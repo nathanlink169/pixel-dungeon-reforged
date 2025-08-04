@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.input.PointerEvent;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.ColorBlock;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.PointerArea;
@@ -67,9 +68,9 @@ public class AboutScene extends PixelScene {
 
 		//*** Pixel Dungeon Reforged Credits ***
 		CreditsBlock pdr = new CreditsBlock(true, Window.PDR_COLOR,
-				"Pixel Dungeon Reforged",
+				"Pixel Dungeon Reforged v" + Game.version,
 				Icons.NATHAN.get(),
-				"Developed by _Nathan Pringle_\nBased on Shattered Pixel Dungeon's open source",
+				"Developed by _Nathan Pringle_\nBased on Shattered Pixel Dungeon's open source v3.1.0",
 				"Github",
 				"https://github.com/nathanlink169");
 		if (landscape()){

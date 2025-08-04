@@ -234,20 +234,6 @@ public class TitleScene extends PixelScene {
 			btnBugReport.setRect(btnChanges.left(), btnFeedback.top(), btnFeedback.width(), BTN_HEIGHT);
 		}
 
-		BitmapText spdVersion = new BitmapText( "Based on SPD v3.1.0", pixelFont);
-		spdVersion.measure();
-		spdVersion.hardlight( 0x888888 );
-		spdVersion.x = w - spdVersion.width() - 4;
-		spdVersion.y = h - spdVersion.height() - 2;
-		add( spdVersion );
-
-		BitmapText pdrVersion = new BitmapText( "PDR v" + Game.version, pixelFont);
-		pdrVersion.measure();
-		pdrVersion.hardlight( 0x888888 );
-		pdrVersion.x = w - pdrVersion.width() - 4;
-		pdrVersion.y = spdVersion.y - pdrVersion.height() - 2;
-		add( pdrVersion );
-
 		if (DeviceCompat.isDesktop()) {
 			ExitButton btnExit = new ExitButton();
 			btnExit.setPos( w - btnExit.width(), 0 );
