@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,17 +24,22 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GolemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -40,8 +48,6 @@ import com.watabou.utils.Random;
 public class Golem extends Mob {
 	
 	{
-		spriteClass = GolemSprite.class;
-		
 		HP = HT = 120;
 		defenseSkill = 15;
 		
@@ -57,6 +63,22 @@ public class Golem extends Mob {
 		WANDERING = new Wandering();
 		HUNTING = new Hunting();
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return GolemSprite.class;
+	}
+
+	@Override
+	protected void onAdd(){
+		boolean previousFirstAdded = firstAdded;
+		super.onAdd();
+		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.BATTLE_WORN)) {
+			// 50%-100% health
+			float multiplier = Random.Float(0.5f, 1.0f);
+			HP = (int) (HT * multiplier);
+		}
+	}
 
 	@Override
 	public int damageRoll(boolean isMaxDamage) {
@@ -68,10 +90,18 @@ public class Golem extends Mob {
 	public int attackSkill( Char target ) {
 		return 28;
 	}
+
+	@Override
+	public float attackDelay() {
+		if (getRandomizerEnabled(RandomTraits.DOUBLE_STRIKE)) {
+			return super.attackDelay() * 0.5f;
+		}
+		return super.attackDelay();
+	}
 	
 	@Override
 	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 12);
+		return super.drRoll() + Random.NormalIntRange(getRandomizerEnabled(RandomTraits.IMMUNITY) ? 6 : 0, 12);
 	}
 
 	@Override
@@ -125,6 +155,12 @@ public class Golem extends Mob {
 	protected boolean act() {
 		selfTeleCooldown--;
 		enemyTeleCooldown--;
+		if (getRandomizerEnabled(RandomTraits.SPATIAL_LOCK)) {
+			selfTeleCooldown = 1000;
+		}
+		if (getRandomizerEnabled(RandomTraits.PROJECTILE_BLOCKING)) {
+			enemyTeleCooldown = 1000;
+		}
 		if (teleporting){
 			((GolemSprite)sprite).teleParticles(false);
 			if (Actor.findChar(target) == null && Dungeon.level.openSpace[target]) {
@@ -181,6 +217,18 @@ public class Golem extends Mob {
 			return false;
 		}
 		return true;
+	}
+
+	@Override
+	//Always spends exactly the specified amount of time, regardless of time-influencing factors
+	protected void spendConstant( float time ){
+		int oldTime = (int)this.getTime(); // cut it off
+		super.spendConstant(time);
+		if (HP > 0 && HP < HT && getRandomizerEnabled(RandomTraits.RAPID_REGENERATION) && this.getTime() > oldTime) { // we go up one turn
+			int oldHP = HP;
+			HP = Math.min(HT, HP + 2);
+			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(HP - oldHP), FloatingText.HEALING);
+		}
 	}
 
 	private class Wandering extends Mob.Wandering{
@@ -250,4 +298,19 @@ public class Golem extends Mob {
 		}
 	}
 
+	public enum RandomTraits {
+		RAPID_REGENERATION, IMMUNITY, DOUBLE_STRIKE, SPATIAL_LOCK, PROJECTILE_BLOCKING, BATTLE_WORN
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case RAPID_REGENERATION: return Randomizer.getCreatureBuff(Golem.class) == 1;
+			case IMMUNITY: return Randomizer.getCreatureBuff(Golem.class) == 2;
+			case DOUBLE_STRIKE: return Randomizer.getCreatureBuff(Golem.class) == 3;
+			case SPATIAL_LOCK: return Randomizer.getCreatureNerf(Golem.class) == 1;
+			case PROJECTILE_BLOCKING: return Randomizer.getCreatureNerf(Golem.class) == 2;
+			case BATTLE_WORN: return Randomizer.getCreatureNerf(Golem.class) == 3;
+		}
+		return false;
+	}
 }

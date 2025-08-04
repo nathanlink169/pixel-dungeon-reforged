@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,20 +24,41 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Earthroot;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM100Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class DM100 extends Mob implements Callback {
@@ -42,8 +66,6 @@ public class DM100 extends Mob implements Callback {
 	private static final float TIME_TO_ZAP	= 1f;
 	
 	{
-		spriteClass = DM100Sprite.class;
-		
 		HP = HT = 20;
 		defenseSkill = 8;
 		
@@ -55,6 +77,52 @@ public class DM100 extends Mob implements Callback {
 		
 		properties.add(Property.ELECTRIC);
 		properties.add(Property.INORGANIC);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return DM100Sprite.class;
+	}
+
+	private boolean seenPlayer = false;
+	private boolean hasZapped = false;
+
+	@Override
+	public void storeInBundle( Bundle bundle ) {
+		super.storeInBundle( bundle );
+		bundle.put( SEEN_PLAYER, seenPlayer);
+		bundle.put( HAS_ZAPPED, hasZapped );
+	}
+
+	@Override
+	public void restoreFromBundle( Bundle bundle ) {
+		super.restoreFromBundle( bundle );
+		seenPlayer = bundle.getBoolean( SEEN_PLAYER );
+		hasZapped = bundle.getBoolean( HAS_ZAPPED );
+	}
+
+	public void notice() {
+		super.notice();
+		if (!seenPlayer && getRandomizerEnabled(RandomTraits.SECURITY_NETWORK)) {
+			if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
+				seenPlayer = true;
+				CellEmitter.center( pos ).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
+				Sample.INSTANCE.play( Assets.Sounds.ALERT );
+
+				for (Mob mob : Dungeon.level.mobs) {
+					mob.beckon( pos );
+				}
+			}
+		}
+	}
+
+	private static final String SEEN_PLAYER = "seen_player";
+	private static final String HAS_ZAPPED = "has_zapped";
+
+	{
+		if (getRandomizerEnabled(RandomTraits.COMBAT_READY)) {
+			immunities.add(Sleep.class);
+		}
 	}
 	
 	@Override
@@ -75,8 +143,17 @@ public class DM100 extends Mob implements Callback {
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
+		if (getRandomizerEnabled(RandomTraits.PASSIVE_PROTOCOL)) {
+			if (HP == HT) return false;
+		}
+
+		boolean canRanged = new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
+		if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && hasZapped) {
+			canRanged = false;
+		}
+
 		return super.canAttack(enemy)
-				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
+				|| canRanged;
 	}
 	
 	//used so resistances can differentiate between melee and magical attacks
@@ -91,8 +168,16 @@ public class DM100 extends Mob implements Callback {
 			return super.doAttack( enemy );
 			
 		} else {
+			if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && hasZapped) {
+				return false;
+			}
 			
 			spend( TIME_TO_ZAP );
+
+			if (getRandomizerEnabled(RandomTraits.FAULTY_BATTERIES) && HP > 1) {
+				HP /= 2;
+			}
+			hasZapped = true;
 
 			Invisibility.dispel(this);
 			if (hit( this, enemy, true )) {
@@ -127,10 +212,51 @@ public class DM100 extends Mob implements Callback {
 			}
 		}
 	}
+
+	@Override
+	//Always spends exactly the specified amount of time, regardless of time-influencing factors
+	protected void spendConstant( float time ){
+		int oldTime = (int)this.getTime(); // cut it off
+		super.spendConstant(time);
+		if (getRandomizerEnabled(RandomTraits.ELECTRICAL_AURA) && this.getTime() > oldTime) { // we go up one turn
+			auraDamage();
+		}
+	}
+
+	private void auraDamage() {
+		for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
+			if (pos + PathFinder.NEIGHBOURS8[i] < 0) continue;
+
+			Char ch = findChar( pos + PathFinder.NEIGHBOURS8[i] );
+			if (ch != null && ch.isAlive()) {
+				if (ch.isImmune(Electricity.class)) {
+					continue;
+				}
+
+				int damage = Math.round(Random.NormalIntRange(1, 8));
+				enemy.damage( damage, new LightningBolt() );
+			}
+		}
+	}
 	
 	@Override
 	public void call() {
 		next();
 	}
-	
+
+	public enum RandomTraits {
+		ELECTRICAL_AURA, COMBAT_READY, SECURITY_NETWORK, FAULTY_BATTERIES, PASSIVE_PROTOCOL, POWER_CONSERVATION
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case ELECTRICAL_AURA: return Randomizer.getCreatureBuff(DM100.class) == 1;
+			case COMBAT_READY: return Randomizer.getCreatureBuff(DM100.class) == 2;
+			case SECURITY_NETWORK: return Randomizer.getCreatureBuff(DM100.class) == 3;
+			case FAULTY_BATTERIES: return Randomizer.getCreatureNerf(DM100.class) == 1;
+			case PASSIVE_PROTOCOL: return Randomizer.getCreatureNerf(DM100.class) == 2;
+			case POWER_CONSERVATION: return Randomizer.getCreatureNerf(DM100.class) == 3;
+		}
+		return false;
+	}
 }

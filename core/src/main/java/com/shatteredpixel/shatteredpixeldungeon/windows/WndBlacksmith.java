@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -64,7 +67,7 @@ public class WndBlacksmith extends Window {
 
 		IconTitle titlebar = new IconTitle();
 		titlebar.icon( troll.sprite() );
-		titlebar.label( Messages.titleCase( troll.name() ) );
+		titlebar.label( Messages.titleCase( troll.name(false) ) );
 		titlebar.setRect( 0, 0, width, 0 );
 		add( titlebar );
 
@@ -81,7 +84,7 @@ public class WndBlacksmith extends Window {
 			protected void onClick() {
 				GameScene.show(new WndOptions(
 						troll.sprite(),
-						Messages.titleCase( troll.name() ),
+						Messages.titleCase( troll.name(false) ),
 						Messages.get(WndBlacksmith.class, "pickaxe_verify") + (pickaxeCost == 0 ? "\n\n" + Messages.get(WndBlacksmith.class, "pickaxe_free") : ""),
 						Messages.get(WndBlacksmith.class, "pickaxe_yes"),
 						Messages.get(WndBlacksmith.class, "pickaxe_no")
@@ -144,7 +147,7 @@ public class WndBlacksmith extends Window {
 			protected void onClick() {
 				GameScene.show(new WndOptions(
 						troll.sprite(),
-						Messages.titleCase( troll.name() ),
+						Messages.titleCase( troll.name(false) ),
 						Messages.get(WndBlacksmith.class, "smith_verify"),
 						Messages.get(WndBlacksmith.class, "smith_yes"),
 						Messages.get(WndBlacksmith.class, "smith_no")
@@ -169,7 +172,7 @@ public class WndBlacksmith extends Window {
 			protected void onClick() {
 				GameScene.show(new WndOptions(
 						troll.sprite(),
-						Messages.titleCase( troll.name() ),
+						Messages.titleCase( troll.name(false) ),
 						Messages.get(WndBlacksmith.class, "cashout_verify", Blacksmith.Quest.favor),
 						Messages.get(WndBlacksmith.class, "cashout_yes"),
 						Messages.get(WndBlacksmith.class, "cashout_no")
@@ -223,7 +226,7 @@ public class WndBlacksmith extends Window {
 
 			IconTitle titlebar = new IconTitle();
 			titlebar.icon( troll.sprite() );
-			titlebar.label( Messages.titleCase( troll.name() ) );
+			titlebar.label( Messages.titleCase( troll.name(false) ) );
 			titlebar.setRect( 0, 0, WIDTH, 0 );
 			add( titlebar );
 
@@ -460,7 +463,7 @@ public class WndBlacksmith extends Window {
 
 			IconTitle titlebar = new IconTitle();
 			titlebar.icon(troll.sprite());
-			titlebar.label(Messages.titleCase(troll.name()));
+			titlebar.label(Messages.titleCase(troll.name(false)));
 
 			RenderedTextBlock message = PixelScene.renderTextBlock( Messages.get(this, "prompt"), 6 );
 

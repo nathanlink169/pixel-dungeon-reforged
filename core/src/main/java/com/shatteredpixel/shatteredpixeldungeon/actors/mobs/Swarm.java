@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,16 +24,23 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SwarmSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -40,10 +50,9 @@ import java.util.ArrayList;
 public class Swarm extends Mob {
 
 	{
-		spriteClass = SwarmSprite.class;
-		
-		HP = HT = 50;
+		HP = HT = getRandomizerEnabled(RandomTraits.DEPLETED_NUMBERS) ? 25 : 50;
 		defenseSkill = 5;
+		baseSpeed = getRandomizerEnabled(RandomTraits.CRAB_SPEED) ? 2f : 1f;
 
 		EXP = 3;
 		maxLvl = 9;
@@ -52,6 +61,11 @@ public class Swarm extends Mob {
 
 		loot = PotionOfHealing.class;
 		lootChance = 0.1667f; //by default, see lootChance()
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return SwarmSprite.class;
 	}
 	
 	private static final float SPLIT_DELAY	= 1f;
@@ -74,6 +88,17 @@ public class Swarm extends Mob {
 	}
 
 	@Override
+	protected void onAdd(){
+		boolean previousFirstAdded = firstAdded;
+		super.onAdd();
+		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.WEAKENED_SWARM)) {
+			// 50%-100% health
+			float multiplier = Random.Float(0.5f, 1.0f);
+			HP = (int) (HT * multiplier);
+		}
+	}
+
+	@Override
 	public void die(Object cause) {
 		flying = false;
 		super.die(cause);
@@ -84,36 +109,53 @@ public class Swarm extends Mob {
 		if (isMaxDamage) return 4;
 		return Random.NormalIntRange( 1, 4 );
 	}
+
+	@Override
+	public void damage(int dmg, Object src, int damageType) {
+		if (getRandomizerEnabled(RandomTraits.DAMAGE_RESISTANCE)) {
+			if (DamageType.getIsDamageType(damageType, DamageType.SLASHING) || DamageType.getIsDamageType(damageType, DamageType.PIERCING)) {
+				dmg /= 2;
+			}
+		}
+		if (getRandomizerEnabled(RandomTraits.MAGIC_VULNERABILITY)) {
+			if (DamageType.getIsDamageType(damageType, DamageType.MAGIC)) {
+				dmg *= 3;
+			}
+		}
+		super.damage(dmg, src, damageType);
+	}
 	
 	@Override
 	public int defenseProc( Char enemy, int damage ) {
 
 		if (HP >= damage + 2) {
-			ArrayList<Integer> candidates = new ArrayList<>();
-			
-			int[] neighbours = {pos + 1, pos - 1, pos + Dungeon.level.width(), pos - Dungeon.level.width()};
-			for (int n : neighbours) {
-				if (!Dungeon.level.solid[n]
-						&& Actor.findChar( n ) == null
-						&& (Dungeon.level.passable[n] || Dungeon.level.avoid[n])
-						&& (!properties().contains(Property.LARGE) || Dungeon.level.openSpace[n])) {
-					candidates.add( n );
+			if (!(getRandomizerEnabled(RandomTraits.DEPLETED_NUMBERS) && Random.Float() > 0.5f)) {
+				ArrayList<Integer> candidates = new ArrayList<>();
+
+				int[] neighbours = {pos + 1, pos - 1, pos + Dungeon.level.width(), pos - Dungeon.level.width()};
+				for (int n : neighbours) {
+					if (!Dungeon.level.solid[n]
+							&& Actor.findChar(n) == null
+							&& (Dungeon.level.passable[n] || Dungeon.level.avoid[n])
+							&& (!properties().contains(Property.LARGE) || Dungeon.level.openSpace[n])) {
+						candidates.add(n);
+					}
 				}
-			}
-	
-			if (candidates.size() > 0) {
-				
-				Swarm clone = split();
-				clone.pos = Random.element( candidates );
-				clone.state = clone.HUNTING;
-				GameScene.add( clone, SPLIT_DELAY ); //we add before assigning HP due to ascension
 
-				clone.HP = (HP - damage) / 2;
-				Actor.add( new Pushing( clone, pos, clone.pos ) );
+				if (candidates.size() > 0) {
 
-				Dungeon.level.occupyCell(clone);
-				
-				HP -= clone.HP;
+					Swarm clone = split();
+					clone.pos = Random.element(candidates);
+					clone.state = clone.HUNTING;
+					GameScene.add(clone, SPLIT_DELAY); //we add before assigning HP due to ascension
+
+					clone.HP = (HP - damage) / 2;
+					Actor.add(new Pushing(clone, pos, clone.pos));
+
+					Dungeon.level.occupyCell(clone);
+
+					HP -= clone.HP;
+				}
 			}
 		}
 		
@@ -123,6 +165,19 @@ public class Swarm extends Mob {
 	@Override
 	public int attackSkill( Char target ) {
 		return 10;
+	}
+
+	@Override
+	public int attackProc( Char enemy, int damage ) {
+		damage = super.attackProc( enemy, damage );
+
+		if (getRandomizerEnabled(RandomTraits.BLOODSUCKERS)) {
+			if (damage > 0 && Random.Int(2) == 0) {
+				Buff.affect(enemy, Bleeding.class).set(3);
+			}
+		}
+
+		return damage;
 	}
 	
 	private Swarm split() {
@@ -153,5 +208,21 @@ public class Swarm extends Mob {
 	public Item createLoot(){
 		Dungeon.LimitedDrops.SWARM_HP.count++;
 		return super.createLoot();
+	}
+
+	public enum RandomTraits {
+		DAMAGE_RESISTANCE, CRAB_SPEED, BLOODSUCKERS, WEAKENED_SWARM, MAGIC_VULNERABILITY, DEPLETED_NUMBERS
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case DAMAGE_RESISTANCE: return Randomizer.getCreatureBuff(Swarm.class) == 1;
+			case CRAB_SPEED: return Randomizer.getCreatureBuff(Swarm.class) == 2;
+			case BLOODSUCKERS: return Randomizer.getCreatureBuff(Swarm.class) == 3;
+			case WEAKENED_SWARM: return Randomizer.getCreatureNerf(Swarm.class) == 1;
+			case MAGIC_VULNERABILITY: return Randomizer.getCreatureNerf(Swarm.class) == 2;
+			case DEPLETED_NUMBERS: return Randomizer.getCreatureNerf(Swarm.class) == 3;
+		}
+		return false;
 	}
 }

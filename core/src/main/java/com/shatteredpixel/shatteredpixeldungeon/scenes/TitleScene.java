@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,6 +39,8 @@ import com.shatteredpixel.shatteredpixeldungeon.services.news.News;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.AvailableUpdateData;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.Updates;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpitterSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
@@ -87,8 +92,8 @@ public class TitleScene extends PixelScene {
 		align(title);
 
 		if (landscape()){
-			placeTorch(title.x + 30, title.y + 35);
-			placeTorch(title.x + title.width - 30, title.y + 35);
+			placeTorch(title.x + 80, title.y + 35);
+			placeTorch(title.x + title.width - 80, title.y + 35);
 		} else {
 			placeTorch(title.x + 22, title.y + 42);
 			placeTorch(title.x + title.width - 22, title.y + 42);
@@ -164,9 +169,14 @@ public class TitleScene extends PixelScene {
 		btnBadges.icon(Icons.get(Icons.JOURNAL));
 		add(btnBadges);
 
-		StyledButton btnNews = new NewsButton(GREY_TR, Messages.get(this, "news"));
-		btnNews.icon(Icons.get(Icons.NEWS));
-		add(btnNews);
+		StyledButton btnAbout = new StyledButton(GREY_TR, Messages.get(this, "about")){
+			@Override
+			protected void onClick() {
+				ShatteredPixelDungeon.switchScene( AboutScene.class );
+			}
+		};
+		btnAbout.icon(Icons.get(Icons.PDR));
+		add(btnAbout);
 
 		StyledButton btnChanges = new ChangesButton(GREY_TR, Messages.get(this, "changes"));
 		btnChanges.icon(Icons.get(Icons.CHANGES));
@@ -175,14 +185,23 @@ public class TitleScene extends PixelScene {
 		StyledButton btnSettings = new SettingsButton(GREY_TR, Messages.get(this, "settings"));
 		add(btnSettings);
 
-		StyledButton btnAbout = new StyledButton(GREY_TR, Messages.get(this, "about")){
+		StyledButton btnFeedback = new StyledButton(GREY_TR, Messages.get(this, "feedback")){
 			@Override
 			protected void onClick() {
-				ShatteredPixelDungeon.switchScene( AboutScene.class );
+				ShatteredPixelDungeon.platform.openURI( "https://forms.gle/tqT95s7Wb4tud8Cm6" );
 			}
 		};
-		btnAbout.icon(Icons.get(Icons.SHPX));
-		add(btnAbout);
+		btnFeedback.icon(Icons.get(Icons.KEYBOARD));
+		add(btnFeedback);
+
+		StyledButton btnBugReport = new StyledButton(GREY_TR, Messages.get(this, "bugreport")){
+			@Override
+			protected void onClick() {
+				ShatteredPixelDungeon.platform.openURI( "https://forms.gle/d9QdhFP8GUTYW3AY7" );
+			}
+		};
+		btnBugReport.icon(new Image(new SpinnerSprite()));
+		add(btnBugReport);
 		
 		final int BTN_HEIGHT = 20;
 		int GAP = (int)(h - topRegion - (landscape() ? 3 : 4)*BTN_HEIGHT)/3;
@@ -197,28 +216,37 @@ public class TitleScene extends PixelScene {
 			btnSupport.setRect(btnPlay.right()+2, btnPlay.top(), btnPlay.width(), BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, (float) (Math.floor(buttonAreaWidth/3f)-1), BTN_HEIGHT);
 			btnBadges.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
-			btnNews.setRect(btnBadges.right()+2, btnBadges.top(), btnRankings.width(), BTN_HEIGHT);
-			btnSettings.setRect(btnRankings.left(), btnRankings.bottom() + GAP, btnRankings.width(), BTN_HEIGHT);
-			btnChanges.setRect(btnSettings.right()+2, btnSettings.top(), btnRankings.width(), BTN_HEIGHT);
-			btnAbout.setRect(btnChanges.right()+2, btnSettings.top(), btnRankings.width(), BTN_HEIGHT);
+			btnAbout.setRect(btnBadges.right()+2, btnBadges.top(), btnRankings.width(), BTN_HEIGHT);
+			btnSettings.setRect(btnPlay.left(), btnRankings.bottom() + GAP, btnPlay.width(), BTN_HEIGHT);
+			btnChanges.setRect(btnSupport.left(), btnSettings.top(), btnSupport.width(), BTN_HEIGHT);
+			btnFeedback.setRect(btnPlay.left(), btnChanges.bottom() + GAP, btnPlay.width(), BTN_HEIGHT);
+			btnBugReport.setRect(btnSupport.left(), btnFeedback.top(), btnPlay.width(), BTN_HEIGHT);
 		} else {
 			btnPlay.setRect(btnAreaLeft, topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
 			align(btnPlay);
 			btnSupport.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, btnPlay.width(), BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnSupport.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);
 			btnBadges.setRect(btnRankings.right()+2, btnRankings.top(), btnRankings.width(), BTN_HEIGHT);
-			btnNews.setRect(btnRankings.left(), btnRankings.bottom()+ GAP, btnRankings.width(), BTN_HEIGHT);
-			btnChanges.setRect(btnNews.right()+2, btnNews.top(), btnNews.width(), BTN_HEIGHT);
-			btnSettings.setRect(btnNews.left(), btnNews.bottom()+GAP, btnRankings.width(), BTN_HEIGHT);
-			btnAbout.setRect(btnSettings.right()+2, btnSettings.top(), btnSettings.width(), BTN_HEIGHT);
+			btnAbout.setRect(btnRankings.left(), btnRankings.bottom()+ GAP, btnRankings.width(), BTN_HEIGHT);
+			btnChanges.setRect(btnAbout.right()+2, btnAbout.top(), btnAbout.width(), BTN_HEIGHT);
+			btnSettings.setRect(btnAbout.left(), btnAbout.bottom()+GAP, buttonAreaWidth, BTN_HEIGHT);
+			btnFeedback.setRect(btnSettings.left(), btnSettings.bottom()+GAP, btnAbout.width(), BTN_HEIGHT);
+			btnBugReport.setRect(btnChanges.left(), btnFeedback.top(), btnFeedback.width(), BTN_HEIGHT);
 		}
 
-		BitmapText version = new BitmapText( "v" + Game.version, pixelFont);
-		version.measure();
-		version.hardlight( 0x888888 );
-		version.x = w - version.width() - 4;
-		version.y = h - version.height() - 2;
-		add( version );
+		BitmapText spdVersion = new BitmapText( "Based on SPD v3.1.0", pixelFont);
+		spdVersion.measure();
+		spdVersion.hardlight( 0x888888 );
+		spdVersion.x = w - spdVersion.width() - 4;
+		spdVersion.y = h - spdVersion.height() - 2;
+		add( spdVersion );
+
+		BitmapText pdrVersion = new BitmapText( "PDR v" + Game.version, pixelFont);
+		pdrVersion.measure();
+		pdrVersion.hardlight( 0x888888 );
+		pdrVersion.x = w - pdrVersion.width() - 4;
+		pdrVersion.y = spdVersion.y - pdrVersion.height() - 2;
+		add( pdrVersion );
 
 		if (DeviceCompat.isDesktop()) {
 			ExitButton btnExit = new ExitButton();

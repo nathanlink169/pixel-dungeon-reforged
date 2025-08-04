@@ -9,31 +9,29 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class UnholyPriestSprite extends MobSprite {
+    @Override
+    public void setup() {
+        super.setup();
+        zap = attack.clone();
+    }
 
-    public UnholyPriestSprite() {
-        super();
+    @Override
+    protected void setupFrames() {
+        texture( Assets.Sprites.UNHOLY_PRIEST );
 
-        int c = 21;
+        TextureFilm frames = new TextureFilm( texture, 16, 16 );
 
-        texture( Assets.Sprites.SHAMAN );
-
-        TextureFilm frames = new TextureFilm( texture, 12, 15 );
-
-        idle = new Animation( 2, true );
-        idle.frames( frames, c+0, c+0, c+0, c+1, c+0, c+0, c+1, c+1 );
+        idle = new Animation( 1, true );
+        idle.frames( frames, 0);
 
         run = new Animation( 12, true );
-        run.frames( frames, c+4, c+5, c+6, c+7 );
+        run.frames( frames, 1, 2, 3, 4 );
 
         attack = new Animation( 12, false );
-        attack.frames( frames, c+2, c+3, c+0 );
-
-        zap = attack.clone();
+        attack.frames( frames, 6, 7, 8, 5 );
 
         die = new Animation( 12, false );
-        die.frames( frames, c+8, c+9, c+10 );
-
-        play( idle );
+        die.frames( frames, 0, 9, 10, 11, 12 );
     }
 
     public void zap( int cell ) {
@@ -41,7 +39,7 @@ public class UnholyPriestSprite extends MobSprite {
         super.zap( cell );
 
         MagicMissile.boltFromChar( parent,
-                MagicMissile.SHAMAN_BLUE,
+                MagicMissile.CORROSION,
                 this,
                 cell,
                 new Callback() {

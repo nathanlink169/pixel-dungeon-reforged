@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -58,6 +61,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.MobSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Piranha;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Skeleton;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wyrm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
@@ -313,6 +317,8 @@ public abstract class Level implements Bundlable {
 
 		Random.popGenerator();
 	}
+
+	public void returnTo(){}
 	
 	public void setSize(int w, int h){
 		
@@ -720,19 +726,24 @@ public abstract class Level implements Bundlable {
 	}
 
 	public float respawnCooldown(){
+		float timeToRespawn = TIME_TO_RESPAWN;
+		if (Dungeon.isChallenged(Challenges.HORDE)) {
+			timeToRespawn /= 2.0f;
+		}
+
 		float cooldown;
 		if (Statistics.amuletObtained){
 			if (Dungeon.depth == 1){
 				//very fast spawns on floor 1! 0/2/4/6/8/10/12, etc.
-				cooldown = (Dungeon.level.mobCount()) * (TIME_TO_RESPAWN / 25f);
+				cooldown = (Dungeon.level.mobCount()) * (timeToRespawn / 25f);
 			} else {
 				//respawn time is 5/5/10/15/20/25/25, etc.
-				cooldown = Math.round(GameMath.gate( TIME_TO_RESPAWN/10f, Dungeon.level.mobCount() * (TIME_TO_RESPAWN / 10f), TIME_TO_RESPAWN / 2f));
+				cooldown = Math.round(GameMath.gate( timeToRespawn/10f, Dungeon.level.mobCount() * (timeToRespawn / 10f), timeToRespawn / 2f));
 			}
 		} else if (Dungeon.level.feeling == Feeling.DARK){
-			cooldown = 2*TIME_TO_RESPAWN/3f;
+			cooldown = 2*timeToRespawn/3f;
 		} else {
-			cooldown = TIME_TO_RESPAWN;
+			cooldown = timeToRespawn;
 		}
 		return cooldown / DimensionalSundial.spawnMultiplierAtCurrentTime();
 	}
@@ -742,7 +753,7 @@ public abstract class Level implements Bundlable {
 
 		Mob mob = createMob();
 		if (mob.state != mob.PASSIVE) {
-			mob.state = mob.WANDERING;
+		mob.state = mob.WANDERING;
 		}
 		int tries = 30;
 		do {
@@ -1266,6 +1277,9 @@ public abstract class Level implements Bundlable {
 		
 		boolean sighted = c.buff( Blindness.class ) == null && c.buff( Shadows.class ) == null
 						&& c.isAlive();
+		if (c instanceof Skeleton && Skeleton.getRandomizerEnabled(Skeleton.RandomTraits.HOLLOW_SOCKETS)) {
+			sighted = false;
+		}
 		if (sighted) {
 			boolean[] blocking = null;
 
@@ -1425,10 +1439,10 @@ public abstract class Level implements Bundlable {
 					}
 				}
 			}
-			
-			if (c.buff( Awareness.class ) != null) {
-				for (Heap heap : heaps.valueList()) {
-					int p = heap.pos;
+
+			Awareness awareness = c.buff(Awareness.class);
+			if (awareness != null) {
+				for (int p : awareness.getPositions()) {
 					for (int i : PathFinder.NEIGHBOURS9) heroMindFov[p+i] = true;
 				}
 			}

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndImp;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
@@ -50,9 +54,11 @@ import com.watabou.utils.Random;
 public class Imp extends NPC {
 
 	{
-		spriteClass = ImpSprite.class;
-
 		properties.add(Property.IMMOVABLE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return ImpSprite.class;
 	}
 	
 	private boolean seenBefore = false;
@@ -70,7 +76,7 @@ public class Imp extends NPC {
 		}
 		if (!Quest.given && Dungeon.level.visited[pos]) {
 			if (!seenBefore && Dungeon.level.heroFOV[pos]) {
-				yell(Messages.get(this, "hey", Messages.titleCase(Dungeon.hero.name())));
+				yell(Messages.get(this, "hey", Messages.titleCase(Dungeon.hero.name(false))));
 				seenBefore = true;
 			}
 		} else {
@@ -86,7 +92,7 @@ public class Imp extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		//do nothing
 	}
 
@@ -121,14 +127,14 @@ public class Imp extends NPC {
 				});
 			} else {
 				tell( Quest.alternative ?
-						Messages.get(this, "monks_2", Messages.titleCase(Dungeon.hero.name()))
-						: Messages.get(this, "golems_2", Messages.titleCase(Dungeon.hero.name())) );
+						Messages.get(this, "monks_2", Messages.titleCase(Dungeon.hero.name(false)))
+						: Messages.get(this, "golems_2", Messages.titleCase(Dungeon.hero.name(false))) );
 			}
 			
 		} else {
 			tell( Messages.get(this, "intro") + "\n\n" + (Quest.alternative ?
-					Messages.get(this, "monks_1", Messages.titleCase(Dungeon.hero.name()))
-					: Messages.get(this, "golems_1", Messages.titleCase(Dungeon.hero.name()))) );
+					Messages.get(this, "monks_1", Messages.titleCase(Dungeon.hero.name(false)))
+					: Messages.get(this, "golems_1", Messages.titleCase(Dungeon.hero.name(false)))) );
 			Quest.given = true;
 			Quest.completed = false;
 		}
@@ -147,7 +153,7 @@ public class Imp extends NPC {
 	
 	public void flee() {
 		
-		yell( Messages.get(this, "cya", Messages.titleCase(Dungeon.hero.name())) );
+		yell( Messages.get(this, "cya", Messages.titleCase(Dungeon.hero.name(false))) );
 		
 		destroy();
 		sprite.die();
@@ -210,7 +216,8 @@ public class Imp extends NPC {
 		}
 		
 		public static void spawn( CityLevel level ) {
-			if (!spawned && Dungeon.depth > 16 && Random.Int( 20 - Dungeon.depth ) == 0) {
+			// don't spawn imp on level 19
+			if (!spawned && Dungeon.depth > 16 && Random.Int( 19 - Dungeon.depth ) == 0) {
 
 				Imp npc = new Imp();
 				int tries = 30;

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -35,8 +39,10 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalGuardianSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -45,8 +51,6 @@ import com.watabou.utils.Random;
 public class CrystalGuardian extends Mob{
 
 	{
-		spriteClass = CrystalGuardianSprite.class;
-
 		HP = HT = 100;
 		defenseSkill = 14;
 
@@ -59,6 +63,26 @@ public class CrystalGuardian extends Mob{
 		properties.add(Property.INORGANIC);
 		properties.add(Property.MINIBOSS);
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		if (spriteClass == null) {
+			switch (Random.Int(3)){
+				case 0: default:
+					spriteClass = CrystalGuardianSprite.Blue.class;
+					break;
+				case 1:
+					spriteClass = CrystalGuardianSprite.Green.class;
+					break;
+				case 2:
+					spriteClass = CrystalGuardianSprite.Red.class;
+					break;
+			}
+		}
+
+		return spriteClass;
+	}
+
+	private Class<? extends CharSprite> spriteClass = null;
 
 	private boolean recovering = false;
 
@@ -175,21 +199,6 @@ public class CrystalGuardian extends Mob{
 			return super.isInvulnerable(effect) || (Char.class.isAssignableFrom(effect) && !Hero.class.isAssignableFrom(effect) && !CrystalSpire.class.isAssignableFrom(effect));
 		}
 		return super.isInvulnerable(effect);
-	}
-
-	public CrystalGuardian(){
-		super();
-		switch (Random.Int(3)){
-			case 0: default:
-				spriteClass = CrystalGuardianSprite.Blue.class;
-				break;
-			case 1:
-				spriteClass = CrystalGuardianSprite.Green.class;
-				break;
-			case 2:
-				spriteClass = CrystalGuardianSprite.Red.class;
-				break;
-		}
 	}
 
 	@Override

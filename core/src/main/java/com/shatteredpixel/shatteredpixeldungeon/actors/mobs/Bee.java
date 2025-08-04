@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -29,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BeeSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -36,8 +40,6 @@ import com.watabou.utils.Random;
 public class Bee extends Mob {
 	
 	{
-		spriteClass = BeeSprite.class;
-		
 		viewDistance = 4;
 
 		EXP = 0;
@@ -47,6 +49,11 @@ public class Bee extends Mob {
 		
 		//only applicable when the bee is charmed with elixir of honeyed healing
 		intelligentAlly = true;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return BeeSprite.class;
 	}
 
 	private int level;
@@ -209,11 +216,11 @@ public class Bee extends Mob {
 	}
 	
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.ALLY && buffs(AllyBuff.class).isEmpty()){
 			return Messages.get(this, "desc_honey");
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 }

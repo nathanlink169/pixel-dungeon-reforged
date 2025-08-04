@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -34,29 +37,30 @@ import com.watabou.utils.Callback;
 public class GolemSprite extends MobSprite {
 
 	private Emitter teleParticles;
-	
-	public GolemSprite() {
-		super();
-		
+
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.GOLEM );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 17, 19 );
-		
+
 		idle = new Animation( 4, true );
 		idle.frames( frames, 0, 1 );
-		
+
 		run = new Animation( 12, true );
 		run.frames( frames, 2, 3, 4, 5 );
-		
+
 		attack = new Animation( 10, false );
 		attack.frames( frames, 6, 7, 8 );
 
-		zap = attack.clone();
-		
 		die = new Animation( 15, false );
 		die.frames( frames, 9, 10, 11, 12, 13 );
-		
-		play( idle );
 	}
 
 	@Override

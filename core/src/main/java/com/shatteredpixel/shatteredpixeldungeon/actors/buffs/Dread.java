@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +34,7 @@ import com.watabou.utils.Bundle;
 
 public class Dread extends Buff {
 
+	public boolean permanent = false;
 	protected int left = (int)DURATION;
 	public int object = 0;
 
@@ -64,10 +68,12 @@ public class Dread extends Buff {
 			if (target instanceof Mob){
 				((Mob) target).EXP /= 2;
 			}
+			permanent = false;
+			detach();
 			target.destroy();
 			target.sprite.killAndErase();
 			Dungeon.level.mobs.remove(target);
-		} else {
+		} else if (!permanent) {
 			left--;
 			if (left <= 0){
 				detach();
@@ -78,18 +84,28 @@ public class Dread extends Buff {
 		return true;
 	}
 
+	@Override
+	public void detach() {
+		if (!permanent) {
+			super.detach();
+		}
+	}
+
+
 	public void extend( float duration ) {
 		left += duration;
 	}
 
 	private static final String LEFT	= "left";
 	private static final String OBJECT    = "object";
+	private static final String PERMANENT = "permanent";
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle(bundle);
 		bundle.put(LEFT, left);
 		bundle.put(OBJECT, object);
+		bundle.put(PERMANENT, permanent);
 	}
 
 	@Override
@@ -97,6 +113,7 @@ public class Dread extends Buff {
 		super.restoreFromBundle( bundle );
 		object = bundle.getInt( OBJECT );
 		left = bundle.getInt( LEFT );
+		permanent = bundle.getBoolean(PERMANENT);
 	}
 
 	@Override
@@ -106,6 +123,7 @@ public class Dread extends Buff {
 
 	@Override
 	public float iconFadePercent() {
+		if (permanent) return 1;
 		return Math.max(0, (DURATION - left) / DURATION);
 	}
 
@@ -121,6 +139,9 @@ public class Dread extends Buff {
 
 	@Override
 	public String desc() {
+		if (permanent) {
+			return Messages.get(this, "desc_permanent");
+		}
 		return Messages.get(this, "desc", left);
 	}
 
@@ -130,5 +151,4 @@ public class Dread extends Buff {
 			detach();
 		}
 	}
-
 }

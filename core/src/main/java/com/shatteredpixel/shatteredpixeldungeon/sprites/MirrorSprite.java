@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
@@ -32,13 +36,11 @@ public class MirrorSprite extends MobSprite {
 	
 	private static final int FRAME_WIDTH	= 12;
 	private static final int FRAME_HEIGHT	= 15;
-	
-	public MirrorSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Dungeon.hero != null ? Dungeon.hero.heroClass.spritesheet() : HeroClass.WARRIOR.spritesheet() );
-		updateArmor( 0 );
-		idle();
+		updateArmor( 1 );
 	}
 	
 	@Override
@@ -57,6 +59,10 @@ public class MirrorSprite extends MobSprite {
 	}
 	
 	public void updateArmor( int tier ) {
+		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			return;
+		}
+
 		TextureFilm film = new TextureFilm( HeroSprite.tiers(), tier, FRAME_WIDTH, FRAME_HEIGHT );
 		
 		idle = new Animation( 1, true );

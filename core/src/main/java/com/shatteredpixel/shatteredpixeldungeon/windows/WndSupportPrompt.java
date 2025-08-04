@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -46,6 +49,7 @@ public class WndSupportPrompt extends Window {
 		add(title);
 
 		String message = Messages.get(WndSupportPrompt.class, "intro");
+		message += "\n\n" + Messages.get(WndSupportPrompt.class, "disclaimer");
 		message += "\n\n" + Messages.get(SupporterScene.class, "patreon_msg");
 		if (Messages.lang() != Languages.ENGLISH) {
 			message += "\n" + Messages.get(SupporterScene.class, "patreon_english");
@@ -63,7 +67,7 @@ public class WndSupportPrompt extends Window {
 				super.onClick();
 				String link = "https://www.patreon.com/ShatteredPixel";
 				//tracking codes, so that the website knows where this pageview came from
-				link += "?utm_source=shatteredpd";
+				link += "?utm_source=pdreforged";
 				link += "&utm_medium=supporter_prompt";
 				link += "&utm_campaign=ingame_link";
 				ShatteredPixelDungeon.platform.openURI(link);

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
@@ -29,7 +33,9 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalWispSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -49,21 +55,26 @@ public class CrystalWisp extends Mob{
 
 		properties.add(Property.INORGANIC);
 	}
-
-	public CrystalWisp(){
-		super();
-		switch (Random.Int(3)){
-			case 0: default:
-				spriteClass = CrystalWispSprite.Blue.class;
-				break;
-			case 1:
-				spriteClass = CrystalWispSprite.Green.class;
-				break;
-			case 2:
-				spriteClass = CrystalWispSprite.Red.class;
-				break;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		if (spriteClass == null) {
+			switch (Random.Int(3)){
+				case 0: default:
+					spriteClass = CrystalWispSprite.Blue.class;
+					break;
+				case 1:
+					spriteClass = CrystalWispSprite.Green.class;
+					break;
+				case 2:
+					spriteClass = CrystalWispSprite.Red.class;
+					break;
+			}
 		}
+
+		return spriteClass;
 	}
+
+	private Class<? extends CharSprite> spriteClass = null;
 
 	@Override
 	public boolean[] modifyPassable(boolean[] passable) {

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.scrolls;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -71,7 +75,7 @@ public abstract class InventoryScroll extends Scroll {
 		GameScene.selectItem( itemSelector );
 	}
 	
-	private void confirmCancelation() {
+	public void confirmCancelation() {
 		GameScene.show( new WndOptions(new ItemSprite(this),
 				Messages.titleCase(name()),
 				Messages.get(this, "warning"),
@@ -145,7 +149,7 @@ public abstract class InventoryScroll extends Scroll {
 							chance = 5;
 						}
 						if (rand > chance) { // Failed Roll
-					curItem = detach(curUser.belongings.backpack);
+							curItem = detach(curUser.belongings.backpack);
 						}
 						else {
 							GLog.p( Messages.get(Potion.class, "saved") );
@@ -162,7 +166,7 @@ public abstract class InventoryScroll extends Scroll {
 					Sample.INSTANCE.play(Assets.Sounds.READ);
 				}
 				
-			} else if (identifiedByUse && !((Scroll)curItem).anonymous) {
+			} else if (identifiedByUse && !((Scroll) curItem).anonymous) {
 				
 				((InventoryScroll)curItem).confirmCancelation();
 				

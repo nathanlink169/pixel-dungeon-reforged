@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,12 +26,15 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
@@ -36,9 +42,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfAggression;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WarlockSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
@@ -47,8 +55,6 @@ public class Warlock extends Mob implements Callback {
 	private static final float TIME_TO_ZAP	= 1f;
 	
 	{
-		spriteClass = WarlockSprite.class;
-		
 		HP = HT = 70;
 		defenseSkill = 18;
 		
@@ -59,6 +65,29 @@ public class Warlock extends Mob implements Callback {
 		lootChance = 0.5f;
 
 		properties.add(Property.UNDEAD);
+
+		WANDERING = new Wandering();
+	}
+
+	private boolean dancing = false;
+	private static final String DANCING = "dancing";
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put( DANCING, dancing);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		dancing = bundle.getBoolean(DANCING);
+	}
+
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return WarlockSprite.class;
 	}
 	
 	@Override
@@ -79,6 +108,11 @@ public class Warlock extends Mob implements Callback {
 	
 	@Override
 	protected boolean canAttack( Char enemy ) {
+		if (getRandomizerEnabled(RandomTraits.SHORT_RANGE)) {
+			if (distance(enemy) > 3) {
+				return false;
+			}
+		}
 		return super.canAttack(enemy)
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
 	}
@@ -106,14 +140,21 @@ public class Warlock extends Mob implements Callback {
 	public static class DarkBolt{}
 	
 	protected void zap() {
-		spend( TIME_TO_ZAP );
+		if (getRandomizerEnabled(RandomTraits.SPELL_FATIGUE)) {
+			spend(TIME_TO_ZAP * 2.0f);
+		} else {
+			spend(TIME_TO_ZAP);
+		}
 
 		Invisibility.dispel(this);
 		Char enemy = this.enemy;
 		if (hit( this, enemy, true )) {
 			//TODO would be nice for this to work on ghost/statues too
 			if (enemy == Dungeon.hero && Random.Int( 2 ) == 0) {
-				Buff.prolong( enemy, Degrade.class, Degrade.DURATION );
+				Buff.prolong( enemy, Degrade.class, Degrade.DURATION ).poweredUp = getRandomizerEnabled(RandomTraits.ARCANE_MASTERY);
+				if (getRandomizerEnabled(RandomTraits.HINDERING_HEX)) {
+					Buff.prolong( enemy, Slow.class, Slow.DURATION );
+				}
 				Sample.INSTANCE.play( Assets.Sounds.DEGRADE );
 			}
 			
@@ -136,6 +177,39 @@ public class Warlock extends Mob implements Callback {
 			}
 		} else {
 			enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
+		}
+	}
+
+	@Override
+	public int defenseProc(Char enemy, int damage) {
+		if (dancing) {
+			setIsDancing(false);
+		}
+
+		return super.defenseProc(enemy, damage);
+	}
+
+	private void setIsDancing(boolean isDancing) {
+		if (isDancing) {
+			((WarlockSprite)sprite).dance();
+			dancing = true;
+		} else {
+			sprite.idle();
+			dancing = false;
+		}
+	}
+
+	@Override
+	public void beckon( int cell ) {
+		if (!dancing) {
+			super.beckon(cell);
+		}
+	}
+
+	@Override
+	public void notice() {
+		if (!dancing) {
+			super.notice();
 		}
 	}
 	
@@ -163,6 +237,53 @@ public class Warlock extends Mob implements Callback {
 			} while (i instanceof PotionOfHealing);
 			return i;
 		}
+	}
 
+	@Override
+	protected boolean getCloser( int target ) {
+		if (state == HUNTING && getRandomizerEnabled(RandomTraits.COWARDLY_CASTER)) {
+			return enemySeen && getFurther( target );
+		} else {
+			return super.getCloser( target );
+		}
+	}
+
+	private class Wandering extends Mob.Wandering{
+
+		@Override
+		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+			if (!dancing) {
+				if (getRandomizerEnabled(RandomTraits.DANCE_FEVER)) {
+					if (!enemyInFOV && !justAlerted && Random.Int(50) == 0) {
+						setIsDancing(true);
+						spend( TICK );
+						return true;
+					}
+					return super.act(enemyInFOV, justAlerted);
+				}
+				return super.act(enemyInFOV, justAlerted);
+			}
+			if (!((WarlockSprite)sprite).isDancing()) {
+				((WarlockSprite) sprite).dance();
+			}
+			spend( TICK );
+			return true;
+		}
+	}
+
+	public enum RandomTraits {
+		HINDERING_HEX, COWARDLY_CASTER, ARCANE_MASTERY, SHORT_RANGE, SPELL_FATIGUE, DANCE_FEVER
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case HINDERING_HEX: return Randomizer.getCreatureBuff(Warlock.class) == 1;
+			case COWARDLY_CASTER: return Randomizer.getCreatureBuff(Warlock.class) == 2;
+			case ARCANE_MASTERY: return Randomizer.getCreatureBuff(Warlock.class) == 3;
+			case SHORT_RANGE: return Randomizer.getCreatureNerf(Warlock.class) == 1;
+			case SPELL_FATIGUE: return Randomizer.getCreatureNerf(Warlock.class) == 2;
+			case DANCE_FEVER: return Randomizer.getCreatureNerf(Warlock.class) == 3;
+		}
+		return false;
 	}
 }

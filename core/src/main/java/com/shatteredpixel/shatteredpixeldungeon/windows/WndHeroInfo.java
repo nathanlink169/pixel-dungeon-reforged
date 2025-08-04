@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -77,7 +80,7 @@ public class WndHeroInfo extends WndTabbed {
 				tabIcon = new ItemSprite(ItemSpriteSheet.ARTIFACT_TOME, null);
 				break;
 			case ARTIFICER:
-				tabIcon = new ItemSprite(ItemSpriteSheet.ARTIFACT_GUN, null);
+				tabIcon = new ItemSprite(ItemSpriteSheet.GUN, null);
 				break;
 		}
 
@@ -211,7 +214,7 @@ public class WndHeroInfo extends WndTabbed {
 							new ItemSprite(ItemSpriteSheet.SCROLL_ISAZ)};
 					break;
 				case ARTIFICER:
-					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.ARTIFACT_GUN),
+					icons = new Image[]{ new ItemSprite(ItemSpriteSheet.GUN),
 							new ItemSprite(ItemSpriteSheet.DAGGER),
 							new ItemSprite(ItemSpriteSheet.POTION_CRIMSON)};
 					break;

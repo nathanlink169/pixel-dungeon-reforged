@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -37,8 +41,8 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.RedButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
-import com.shatteredpixel.shatteredpixeldungeon.utils.PDRHelpers;
 import com.watabou.noosa.Game;
+import com.watabou.utils.DeviceCompat;
 
 import java.util.Locale;
 
@@ -96,7 +100,10 @@ public class WndGameInProgress extends Window {
 		if (info.shld > 0)  statSlot( Messages.get(this, "health"), info.hp + "+" + info.shld + "/" + info.ht );
 		else                statSlot( Messages.get(this, "health"), (info.hp) + "/" + info.ht );
 		statSlot( Messages.get(this, "exp"), info.exp + "/" + Hero.maxExp(info.level) );
-		statSlot( "Difficulty", PDRHelpers.DifficultyIntToString(info.difficulty));
+		statSlot( Messages.get(this, "difficulty"), Messages.get(this, "difficulty" + info.difficulty));
+		if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()) {
+			statSlot( "Randomized", info.randomized ? "Yes" : "No" );
+		}
 		
 		pos += GAP;
 		statSlot( Messages.get(this, "gold"), info.goldCollected );

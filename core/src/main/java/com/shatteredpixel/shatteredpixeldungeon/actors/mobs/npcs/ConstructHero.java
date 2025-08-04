@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -19,8 +20,11 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ConstructSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
@@ -36,8 +40,6 @@ import com.watabou.utils.Random;
 public class ConstructHero extends DirectableAlly implements ActionIndicator.Action {
 
     {
-        spriteClass = ConstructSprite.class;
-
         flying = false;
 
         state = HUNTING;
@@ -45,10 +47,17 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
         properties.add(Property.ELECTRIC);
         properties.add(Property.INORGANIC);
     }
+    @Override
+    public Class<? extends CharSprite> GetSpriteClass() {
+        return ConstructSprite.class;
+    }
 
     public ConstructHero(){
         super();
         HP = HT;
+    }
+
+    public void setupActionIndicator() {
         ActionIndicator.setAction(this);
     }
 
@@ -224,6 +233,11 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
     @Override
     public String actionName() {
         return "";
+    }
+
+    @Override
+    public int actionIcon() {
+        return HeroIcon.CONSTRUCTOR;
     }
 
     @Override

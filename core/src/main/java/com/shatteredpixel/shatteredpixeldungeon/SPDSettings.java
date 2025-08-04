@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -240,6 +243,8 @@ public class SPDSettings extends GameSettings {
 	public static final String KEY_INTRO		= "intro";
 	public static final String KEY_DIFFICULTY   = "difficulty";
 
+	public static final String KEY_RANDOMIZER_ENABLED = "randomizer_enabled";
+
 	public static final String KEY_SUPPORT_NAGGED= "support_nagged";
 	public static final String KEY_VICTORY_NAGGED= "victory_nagged";
 	
@@ -270,6 +275,9 @@ public class SPDSettings extends GameSettings {
 	// 1 easy, 2 medium, 3 hard, 4 impossible
 	public static void difficulty( int value) { put (KEY_DIFFICULTY, value); }
 	public static int difficulty() {return getInt(KEY_DIFFICULTY, 2, 1, 4);}
+
+	public static void randomizerEnabled( boolean value ) { put( KEY_RANDOMIZER_ENABLED, value);}
+	public static boolean randomizerEnabled() { return getBoolean(KEY_RANDOMIZER_ENABLED, false);}
 
 	public static void customSeed( String value ){
 		put( KEY_CUSTOM_SEED, value );

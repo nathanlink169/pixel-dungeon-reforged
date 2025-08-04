@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,17 +30,19 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 public class Challenges {
 
 	//Some of these internal IDs are outdated and don't represent what these challenges do
-	public static final int NO_FOOD				= 1;
-	public static final int NO_ARMOR			= 2;
-	public static final int NO_HEALING			= 4;
-	public static final int NO_HERBALISM		= 8;
-	public static final int SWARM_INTELLIGENCE	= 16;
-	public static final int DARKNESS			= 32;
-	public static final int NO_SCROLLS		    = 64;
-	public static final int CHAMPION_ENEMIES	= 128;
-	public static final int STRONGER_BOSSES 	= 256;
+	public static final int NO_FOOD				= 1 << 0;
+	public static final int NO_ARMOR			= 1 << 1;
+	public static final int NO_HEALING			= 1 << 2;
+	public static final int NO_HERBALISM		= 1 << 3;
+	public static final int SWARM_INTELLIGENCE	= 1 << 4;
+	public static final int DARKNESS			= 1 << 5;
+	public static final int NO_SCROLLS		    = 1 << 6;
+	public static final int CHAMPION_ENEMIES	= 1 << 7;
+	public static final int STRONGER_BOSSES 	= 1 << 8;
+	public static final int HORDE				= 1 << 9;
+	public static final int MONSTER_UNKNOWN		= 1 << 10;
 
-	public static final int MAX_VALUE           = 511;
+	public static final int MAX_VALUE           = 1 << 11;
 
 	public static final String[] NAME_IDS = {
 			"champion_enemies",
@@ -48,11 +53,13 @@ public class Challenges {
 			"no_herbalism",
 			"swarm_intelligence",
 			"darkness",
-			"no_scrolls"
+			"no_scrolls",
+			"horde",
+			"monster_unknown"
 	};
 
 	public static final int[] MASKS = {
-			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS
+			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, HORDE, MONSTER_UNKNOWN
 	};
 
 	public static int activeChallenges(){

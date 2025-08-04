@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,29 +28,26 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.watabou.noosa.TextureFilm;
 
 public class SnakeSprite extends MobSprite {
-	
-	public SnakeSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.SNAKE );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 11 );
-		
+
 		//many frames here as we want the rising/falling to be slow but the tongue to be fast
 		idle = new Animation( 10, true );
 		idle.frames( frames, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1);
-		
+				1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 2, 1, 1);
+
 		run = new Animation( 8, true );
 		run.frames( frames, 4, 5, 6, 7 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, 8, 9, 10, 9, 0);
-		
+
 		die = new Animation( 10, false );
 		die.frames( frames, 11, 12, 13 );
-		
-		play(idle);
 	}
 	
 }

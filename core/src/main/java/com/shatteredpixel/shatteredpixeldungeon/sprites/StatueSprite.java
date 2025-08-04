@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,36 +25,39 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.GameMath;
 
 public class StatueSprite extends MobSprite {
-	
-	public StatueSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.STATUE );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
-		
+
 		idle = new Animation( 2, true );
 		idle.frames( frames, 0, 0, 0, 0, 0, 1, 1 );
-		
+
 		run = new Animation( 15, true );
 		run.frames( frames, 2, 3, 4, 5, 6, 7 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 8, 9, 10 );
-		
+
 		die = new Animation( 5, false );
 		die.frames( frames, 11, 12, 13, 14, 15, 15 );
-		
-		play( idle );
 	}
 
 	private static int[] tierFrames = {0, 21, 32, 43, 54, 65};
 
 	public void setArmor( int tier ){
+		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			return;
+		}
+		
 		int c = tierFrames[(int)GameMath.gate(0, tier, 5)];
 
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );

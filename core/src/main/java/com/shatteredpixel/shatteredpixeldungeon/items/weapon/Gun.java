@@ -1,5 +1,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
+import static com.shatteredpixel.shatteredpixeldungeon.actors.Char.hit;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.ARCSHIELDING;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
 
@@ -8,22 +9,34 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cursed;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldown;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Viscosity;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.spells.ReclaimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ToxicGasRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BlazingTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BurningTrap;
@@ -46,6 +59,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
+import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf;
@@ -72,17 +86,19 @@ public class Gun extends Weapon {
 
     public static final String AC_SHOOT		    = "SHOOT";
     public static final String AC_RELOAD        = "RELOAD";
-    public static final float TIME_TO_RELOAD	= 2f;
+    public static final float TIME_TO_RELOAD	= 4f;
 
     private boolean isLoaded = true;
 
     {
-        image = ItemSpriteSheet.ARTIFACT_GUN;
+        image = ItemSpriteSheet.GUN;
 
         defaultAction = AC_SHOOT;
 
         unique = true;
         bones = false;
+
+        damageType = DamageType.PIERCING;
     }
 
     @Override
@@ -179,27 +195,38 @@ public class Gun extends Weapon {
 
     @Override
     public int min(int lvl) {
-        int dmg = 1 + (int)(Dungeon.hero.lvl*0.6f) // divided by 5, multiplied by 3
+        int dmg = 1 + Dungeon.hero.lvl/5
+                + (RingOfSharpshooting.levelDamageBonus(Dungeon.hero) / 2)
                 + (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0);
         return Math.max(0, dmg);
     }
 
     @Override
     public int max(int lvl) {
-        int dmg = 6 + (int)(Dungeon.hero.lvl*1.2f) // divided by 2.5, multiplied by 3
+        int dmg = 6 + (int)(Dungeon.hero.lvl/2.5f)
+                + /*2**/RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
                 + (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
+        dmg *= 2;
         return Math.max(0, dmg);
     }
 
     @Override
-    public int targetingPos(Hero user, int dst) {
-        return knockArrow().targetingPos(user, dst);
-    }
-
-    private int targetPos;
-
-    @Override
     public int damageRoll(Char owner, boolean isMaxDamage) {
+        if (((Hero)owner).hasTalent(EFFECTIVE_SHOT)) {
+            if (owner.buff(EffectiveShotCooldown.class) == null) {
+                isMaxDamage = true;
+                Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));
+            }
+            else {
+                EffectiveShotCooldown cd = owner.buff(EffectiveShotCooldown.class);
+                if (cd.left == 1) {
+                    cd.detach();
+                }
+                else {
+                    cd.left--;
+                }
+            }
+        }
         int damage = augment.damageFactor(super.damageRoll(owner, isMaxDamage));
         if (owner.buff(Talent.ArtificerFoodDamageBonus.class) != null) {
             damage += 3;
@@ -226,164 +253,137 @@ public class Gun extends Weapon {
         return false;
     }
 
-    public Bullet knockArrow(){
-        return new Bullet();
-    }
+    public boolean fire(final Hero user, final int cell, final boolean playSFX) {
+        boolean hitSomething = false;
 
-    public class Bullet extends MissileWeapon {
-
-        {
-            image = ItemSpriteSheet.SPIRIT_ARROW;
-
-            hitSound = Assets.Sounds.HIT_ARROW;
-        }
-
-        @Override
-        public int damageRoll(Char owner, boolean isMaxDamage) {
-            if (((Hero)owner).hasTalent(EFFECTIVE_SHOT)) {
-                if (owner.buff(EffectiveShotCooldown.class) == null) {
-                    isMaxDamage = true;
-                    Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));
-                }
-                else {
-                    EffectiveShotCooldown cd = owner.buff(EffectiveShotCooldown.class);
-                    if (cd.left == 1) {
-                        cd.detach();
-                    }
-                    else {
-                        cd.left--;
-                    }
-                }
+        if (user.hasTalent(ARCSHIELDING)) {
+            float threshold = 0.25f;
+            if (user.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
+            if (user.HP/(float)user.HT <= threshold) {
+                int shielding = 3;
+                if (user.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
+                Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);
             }
-            return Gun.this.damageRoll(owner, isMaxDamage);
         }
 
-        @Override
-        public boolean hasEnchant(Class<? extends Enchantment> type, Char owner) {
-            return Gun.this.hasEnchant(type, owner);
-        }
+        boolean handled = false;
+        Char enemy = Actor.findChar( cell );
+        if (enemy == null || enemy == curUser) {
+            Plant p = Dungeon.level.plants.get(cell);
+            if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && p != null) {
+                p.wither();
+                hitSomething = true;
+            }
 
-        @Override
-        public int proc(Char attacker, Char defender, int damage) {
-            return Gun.this.proc(attacker, defender, damage);
-        }
-
-        @Override
-        public float delayFactor(Char user) {
-            return Gun.this.delayFactor(user);
-        }
-
-        @Override
-        public int STRReq(int lvl) {
-            return Gun.this.STRReq();
-        }
-
-        @Override
-        protected void onThrow( int cell ) {
-            Char enemy = Actor.findChar( cell );
-            if (enemy == null || enemy == curUser) {
-                Plant p = Dungeon.level.plants.get(cell);
-                if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && p != null) {
-                    p.wither();
+            Trap t = Dungeon.level.traps.get(cell);
+            if (curUser.hasTalent(Talent.ADAPTIVE_MINEFIELD) && t != null && t.active) {
+                hitSomething = true;
+                handled = true;
+                if (!t.visible) {
+                    t.reveal();
                 }
+                t.disarm(); //even disarms traps that normally wouldn't be
 
-                Trap t = Dungeon.level.traps.get(cell);
-                if (curUser.hasTalent(Talent.ADAPTIVE_MINEFIELD) && t != null && t.active) {
-                    if (!t.visible) {
-                        t.reveal();
+                if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && !Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
+                    // Plant Dewcatcher
+                    if (t instanceof GeyserTrap) {
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new WandOfRegrowth.Dewcatcher.Seed(), cell );
                     }
-                    t.disarm(); //even disarms traps that normally wouldn't be
-
-                    if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && !Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
-                        // Plant Dewcatcher
-                        if (t instanceof GeyserTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new WandOfRegrowth.Dewcatcher.Seed(), cell );
-                        }
-                        // Plant Blindweed
-                        if (t instanceof FlashingTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new Blindweed.Seed(), cell);
-                        }
-                        // Plant Fadelead
-                        if (t instanceof DisarmingTrap ||
+                    // Plant Blindweed
+                    if (t instanceof FlashingTrap) {
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new Blindweed.Seed(), cell);
+                    }
+                    // Plant Fadelead
+                    if (t instanceof DisarmingTrap ||
                             t instanceof DistortionTrap ||
                             t instanceof GatewayTrap ||
                             t instanceof SummoningTrap ||
                             t instanceof TeleportationTrap) { // and warping trap, but teleportation trap covers that
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new Fadeleaf.Seed(), cell);
-                        }
-                        // Plant Firebloom
-                        if (t instanceof BlazingTrap ||
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new Fadeleaf.Seed(), cell);
+                    }
+                    // Plant Firebloom
+                    if (t instanceof BlazingTrap ||
                             t instanceof BurningTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new Firebloom.Seed(), cell);
-                        }
-                        // Plant Icecap
-                        if (t instanceof ChillingTrap ||
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new Firebloom.Seed(), cell);
+                    }
+                    // Plant Icecap
+                    if (t instanceof ChillingTrap ||
                             t instanceof FrostTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new Icecap.Seed(), cell);
-                        }
-                        // Plant Sorrowmoss
-                        if (t instanceof CorrosionTrap ||
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new Icecap.Seed(), cell);
+                    }
+                    // Plant Sorrowmoss
+                    if (t instanceof CorrosionTrap ||
                             t instanceof OozeTrap ||
                             t instanceof PoisonDartTrap || // and TenguDartTrap
                             t instanceof ToxicGasRoom.ToxicVent ||
                             t instanceof ToxicTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant (new Sorrowmoss.Seed(), cell);
-                        }
-                        // Plant Stormvine
-                        if (t instanceof ConfusionTrap ||
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant (new Sorrowmoss.Seed(), cell);
+                    }
+                    // Plant Stormvine
+                    if (t instanceof ConfusionTrap ||
                             t instanceof ShockingTrap ||
                             t instanceof StormTrap) {
-                            Dungeon.level.traps.remove(cell);
-                            GameScene.updateMap(cell);
-                            Dungeon.level.plant( new Stormvine.Seed(), cell);
-                        }
+                        Dungeon.level.traps.remove(cell);
+                        GameScene.updateMap(cell);
+                        Dungeon.level.plant( new Stormvine.Seed(), cell);
                     }
-
-                    Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
-                    Bestiary.setSeen(t.getClass());
-
-                } else {
-                    parent = null;
-                    Splash.at( cell, 0xCC99FFFF, 1 );
                 }
-            } else {
-                if (!curUser.shoot( enemy, this )) {
-                    Splash.at(cell, 0xCC99FFFF, 1);
-                }
+
+                Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
+                Bestiary.setSeen(t.getClass());
             }
         }
 
-        @Override
-        public void throwSound() {
-            Sample.INSTANCE.play( Assets.Sounds.ATK_SPIRITBOW, 1, Random.Float(0.87f, 1.15f) );
+        if (!handled) {
+            if (Dungeon.level.map[cell] == Terrain.EMPTY ||
+                Dungeon.level.map[cell] == Terrain.EMPTY_DECO ||
+                Dungeon.level.map[cell] == Terrain.OPEN_DOOR ||
+                Dungeon.level.map[cell] == Terrain.LOCKED_DOOR ||
+                Dungeon.level.map[cell] == Terrain.GRASS ||
+                Dungeon.level.map[cell] == Terrain.FURROWED_GRASS) {
+                Level.set(cell, Terrain.EMBERS);
+                GameScene.updateMap();
+            }
         }
 
-        @Override
-        public void cast(final Hero user, final int dst) {
-            Gun.this.targetPos = throwPos( user, dst );
-            super.cast(user, dst);
+        if (!handled && enemy != null) {
+            user.belongings.thrownWeapon = new Bullet();
+            hitSomething = user.shoot(enemy, new Bullet());
+            // user.attack(enemy, DamageType.PIERCING);
+            Invisibility.dispel();
+            user.belongings.thrownWeapon = null;
+        }
 
-            if (user.hasTalent(ARCSHIELDING)) {
-                float threshold = 0.25f;
-                if (user.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
-                if (user.HP/(float)user.HT <= threshold) {
-                    int shielding = 3;
-                    if (user.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
-                    Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);
-                }
-            }
+        if (playSFX) {
+            Sample.INSTANCE.play(Assets.Sounds.BLAST);
+        }
+        CellEmitter.center(cell).burst(SmokeParticle.FACTORY, 5);
+
+        user.sprite.operate( user.pos );
+        user.spendAndNext( 1.0f );
+
+        return hitSomething;
+    }
+
+    public class Bullet extends MissileWeapon {
+        {
+            damageType = DamageType.PIERCING;
+        }
+        @Override
+        public int damageRoll(Char owner, boolean isMaxDamage) {
+            return Gun.this.damageRoll(owner, isMaxDamage);
         }
     }
 
@@ -391,7 +391,9 @@ public class Gun extends Weapon {
         @Override
         public void onSelect( Integer target ) {
             if (target != null) {
-                knockArrow().cast(curUser, target);
+                int actualTarget = new Ballistica( curUser.pos, target, Ballistica.PROJECTILE ).collisionPos;
+
+                fire(curUser, actualTarget, true);
                 isLoaded = false;
             }
         }

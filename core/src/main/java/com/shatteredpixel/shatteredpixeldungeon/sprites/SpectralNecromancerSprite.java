@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,9 +39,8 @@ public class SpectralNecromancerSprite extends MobSprite {
 	private Animation charging;
 	private Emitter summoningParticles;
 
-	public SpectralNecromancerSprite(){
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.NECRO );
 		TextureFilm film = new TextureFilm( texture, 16, 16 );
 
@@ -53,15 +55,20 @@ public class SpectralNecromancerSprite extends MobSprite {
 		zap = new Animation( 10, false );
 		zap.frames( film, c+5, c+6, c+7, c+8 );
 
+		attack = zap.clone();
+
 		charging = new Animation( 5, true );
 		charging.frames( film, c+7, c+8 );
 
 		die = new Animation( 10, false );
 		die.frames( film, c+9, c+10, c+11, c+12 );
+	}
 
-		attack = zap.clone();
-
-		idle();
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		zap = attack.clone();
+		charging = run.clone();
 	}
 
 	@Override

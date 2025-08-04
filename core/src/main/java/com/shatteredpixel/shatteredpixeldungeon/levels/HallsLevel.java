@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +27,8 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.items.Torch;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.HallsPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
@@ -120,6 +125,18 @@ public class HallsLevel extends RegularLevel {
 		addItemToSpawn( new Torch() );
 		addItemToSpawn( new Torch() );
 		super.create();
+	}
+
+	@Override
+	public void createMobs() {
+		HalfRipper.Quest.spawn(this, GetExitRoom());
+		super.createMobs();
+	}
+
+	@Override
+	public void returnTo() {
+		HalfRipper.Quest.spawn(this, GetExitRoom());
+		super.returnTo();
 	}
 	
 	@Override

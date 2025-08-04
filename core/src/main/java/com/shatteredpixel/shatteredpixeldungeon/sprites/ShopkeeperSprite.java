@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,19 +25,20 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.particles.PixelParticle;
 
 public class ShopkeeperSprite extends MobSprite {
 	
 	private PixelParticle coin;
-	
-	public ShopkeeperSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.KEEPER );
 		TextureFilm film = new TextureFilm( texture, 14, 14 );
-		
+
 		idle = new Animation( 10, true );
 		idle.frames( film, 1, 1, 1, 1, 1, 0, 0, 0, 0 );
 
@@ -44,15 +48,13 @@ public class ShopkeeperSprite extends MobSprite {
 		run = idle.clone();
 
 		attack = idle.clone();
-		
-		idle();
 	}
 	
 	@Override
 	public void onComplete( Animation anim ) {
 		super.onComplete( anim );
 		
-		if (visible && anim == idle) {
+		if (visible && anim == idle && !Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
 			if (coin == null) {
 				coin = new PixelParticle();
 				parent.add( coin );

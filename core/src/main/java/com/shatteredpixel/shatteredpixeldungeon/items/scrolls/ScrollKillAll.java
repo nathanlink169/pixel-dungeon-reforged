@@ -5,6 +5,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Healing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
@@ -27,7 +28,7 @@ public class ScrollKillAll extends Scroll {
 
     @Override
     public void doRead() {
-        GameScene.flash( 0x80FFFFFF );
+        GameScene.flash( 0x80000000 );
 
         //scales from 0x to 1x power, maxing at ~10% HP
         float hpPercent = (curUser.HT - curUser.HP)/(float)(curUser.HT);
@@ -47,7 +48,7 @@ public class ScrollKillAll extends Scroll {
         for (Mob mob : targets){
             mob.damage(100000, this);
             if (mob.isAlive()) {
-                Buff.prolong(mob, Blindness.class, Blindness.DURATION);
+                Buff.affect(mob, Doom.class);
             }
         }
 

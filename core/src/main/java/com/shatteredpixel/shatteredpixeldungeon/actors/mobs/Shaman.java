@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -44,7 +48,7 @@ import com.watabou.utils.Random;
 public abstract class Shaman extends Mob {
 	
 	{
-		HP = HT = 35;
+		HP = HT = getRandomizerEnabled(RandomTraits.FRAIL_CASTERS) ? 1 : 35;
 		defenseSkill = 15;
 		
 		EXP = 8;
@@ -56,8 +60,13 @@ public abstract class Shaman extends Mob {
 	
 	@Override
 	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 10;
-		return Random.NormalIntRange( 5, 10 );
+		int damage;
+		if (isMaxDamage) damage = 10;
+		else damage = Random.NormalIntRange( 5, 10 );
+		if (getRandomizerEnabled(RandomTraits.RITUAL_BLADE)) {
+			damage *= 2;
+		}
+		return damage;
 	}
 	
 	@Override
@@ -112,13 +121,18 @@ public abstract class Shaman extends Mob {
 	public static class EarthenBolt{}
 	
 	private void zap() {
-		spend( 1f );
+		if (getRandomizerEnabled(RandomTraits.SLUGGISH_CASTING)) {
+			spend (2f);
+		} else {
+			spend(1f);
+		}
 
 		Invisibility.dispel(this);
 		Char enemy = this.enemy;
 		if (hit( this, enemy, true )) {
-			
-			if (Random.Int( 2 ) == 0) {
+			int randomChance = 2;
+			if (getRandomizerEnabled(RandomTraits.DILUTED_MAGIC)) randomChance = 5;
+			if (Random.Int( randomChance ) == 0) {
 				debuff( enemy );
 				if (enemy == Dungeon.hero) Sample.INSTANCE.play( Assets.Sounds.DEBUFF );
 			}
@@ -145,40 +159,58 @@ public abstract class Shaman extends Mob {
 	}
 	
 	@Override
-	public String description() {
-		return super.description() + "\n\n" + Messages.get(this, "spell_desc");
+	public String description(boolean forceNoMonsterUnknown) {
+		return super.description(forceNoMonsterUnknown) + "\n\n" + Messages.get(this, "spell_desc");
 	}
 	
 	public static class RedShaman extends Shaman {
-		{
-			spriteClass = ShamanSprite.Red.class;
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ShamanSprite.Red.class;
 		}
 		
 		@Override
 		protected void debuff( Char enemy ) {
-			Buff.prolong( enemy, Weakness.class, Weakness.DURATION );
+			Buff.prolong( enemy, Weakness.class, Weakness.DURATION  * (getRandomizerEnabled(RandomTraits.PERSISTENT_CURSES) ? 2 : 1));
+
+			if (getRandomizerEnabled(RandomTraits.CROSS_TRAINING)) {
+				if (Random.Int( 2 ) == 0) Buff.prolong( enemy, Vulnerable.class, Vulnerable.DURATION );
+				else Buff.prolong( enemy, Hex.class, Hex.DURATION );
+			}
 		}
 	}
 	
 	public static class BlueShaman extends Shaman {
-		{
-			spriteClass = ShamanSprite.Blue.class;
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ShamanSprite.Blue.class;
 		}
 		
 		@Override
 		protected void debuff( Char enemy ) {
-			Buff.prolong( enemy, Vulnerable.class, Vulnerable.DURATION );
+			Buff.prolong( enemy, Vulnerable.class, Vulnerable.DURATION * (getRandomizerEnabled(RandomTraits.PERSISTENT_CURSES) ? 2 : 1) );
+
+			if (getRandomizerEnabled(RandomTraits.CROSS_TRAINING)) {
+				if (Random.Int( 2 ) == 0) Buff.prolong( enemy, Weakness.class, Weakness.DURATION );
+				else Buff.prolong( enemy, Hex.class, Hex.DURATION );
+			}
 		}
 	}
 	
 	public static class PurpleShaman extends Shaman {
-		{
-			spriteClass = ShamanSprite.Purple.class;
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ShamanSprite.Purple.class;
 		}
 		
 		@Override
 		protected void debuff( Char enemy ) {
-			Buff.prolong( enemy, Hex.class, Hex.DURATION );
+			Buff.prolong( enemy, Hex.class, Hex.DURATION  * (getRandomizerEnabled(RandomTraits.PERSISTENT_CURSES) ? 2 : 1));
+
+			if (getRandomizerEnabled(RandomTraits.CROSS_TRAINING)) {
+				if (Random.Int( 2 ) == 0) Buff.prolong( enemy, Vulnerable.class, Vulnerable.DURATION );
+				else Buff.prolong( enemy, Weakness.class, Weakness.DURATION );
+			}
 		}
 	}
 	
@@ -191,5 +223,21 @@ public abstract class Shaman extends Mob {
 		} else {
 			return PurpleShaman.class;
 		}
+	}
+
+	public enum RandomTraits {
+		CROSS_TRAINING, RITUAL_BLADE, PERSISTENT_CURSES, SLUGGISH_CASTING, DILUTED_MAGIC, FRAIL_CASTERS
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case CROSS_TRAINING: return Randomizer.getCreatureBuff(Shaman.class) == 1;
+			case RITUAL_BLADE: return Randomizer.getCreatureBuff(Shaman.class) == 2;
+			case PERSISTENT_CURSES: return Randomizer.getCreatureBuff(Shaman.class) == 3;
+			case SLUGGISH_CASTING: return Randomizer.getCreatureNerf(Shaman.class) == 1;
+			case DILUTED_MAGIC: return Randomizer.getCreatureNerf(Shaman.class) == 2;
+			case FRAIL_CASTERS: return Randomizer.getCreatureNerf(Shaman.class) == 3;
+		}
+		return false;
 	}
 }

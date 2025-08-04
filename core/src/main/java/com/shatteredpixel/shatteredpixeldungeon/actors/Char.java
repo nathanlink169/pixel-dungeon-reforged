@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -79,6 +82,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.artificer.Reflection;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.PowerOfMany;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Challenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.rogue.DeathMark;
@@ -128,6 +132,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFireblast;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
@@ -227,7 +232,7 @@ public abstract class Char extends Actor {
 		}
 	}
 
-	public String name(){
+	public String name(boolean forceNoMonsterUnknown){
 		return Messages.get(this, "name");
 	}
 
@@ -365,11 +370,19 @@ public abstract class Char extends Actor {
 		}
 	}
 
+	final public boolean attack( Char enemy, int damageType) {
+		return attack(enemy, 1f, 0f, 1f, damageType);
+	}
+
 	final public boolean attack( Char enemy ){
-		return attack(enemy, 1f, 0f, 1f);
+		return attack(enemy, 1f, 0f, 1f, DamageType.NONE);
+	}
+
+	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
+		return attack(enemy, dmgMulti, dmgBonus, accMulti, DamageType.NONE);
 	}
 	
-	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
+	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti, int damageType ) {
 
 		if (enemy == null) return false;
 		
@@ -388,7 +401,7 @@ public abstract class Char extends Actor {
 		} else if (hit( this, enemy, accMulti, false )) {
 			
 			int dr = Math.round(enemy.drRoll() * AscensionChallenge.statModifier(enemy));
-			
+
 			boolean isMaxDamage = false;
 
 			if (this instanceof Hero){
@@ -438,7 +451,7 @@ public abstract class Char extends Actor {
 					dmg += 1 + 2*Dungeon.hero.pointsInTalent(Talent.SEARING_LIGHT);
 				}
 				if (this != Dungeon.hero && Dungeon.hero.subClass == HeroSubClass.PRIEST){
-					enemy.damage(5+Dungeon.hero.lvl, GuidingLight.INSTANCE);
+					enemy.damage(5+Dungeon.hero.lvl, GuidingLight.INSTANCE, damageType);
 				}
 			}
 
@@ -474,6 +487,9 @@ public abstract class Char extends Actor {
 				dmg = endure.adjustDamageTaken(dmg);
 			}
 
+			Reflection.ReflectionTracker reflection = buff(Reflection.ReflectionTracker.class);
+			if (reflection != null) dmg = reflection.handledamageTaken(enemy, dmg);
+
 			if (enemy.buff(ScrollOfChallenge.ChallengeArena.class) != null){
 				dmg *= 0.67f;
 			}
@@ -505,7 +521,7 @@ public abstract class Char extends Actor {
 			
 			int effectiveDamage = enemy.defenseProc( this, Math.round(dmg) );
 			//do not trigger on-hit logic if defenseProc returned a negative value
-			if (effectiveDamage >= 0) {
+			if (effectiveDamage > 0) {
 				effectiveDamage = Math.max(effectiveDamage - dr, 0);
 
 				if (enemy.buff(Viscosity.ViscosityTracker.class) != null) {
@@ -535,7 +551,7 @@ public abstract class Char extends Actor {
 				return true;
 			}
 
-			enemy.damage( effectiveDamage, this );
+			enemy.damage( effectiveDamage, this, damageType);
 
 			if (buff(FireImbue.class) != null)  buff(FireImbue.class).proc(enemy);
 			if (buff(FrostImbue.class) != null) buff(FrostImbue.class).proc(enemy);
@@ -549,7 +565,7 @@ public abstract class Char extends Actor {
 					enemy.die(this);
 				} else {
 					//helps with triggering any on-damage effects that need to activate
-					enemy.damage(-1, this);
+					enemy.damage(-1, this, damageType);
 					DeathMark.processFearTheReaper(enemy);
 				}
 				if (enemy.sprite != null) {
@@ -570,7 +586,7 @@ public abstract class Char extends Actor {
 						enemy.die(this);
 					} else {
 						//helps with triggering any on-damage effects that need to activate
-						enemy.damage(-1, this);
+						enemy.damage(-1, this, damageType);
 						DeathMark.processFearTheReaper(enemy);
 					}
 					if (enemy.sprite != null) {
@@ -597,10 +613,10 @@ public abstract class Char extends Actor {
 						Badges.validateDeathFromFriendlyMagic();
 					}
 					Dungeon.fail( this );
-					GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+					GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 					
 				} else if (this == Dungeon.hero) {
-					GLog.i( Messages.capitalize(Messages.get(Char.class, "defeat", enemy.name())) );
+					GLog.i( Messages.capitalize(Messages.get(Char.class, "defeat", enemy.name(false))) );
 				}
 			}
 			
@@ -674,8 +690,8 @@ public abstract class Char extends Actor {
 
 		float acuRoll = Random.Float( acuStat );
 		if (attacker.buff(Bless.class) != null) acuRoll *= 1.25f;
-		if (attacker.buff(  Hex.class) != null) acuRoll *= 0.8f;
-		if (attacker.buff( Daze.class) != null) acuRoll *= 0.5f;
+		if (attacker.buff(   Hex.class) != null) acuRoll *= 0.8f;
+		if (attacker.buff(  Daze.class) != null) acuRoll *= 0.5f;
 		if (attacker.buff(Cursed.class) != null) acuRoll *= 0.9f;
 		for (ChampionEnemy buff : attacker.buffs(ChampionEnemy.class)){
 			acuRoll *= buff.evasionAndAccuracyFactor();
@@ -688,11 +704,11 @@ public abstract class Char extends Actor {
 			acuRoll *= 1.01f + 0.02f*Dungeon.hero.pointsInTalent(Talent.BLESS);
 		}
 		acuRoll *= accMulti;
-
+		
 		float defRoll = Random.Float( defStat );
 		if (defender.buff(Bless.class) != null) defRoll *= 1.25f;
-		if (defender.buff(  Hex.class) != null) defRoll *= 0.8f;
-		if (defender.buff( Daze.class) != null) defRoll *= 0.5f;
+		if (defender.buff(   Hex.class) != null) defRoll *= 0.8f;
+		if (defender.buff(  Daze.class) != null) defRoll *= 0.5f;
 		if (defender.buff(Cursed.class) != null) defRoll *= 0.7f;
 		for (ChampionEnemy buff : defender.buffs(ChampionEnemy.class)){
 			defRoll *= buff.evasionAndAccuracyFactor();
@@ -704,10 +720,10 @@ public abstract class Char extends Actor {
 			// + 3%/5%
 			defRoll *= 1.01f + 0.02f*Dungeon.hero.pointsInTalent(Talent.BLESS);
 		}
-
+		
 		if (defRoll < acuRoll && (defRoll*FerretTuft.evasionMultiplier()) >= acuRoll){
 			tuftDodged = true;
-		}
+	}
 		defRoll *= FerretTuft.evasionMultiplier();
 
 		return acuRoll >= defRoll;
@@ -833,8 +849,12 @@ public abstract class Char extends Actor {
 		needsShieldUpdate = false;
 		return cachedShield;
 	}
+
+	final public void damage( int dmg, Object src ) {
+		damage( dmg, src, DamageType.NONE );
+	}
 	
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		
 		if (!isAlive() || dmg < 0) {
 			return;
@@ -857,7 +877,7 @@ public abstract class Char extends Actor {
 			for (LifeLink link : links){
 				Char ch = (Char)Actor.findById(link.object);
 				if (ch != null) {
-					ch.damage(dmg, link);
+					ch.damage(dmg, link, damageType);
 					if (!ch.isAlive()) {
 						link.detach();
 						if (ch == Dungeon.hero){

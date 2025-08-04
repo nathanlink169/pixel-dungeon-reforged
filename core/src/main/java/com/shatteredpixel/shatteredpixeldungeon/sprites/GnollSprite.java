@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,29 +25,52 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ParalyticDart;
 import com.watabou.noosa.TextureFilm;
+import com.watabou.utils.Callback;
 
 public class GnollSprite extends MobSprite {
-	
-	public GnollSprite() {
-		super();
-		
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.GNOLL );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
-		
+
 		idle = new Animation( 2, true );
 		idle.frames( frames, 0, 0, 0, 1, 0, 0, 1, 1 );
-		
+
 		run = new Animation( 12, true );
 		run.frames( frames, 4, 5, 6, 7 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 2, 3, 0 );
-		
+
 		die = new Animation( 12, false );
 		die.frames( frames, 8, 9, 10 );
-		
-		play( idle );
+	}
+
+	@Override
+	public void attack( int cell ) {
+		if (!Dungeon.level.adjacent(cell, ch.pos)) {
+
+			((MissileSprite)parent.recycle( MissileSprite.class )).
+					reset( this, cell, new ThrowingStone(), new Callback() {
+						@Override
+						public void call() {
+							// this is called in the "attack complete" callback in CharSprite
+							// ch.onAttackComplete();
+						}
+					} );
+
+			play( attack );
+			turnTo( ch.pos , cell );
+
+		} else {
+
+			super.attack( cell );
+
+		}
 	}
 }

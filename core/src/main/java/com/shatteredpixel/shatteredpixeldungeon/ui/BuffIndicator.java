@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -135,6 +138,7 @@ public class BuffIndicator extends Component {
 	public static final int TRINITY_FORM= 82;
 	public static final int MANY_POWER  = 83;
 	public static final int SEAL_SHIELD = 84;
+	public static final int MIASMA 		= 85;
 
 	public static final int SIZE_SMALL  = 7;
 	public static final int SIZE_LARGE  = 16;

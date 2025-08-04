@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -79,14 +82,17 @@ import java.util.HashSet;
 public class DwarfKing extends Mob {
 
 	{
-		spriteClass = KingSprite.class;
-
 		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 450 : 300;
 		EXP = 40;
 		defenseSkill = 22;
 
 		properties.add(Property.BOSS);
 		properties.add(Property.UNDEAD);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return KingSprite.class;
 	}
 
 	@Override
@@ -452,7 +458,7 @@ public class DwarfKing extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		//hero counts as unarmed if they aren't attacking with a weapon and aren't benefiting from force
 		if (src == Dungeon.hero && (!RingOfForce.fightingUnarmed(Dungeon.hero) || Dungeon.hero.buff(RingOfForce.Force.class) != null)){
 			Statistics.qualifiedForBossChallengeBadge = false;
@@ -464,7 +470,7 @@ public class DwarfKing extends Mob {
 		}
 
 		if (isInvulnerable(src.getClass())){
-			super.damage(dmg, src);
+			super.damage(dmg, src, damageType);
 			return;
 		} else if (phase == 3 && !(src instanceof Viscosity.DeferedDamage)){
 			if (dmg >= 0) {
@@ -476,7 +482,7 @@ public class DwarfKing extends Mob {
 			return;
 		}
 		int preHP = HP;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 
 		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
 		if (lock != null && !isImmune(src.getClass()) && !isInvulnerable(src.getClass())){
@@ -517,7 +523,7 @@ public class DwarfKing extends Mob {
 			summonsMade = 1; //monk/warlock on 3rd summon
 			sprite.centerEmitter().start( Speck.factory( Speck.SCREAM ), 0.4f, 2 );
 			Sample.INSTANCE.play( Assets.Sounds.CHALLENGE );
-			yell(  Messages.get(this, "enraged", Dungeon.hero.name()) );
+			yell(  Messages.get(this, "enraged", Dungeon.hero.name(false)) );
 			BossHealthBar.bleed(true);
 			Game.runOnRenderThread(new Callback() {
 				@Override
@@ -561,7 +567,7 @@ public class DwarfKing extends Mob {
 			Dungeon.level.drop(new KingsCrown(), pos).sprite.drop();
 		}
 
-		Badges.validateBossSlain();
+		Badges.validateBossSlain(this);
 		if (Statistics.qualifiedForBossChallengeBadge){
 			Badges.validateBossChallengeCompleted();
 		}

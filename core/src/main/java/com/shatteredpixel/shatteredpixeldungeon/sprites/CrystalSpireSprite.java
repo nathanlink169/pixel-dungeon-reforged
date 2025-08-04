@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
@@ -39,9 +43,17 @@ public abstract class CrystalSpireSprite extends MobSprite {
 		shadowOffset    = 1f;
 	}
 
-	public CrystalSpireSprite(){
-		texture( Assets.Sprites.CRYSTAL_SPIRE );
+	@Override
+	public void setup() {
+		super.setup();
+		run = idle.clone();
+		attack = idle.clone();
+		zap = idle.clone();
+	}
 
+	@Override
+	protected void setupFrames() {
+		texture( Assets.Sprites.CRYSTAL_SPIRE );
 		TextureFilm frames = new TextureFilm( texture, 24, 41 );
 
 		int c = texOffset();
@@ -49,17 +61,15 @@ public abstract class CrystalSpireSprite extends MobSprite {
 		idle = new Animation(1, true);
 		idle.frames( frames, 0+c );
 
-		run = idle.clone();
-		attack = idle.clone();
-		zap = idle.clone();
-
 		die = new Animation(1, false);
 		die.frames( frames, 4+c );
-
-		play(idle);
 	}
 
 	public void updateIdle(){
+		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			return;
+		}
+
 		float hpPercent = 1f;
 		if (ch != null){
 			hpPercent = ch.HP/(float)ch.HT;

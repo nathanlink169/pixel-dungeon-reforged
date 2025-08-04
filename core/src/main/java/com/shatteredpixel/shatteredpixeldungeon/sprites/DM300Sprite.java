@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,16 +43,11 @@ public class DM300Sprite extends MobSprite {
 	private Animation slam;
 
 	private Emitter superchargeSparks;
-	
-	public DM300Sprite() {
-		super();
-		
-		texture( Assets.Sprites.DM300 );
-		
-		updateChargeState(false);
-	}
 
-	public void updateChargeState( boolean enraged ){
+	@Override
+	protected void setupFrames() {
+		texture( Assets.Sprites.DM300 );
+		boolean enraged = ch != null && ch instanceof DM300 && ((DM300) ch).isSupercharged();
 		if (superchargeSparks != null) superchargeSparks.on = enraged;
 
 		int c = enraged ? 10 : 0;
@@ -79,6 +77,19 @@ public class DM300Sprite extends MobSprite {
 			die = new Animation(20, false);
 			die.frames(frames, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10, 0, 10);
 		}
+
+		if (curAnim != charge) play(idle);
+	}
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		boolean enraged = ch != null && ch instanceof DM300 && ((DM300) ch).isSupercharged();
+		if (superchargeSparks != null) superchargeSparks.on = enraged;
+
+		charge = attack.clone();
+		slam = attack.clone();
+		zap = attack.clone();
 
 		if (curAnim != charge) play(idle);
 	}
@@ -146,9 +157,7 @@ public class DM300Sprite extends MobSprite {
 		superchargeSparks.pour(SparkParticle.STATIC, 0.05f);
 		superchargeSparks.on = false;
 
-		if (ch instanceof DM300 && ((DM300) ch).isSupercharged()){
-			updateChargeState(true);
-		}
+		setup();
 	}
 
 	@Override

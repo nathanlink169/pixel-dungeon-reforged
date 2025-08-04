@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -53,8 +56,6 @@ public class Mimic extends Mob {
 	private int level;
 	
 	{
-		spriteClass = MimicSprite.class;
-
 		properties.add(Property.DEMONIC);
 
 		EXP = 0;
@@ -62,6 +63,11 @@ public class Mimic extends Mob {
 		//mimics are neutral when hidden
 		alignment = Alignment.NEUTRAL;
 		state = PASSIVE;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return MimicSprite.class;
 	}
 	
 	public ArrayList<Item> items;
@@ -109,16 +115,16 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public String name() {
+	public String name(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(Heap.class, "chest");
 		} else {
-			return super.name();
+			return super.name(forceNoMonsterUnknown);
 		}
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			if (MimicTooth.stealthyMimics()){
 				return Messages.get(Heap.class, "chest_desc");
@@ -126,7 +132,7 @@ public class Mimic extends Mob {
 				return Messages.get(Heap.class, "chest_desc") + "\n\n" + Messages.get(this, "hidden_hint");
 			}
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 
@@ -153,7 +159,7 @@ public class Mimic extends Mob {
 
 	@Override
 	public boolean interact(Char c) {
-		if (alignment != Alignment.NEUTRAL || c != Dungeon.hero){
+			if (alignment != Alignment.NEUTRAL || c != Dungeon.hero){
 			return super.interact(c);
 		}
 		stopHiding();
@@ -191,12 +197,12 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (state == PASSIVE){
 			alignment = Alignment.ENEMY;
 			stopHiding();
 		}
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override

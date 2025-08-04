@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -127,7 +131,7 @@ public class WandOfLivingEarth extends DamageWand {
 				ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl()/2);
 
 				wandProc(ch, chargesPerCast());
-				ch.damage(damage, this);
+				ch.damage(damage, this, DamageType.MAGIC);
 
 				int closest = -1;
 				boolean[] passable = Dungeon.level.passable;
@@ -173,7 +177,7 @@ public class WandOfLivingEarth extends DamageWand {
 				ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl() / 2);
 
 				wandProc(ch, chargesPerCast());
-				ch.damage(damage, this);
+				ch.damage(damage, this, DamageType.MAGIC);
 				Sample.INSTANCE.play( Assets.Sounds.HIT_MAGIC, 1, 0.8f * Random.Float(0.87f, 1.15f) );
 				
 				if (guardian == null) {
@@ -365,8 +369,6 @@ public class WandOfLivingEarth extends DamageWand {
 	public static class EarthGuardian extends NPC {
 
 		{
-			spriteClass = EarthGuardianSprite.class;
-
 			alignment = Alignment.ALLY;
 			state = HUNTING;
 			intelligentAlly = true;
@@ -379,6 +381,10 @@ public class WandOfLivingEarth extends DamageWand {
 			actPriority = MOB_PRIO + 1;
 
 			HP = HT = 0;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return EarthGuardianSprite.class;
 		}
 
 		private int wandLevel = -1;
@@ -425,7 +431,7 @@ public class WandOfLivingEarth extends DamageWand {
 		}
 
 		@Override
-		public String description() {
+		public String description(boolean forceNoMonsterUnknown) {
 			String desc = Messages.get(this, "desc");
 
 			if (Actor.chars().contains(this)) {

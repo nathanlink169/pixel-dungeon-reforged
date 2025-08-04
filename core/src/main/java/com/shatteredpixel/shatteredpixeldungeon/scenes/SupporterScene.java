@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -113,14 +116,17 @@ public class SupporterScene extends PixelScene {
 
 		NinePatch bg;
 		RenderedTextBlock text;
-		Image icon;
+		Image shpxIcon;
+		Image pdrIcon;
 
 		@Override
 		protected void createChildren() {
 			bg = Chrome.get(Chrome.Type.GREY_BUTTON_TR);
 			add(bg);
 
-			String message = Messages.get(SupporterScene.class, "intro");
+			String message = Messages.get(SupporterScene.class, "disclaimer");
+			message += "\n\n- Nathan";
+			message += "\n\n" + Messages.get(SupporterScene.class, "intro");
 			message += "\n\n" + Messages.get(SupporterScene.class, "patreon_msg");
 			if (Messages.lang() != Languages.ENGLISH) {
 				message += "\n" + Messages.get(SupporterScene.class, "patreon_english");
@@ -130,8 +136,11 @@ public class SupporterScene extends PixelScene {
 			text = PixelScene.renderTextBlock(message, 6);
 			add(text);
 
-			icon = Icons.get(Icons.SHPX);
-			add(icon);
+			pdrIcon = Icons.get(Icons.PDR);
+			add(pdrIcon);
+
+			shpxIcon = Icons.get(Icons.SHPX);
+			add(shpxIcon);
 
 		}
 
@@ -143,8 +152,11 @@ public class SupporterScene extends PixelScene {
 			text.maxWidth((int)width - bg.marginHor());
 			text.setPos(x + bg.marginLeft(), y + bg.marginTop() + 1);
 
-			icon.y = text.bottom() - icon.height() + 4;
-			icon.x = x + 25;
+			shpxIcon.y = text.bottom() - shpxIcon.height() + 4;
+			shpxIcon.x = x + 25;
+
+			pdrIcon.y = text.top() + 18 + shpxIcon.height() + 4;
+			pdrIcon.x = x + 30;
 
 			height = (text.bottom() + 3) - y;
 

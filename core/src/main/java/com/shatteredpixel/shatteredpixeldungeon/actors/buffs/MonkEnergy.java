@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -35,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogDzewa;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
@@ -372,13 +376,13 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					@Override
 					public void call() {
 						AttackIndicator.target(enemy);
-						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY);
+						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING);
 
 						if (enemy.isAlive()){
 							hero.sprite.attack(enemy.pos, new Callback() {
 								@Override
 								public void call() {
-									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY);
+									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING);
 									Invisibility.dispel();
 									hero.next();
 									tracker.detach();
@@ -564,7 +568,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 						boolean empowered = Buff.affect(hero, MonkEnergy.class).abilitiesEmpowered(hero);
 
 						int oldPos = enemy.pos;
-						if (hero.attack(enemy, empowered ? 9f : 6f, 0, Char.INFINITE_ACCURACY)){
+						if (hero.attack(enemy, empowered ? 9f : 6f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING)){
 							Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 						}
 

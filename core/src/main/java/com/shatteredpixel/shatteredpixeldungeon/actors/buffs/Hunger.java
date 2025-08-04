@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,14 +45,18 @@ public class Hunger extends Buff implements Hero.Doom {
 	private float level;
 	private float partialDamage;
 
+	private int timeStarving = 0;
+
 	private static final String LEVEL			= "level";
 	private static final String PARTIALDAMAGE 	= "partialDamage";
+	private static final String TIMESTARVING 	= "timestarving";
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle(bundle);
 		bundle.put( LEVEL, level );
 		bundle.put( PARTIALDAMAGE, partialDamage );
+		bundle.put( TIMESTARVING, timeStarving );
 	}
 
 	@Override
@@ -57,6 +64,7 @@ public class Hunger extends Buff implements Hero.Doom {
 		super.restoreFromBundle( bundle );
 		level = bundle.getFloat( LEVEL );
 		partialDamage = bundle.getFloat(PARTIALDAMAGE);
+		timeStarving = bundle.getInt(TIMESTARVING);
 	}
 
 	@Override
@@ -75,8 +83,10 @@ public class Hunger extends Buff implements Hero.Doom {
 			Hero hero = (Hero)target;
 
 			if (isStarving()) {
+				++timeStarving;
 
-				partialDamage += target.HT/1000f;
+				float multiplier = (float)(((Math.pow(1.001, timeStarving)) - 1.0f) * 0.25f);
+				partialDamage += target.HT * multiplier;
 
 				if (partialDamage > 1){
 					target.damage( (int)partialDamage, this);
@@ -84,14 +94,14 @@ public class Hunger extends Buff implements Hero.Doom {
 				}
 				
 			} else {
-
+				timeStarving = 0;
 				float hungerDelay = 1f;
 				if (target.buff(Shadows.class) != null){
 					hungerDelay *= 1.5f;
 				}
 				hungerDelay /= SaltCube.hungerGainMultiplier();
 
-				float newLevel = level + (1f/hungerDelay);
+				float newLevel = level + (0.8f/hungerDelay);
 				if (newLevel >= STARVING) {
 
 					GLog.n( Messages.get(this, "onstarving") );

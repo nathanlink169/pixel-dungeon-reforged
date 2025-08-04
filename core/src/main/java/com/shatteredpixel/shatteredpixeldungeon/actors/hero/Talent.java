@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -212,12 +215,18 @@ public enum Talent {
 	CONSTRUCT_HARDENING(203, 3), CONSTRUCT_MOBILITY(204, 3), CONSTRUCT_LETHALITY(205, 3),
 	//Armorer T3
 	ARMOR_MOD_LIGHT(206, 3), ARMOR_MOD_INFINITE_FALLING(207, 3), ARMOR_MOD_EMERGENCY_DEFENSE(208, 3),
+	//Quickdraw T4
+	POWERFUL_SHOT(209, 4), DOUBLE_BARREL(210, 4), MULTISHOT(211, 4),
+	//Truesight T4
+	ENHANCED_VISION(212, 4),SONAR(213, 4), BRIGHT_LIGHT(214, 4),
+	//Reflection
+	ADRENALINE(215, 4), ENDURANCE(216, 4), POWERFUL_REFLECTION(217, 4),
 
 
 	//universal T4
 	HEROIC_ENERGY(26, 4), //See icon() and title() for special logic for this one
 	//Ratmogrify T4
-	RATSISTANCE(242, 4), RATLOMACY(243, 4), RATFORCEMENTS(244, 4);
+	RATSISTANCE(247, 4), RATLOMACY(248, 4), RATFORCEMENTS(249, 4);
 
 	public static class ImprovisedProjectileCooldown extends FlavourBuff{
 		public int icon() { return BuffIndicator.TIME; }
@@ -459,7 +468,7 @@ public enum Talent {
 	public int icon(){
 		if (this == HEROIC_ENERGY){
 			if (Ratmogrify.useRatroicEnergy){
-				return 218;
+				return 250;
 			}
 			HeroClass cls = Dungeon.hero != null ? Dungeon.hero.heroClass : GamesInProgress.selectedClass;
 			switch (cls){
@@ -475,6 +484,8 @@ public enum Talent {
 					return 154;
 				case CLERIC:
 					return 186;
+				case ARTIFICER:
+					return 218;
 			}
 		} else {
 			return icon;
@@ -499,7 +510,7 @@ public enum Talent {
 	public String desc(boolean metamorphed){
 		if (metamorphed){
 			String metaDesc = Messages.get(this, name() + ".meta_desc");
-			if (!metaDesc.equals(Messages.NO_TEXT_FOUND)){
+			if (!metaDesc.contains(Messages.NO_TEXT_FOUND)){
 				return Messages.get(this, name() + ".desc") + "\n\n" + metaDesc;
 			}
 		}
@@ -588,6 +599,12 @@ public enum Talent {
 		if (talent == SPIRIT_FORM){
 			Dungeon.hero.updateHT(false);
 		}
+
+		if (talent == PATTERN_RECOGNITION) {
+			for (Potion p : hero.belongings.getAllItems(Potion.class)) {
+				p.identify(false);
+			}
+		}
 	}
 
 	public static class CachedRationsDropped extends CounterBuff{{revivePersists = true;}};
@@ -668,14 +685,21 @@ public enum Talent {
 				artifactChargeTurns += 1 + hero.pointsInTalent(ENLIGHTENING_MEAL);
 			}
 		}
+
 		if (hero.hasTalent(TINKERERS_MEAL)) {
-			Gun gun = hero.belongings.getItem( Gun.class );
-			gun.SetIsLoaded(true);
-			
-			if (hero.pointsInTalent(TINKERERS_MEAL) == 2) {
-				if (hero.cooldown() > 0) {
-					Buff.affect(hero, ArtificerFoodDamageBonus.class, hero.cooldown());
+			if (hero.heroClass == HeroClass.ARTIFICER) {
+				Gun gun = hero.belongings.getItem(Gun.class);
+				if (gun != null) {
+					gun.SetIsLoaded(true);
+
+					if (hero.pointsInTalent(TINKERERS_MEAL) == 2) {
+						if (hero.cooldown() > 0) {
+							Buff.affect(hero, ArtificerFoodDamageBonus.class, hero.cooldown());
+						}
+					}
 				}
+			} else {
+				Dungeon.energy += hero.pointsInTalent(TINKERERS_MEAL);
 			}
 		}
 		if (hero.hasTalent(QUICK_CALIBRATION)){
@@ -683,7 +707,7 @@ public enum Talent {
 				Buff.affect(hero, ArtificerFoodEvasionBonus.class, hero.cooldown());
 			}
 		}
-
+		
 		//we process these at the end as they can stack together from some talents
 		if (wandChargeTurns > 0){
 			Buff.prolong( hero, Recharging.class, wandChargeTurns );
@@ -741,9 +765,9 @@ public enum Talent {
 		if (hero.hasTalent(LIQUID_WILLPOWER)){
 			// 6.5/10% of max HP
 			int shieldToGive = Math.round( factor * hero.HT * (0.030f + 0.035f*hero.pointsInTalent(LIQUID_WILLPOWER)));
-			hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shieldToGive), FloatingText.SHIELDING);
-			Buff.affect(hero, Barrier.class).setShield(shieldToGive);
-		}
+				hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shieldToGive), FloatingText.SHIELDING);
+				Buff.affect(hero, Barrier.class).setShield(shieldToGive);
+			}
 		if (hero.hasTalent(LIQUID_NATURE)){
 			ArrayList<Integer> grassCells = new ArrayList<>();
 			for (int i : PathFinder.NEIGHBOURS9){

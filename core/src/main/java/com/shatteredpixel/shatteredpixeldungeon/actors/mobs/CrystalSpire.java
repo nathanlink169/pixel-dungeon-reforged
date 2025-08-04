@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -44,6 +47,7 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -61,7 +65,6 @@ public class CrystalSpire extends Mob {
 	{
 		//this translates to roughly 33/27/23/20/18/16 pickaxe hits at +0/1/2/3/4/5
 		HP = HT = 300;
-		spriteClass = CrystalSpireSprite.class;
 
 		EXP = 20;
 
@@ -77,6 +80,26 @@ public class CrystalSpire extends Mob {
 		properties.add(Property.INORGANIC);
 		properties.add(Property.STATIC);
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		if (spriteClass == null) {
+			switch (Random.Int(3)){
+				case 0: default:
+					spriteClass = CrystalSpireSprite.Blue.class;
+					break;
+				case 1:
+					spriteClass = CrystalSpireSprite.Green.class;
+					break;
+				case 2:
+					spriteClass = CrystalSpireSprite.Red.class;
+					break;
+			}
+		}
+
+		return spriteClass;
+	}
+
+	private Class<? extends CharSprite> spriteClass = null;
 
 	private float abilityCooldown;
 	private static final int ABILITY_CD = 15;
@@ -160,7 +183,7 @@ public class CrystalSpire extends Mob {
 							Dungeon.level.occupyCell(ch);
 						}
 					} else if (ch == Dungeon.hero){
-						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 						Dungeon.fail(this);
 					}
 				}
@@ -289,11 +312,11 @@ public class CrystalSpire extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (!(src instanceof Pickaxe) ){
 			dmg = 0;
 		}
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -449,21 +472,6 @@ public class CrystalSpire extends Mob {
 
 		}
 		return true;
-	}
-
-	public CrystalSpire(){
-		super();
-		switch (Random.Int(3)){
-			case 0: default:
-				spriteClass = CrystalSpireSprite.Blue.class;
-				break;
-			case 1:
-				spriteClass = CrystalSpireSprite.Green.class;
-				break;
-			case 2:
-				spriteClass = CrystalSpireSprite.Red.class;
-				break;
-		}
 	}
 
 	@Override

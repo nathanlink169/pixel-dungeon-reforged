@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +24,9 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
@@ -29,10 +34,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -41,9 +49,7 @@ import com.watabou.utils.Random;
 public class Spinner extends Mob {
 
 	{
-		spriteClass = SpinnerSprite.class;
-
-		HP = HT = 50;
+		HP = HT = getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN) ? 25 : 50;
 		defenseSkill = 17;
 
 		EXP = 9;
@@ -54,6 +60,11 @@ public class Spinner extends Mob {
 
 		HUNTING = new Hunting();
 		FLEEING = new Fleeing();
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return SpinnerSprite.class;
 	}
 
 	@Override
@@ -69,6 +80,9 @@ public class Spinner extends Mob {
 
 	@Override
 	public int drRoll() {
+		if (getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN)) {
+			return super.drRoll();
+		}
 		return super.drRoll() + Random.NormalIntRange(0, 6);
 	}
 
@@ -98,6 +112,10 @@ public class Spinner extends Mob {
 			webCoolDown--;
 		}
 
+		if (getRandomizerEnabled(RandomTraits.WEBLESS)) {
+			webCoolDown = 500;
+		}
+
 		AiState lastState = state;
 		boolean result = super.act();
 
@@ -122,6 +140,12 @@ public class Spinner extends Mob {
 		damage = super.attackProc( enemy, damage );
 		if (Random.Int(2) == 0) {
 			int duration = Random.IntRange(7, 8);
+			if (getRandomizerEnabled(RandomTraits.POTENT_VENOM)) {
+				duration += 5;
+			}
+			if (getRandomizerEnabled(RandomTraits.WEAK_VENOM)) {
+				duration -= 5;
+			}
 			//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
 			duration = Math.round(duration * (AscensionChallenge.statModifier(this)/2f + 0.5f));
 			Buff.affect(enemy, Poison.class).set(duration);
@@ -135,6 +159,9 @@ public class Spinner extends Mob {
 	private boolean shotWebVisually = false;
 
 	public int webPos(){
+		if (getRandomizerEnabled(RandomTraits.WEBLESS)) {
+			return -1;
+		}
 
 		Char enemy = this.enemy;
 		if (enemy == null) return -1;
@@ -143,34 +170,40 @@ public class Spinner extends Mob {
 		if (state != FLEEING && enemy.pos == lastEnemyPos && canAttack(enemy)){
 			return -1;
 		}
-		
-		Ballistica b;
-		//aims web in direction enemy is moving, or between self and enemy if they aren't moving
-		if (lastEnemyPos == enemy.pos){
-			b = new Ballistica( enemy.pos, pos, Ballistica.WONT_STOP );
-		} else {
-			b = new Ballistica( lastEnemyPos, enemy.pos, Ballistica.WONT_STOP );
+
+		int webPos;
+		if (getRandomizerEnabled(RandomTraits.DIRECT_SHOT)) {
+			webPos = enemy.pos;
 		}
-		
-		int collisionIndex = 0;
-		for (int i = 0; i < b.path.size(); i++){
-			if (b.path.get(i) == enemy.pos){
-				collisionIndex = i;
-				break;
+		else {
+			Ballistica b;
+			//aims web in direction enemy is moving, or between self and enemy if they aren't moving
+			if (lastEnemyPos == enemy.pos) {
+				b = new Ballistica(enemy.pos, pos, Ballistica.WONT_STOP);
+			} else {
+				b = new Ballistica(lastEnemyPos, enemy.pos, Ballistica.WONT_STOP);
 			}
-		}
 
-		//in case target is at the edge of the map and there are no more cells in the path
-		if (b.path.size() <= collisionIndex+1){
-			return -1;
-		}
+			int collisionIndex = 0;
+			for (int i = 0; i < b.path.size(); i++) {
+				if (b.path.get(i) == enemy.pos) {
+					collisionIndex = i;
+					break;
+				}
+			}
 
-		int webPos = b.path.get( collisionIndex+1 );
+			//in case target is at the edge of the map and there are no more cells in the path
+			if (b.path.size() <= collisionIndex + 1) {
+				return -1;
+			}
+
+			webPos = b.path.get(collisionIndex + 1);
+		}
 
 		//ensure we aren't shooting the web through walls
 		int projectilePos = new Ballistica( pos, webPos, Ballistica.STOP_TARGET | Ballistica.STOP_SOLID).collisionPos;
 		
-		if (webPos != enemy.pos && projectilePos == webPos && Dungeon.level.passable[webPos]){
+		if ((webPos != enemy.pos || getRandomizerEnabled(RandomTraits.DIRECT_SHOT)) && projectilePos == webPos && Dungeon.level.passable[webPos]){
 			return webPos;
 		} else {
 			return -1;
@@ -181,25 +214,44 @@ public class Spinner extends Mob {
 	public void shootWeb(){
 		int webPos = webPos();
 		if (webPos != -1){
-			int i;
-			for ( i = 0; i < PathFinder.CIRCLE8.length; i++){
-				if ((enemy.pos + PathFinder.CIRCLE8[i]) == webPos){
-					break;
+
+			if (!getRandomizerEnabled(RandomTraits.DIRECT_SHOT)) {
+				int i;
+				for (i = 0; i < PathFinder.CIRCLE8.length; i++) {
+					if ((enemy.pos + PathFinder.CIRCLE8[i]) == webPos) {
+						break;
+					}
+				}
+
+				//spread to the tile hero was moving towards and the two adjacent ones
+				int leftPos = enemy.pos + PathFinder.CIRCLE8[left(i)];
+				int rightPos = enemy.pos + PathFinder.CIRCLE8[right(i)];
+
+				if (Dungeon.level.passable[leftPos]) applyWebToCell(leftPos);
+				if (Dungeon.level.passable[webPos] && !getRandomizerEnabled(RandomTraits.DIRECT_SHOT))
+					applyWebToCell(webPos);
+				if (Dungeon.level.passable[rightPos]) applyWebToCell(rightPos);
+			} else {
+				for (int offset : PathFinder.NEIGHBOURS4) {
+					if (Dungeon.level.passable[webPos + offset]) applyWebToCell(webPos + offset);
 				}
 			}
-			
-			//spread to the tile hero was moving towards and the two adjacent ones
-			int leftPos = enemy.pos + PathFinder.CIRCLE8[left(i)];
-			int rightPos = enemy.pos + PathFinder.CIRCLE8[right(i)];
-			
-			if (Dungeon.level.passable[leftPos]) applyWebToCell(leftPos);
-			if (Dungeon.level.passable[webPos])  applyWebToCell(webPos);
-			if (Dungeon.level.passable[rightPos])applyWebToCell(rightPos);
 			
 			webCoolDown = 10;
 
 			if (Dungeon.level.heroFOV[enemy.pos]){
 				Dungeon.hero.interrupt();
+			}
+
+			if (getRandomizerEnabled(RandomTraits.DIRECT_SHOT)) {
+				Char e = Dungeon.level.findMob(webPos);
+				if (e == null && Dungeon.hero.pos == webPos) {
+					e = Dungeon.hero;
+				}
+
+				if (e != null) {
+					Buff.prolong(e, Roots.class, Roots.DURATION);
+				}
 			}
 		}
 		next();
@@ -210,11 +262,11 @@ public class Spinner extends Mob {
 	}
 	
 	private int left(int direction){
-		return direction == 0 ? 7 : direction-1;
+		return direction <= 0 ? 7 : direction-1;
 	}
 	
 	private int right(int direction){
-		return direction == 7 ? 0 : direction+1;
+		return direction >= 7 ? 0 : direction+1;
 	}
 
 	{
@@ -271,5 +323,21 @@ public class Spinner extends Mob {
 			return super.act(enemyInFOV, justAlerted);
 		}
 
+	}
+
+	public enum RandomTraits {
+		LASTING_WEBS, DIRECT_SHOT, POTENT_VENOM, WEBLESS, WEAK_VENOM, FRAGILE_CHITIN
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case LASTING_WEBS: return Randomizer.getCreatureBuff(Spinner.class) == 1;
+			case DIRECT_SHOT: return Randomizer.getCreatureBuff(Spinner.class) == 2;
+			case POTENT_VENOM: return Randomizer.getCreatureBuff(Spinner.class) == 3;
+			case WEBLESS: return Randomizer.getCreatureNerf(Spinner.class) == 1;
+			case WEAK_VENOM: return Randomizer.getCreatureNerf(Spinner.class) == 2;
+			case FRAGILE_CHITIN: return Randomizer.getCreatureNerf(Spinner.class) == 3;
+		}
+		return false;
 	}
 }

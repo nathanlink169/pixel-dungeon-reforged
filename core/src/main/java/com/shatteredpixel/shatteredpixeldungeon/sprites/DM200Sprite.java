@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,9 +35,8 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class DM200Sprite extends MobSprite {
-
-	public DM200Sprite () {
-		super();
+	@Override
+	protected void setupFrames() {
 
 		texture( Assets.Sprites.DM200 );
 
@@ -54,26 +56,44 @@ public class DM200Sprite extends MobSprite {
 
 		die = new Animation( 8, false );
 		die.frames( frames, 9, 10, 11 );
+	}
 
-		play( idle );
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		zap = attack.clone();
 	}
 
 	public void zap( int cell ) {
 
 		super.zap( cell );
 
-		MagicMissile.boltFromChar( parent,
-				MagicMissile.SPECK + Speck.TOXIC,
-				this,
-				cell,
-				new Callback() {
-					@Override
-					public void call() {
-						((DM200)ch).onZapComplete();
-					}
-				} );
-		Sample.INSTANCE.play( Assets.Sounds.GAS );
-		GLog.w(Messages.get(DM200.class, "vent"));
+		if (((DM200)ch).nextWeapon == 1) {
+			MagicMissile.boltFromChar(parent,
+					MagicMissile.SPECK + Speck.TOXIC,
+					this,
+					cell,
+					new Callback() {
+						@Override
+						public void call() {
+							((DM200) ch).onZapComplete();
+						}
+					});
+			Sample.INSTANCE.play(Assets.Sounds.GAS);
+			GLog.w(Messages.get(DM200.class, "vent"));
+		} else {
+			MagicMissile.boltFromChar( parent,
+					MagicMissile.FORCE,
+					this,
+					cell,
+					new Callback() {
+						@Override
+						public void call() {
+							((DM200) ch).onZapComplete();
+						}
+					});
+			Sample.INSTANCE.play(Assets.Sounds.ZAP);
+		}
 	}
 
 	@Override

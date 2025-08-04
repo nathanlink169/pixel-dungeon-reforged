@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -43,6 +47,9 @@ public class Whip extends MeleeWeapon {
 
 		tier = 3;
 		RCH = 3;    //lots of extra reach
+
+		// D&D 5e says this is slashing so I'm going with that
+		damageType = DamageType.SLASHING;
 	}
 
 	@Override
@@ -84,7 +91,7 @@ public class Whip extends MeleeWeapon {
 				beforeAbilityUsed(hero, finalClosest);
 				for (Char ch : targets) {
 					//ability does no extra damage
-					hero.attack(ch, 1, 0, Char.INFINITE_ACCURACY);
+					hero.attack(ch, 1, 0, Char.INFINITE_ACCURACY, DamageType.SLASHING);
 					if (!ch.isAlive()){
 						onAbilityKill(hero, ch);
 					}

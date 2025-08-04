@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -152,7 +155,8 @@ public class ItemSpriteSheet {
 	public static final int BOW_FRAGMENT    = MISC_CONSUMABLE +19;
 	public static final int BROKEN_HILT     = MISC_CONSUMABLE +20;
 	public static final int TORN_PAGE       = MISC_CONSUMABLE +21;
-	public static final int TRINKET_CATA    = MISC_CONSUMABLE +22;
+	public static final int CRACKED_GUN		= MISC_CONSUMABLE +22;
+	public static final int TRINKET_CATA    = MISC_CONSUMABLE +23;
 
 	static{
 		assignItemRect(ANKH,            10, 16);
@@ -180,6 +184,7 @@ public class ItemSpriteSheet {
 		assignItemRect(BOW_FRAGMENT,    12,  9);
 		assignItemRect(BROKEN_HILT,      9,  9);
 		assignItemRect(TORN_PAGE,       11, 13);
+		assignItemRect(CRACKED_GUN,		13, 13);
 
 		assignItemRect(TRINKET_CATA,    12, 11);
 	}
@@ -321,6 +326,7 @@ public class ItemSpriteSheet {
 	public static final int TRIDENT         = MISSILE_WEP+13;
 	public static final int THROWING_HAMMER = MISSILE_WEP+14;
 	public static final int FORCE_CUBE      = MISSILE_WEP+15;
+	public static final int GUN				= MISSILE_WEP+16;
 	
 	static{
 		assignItemRect(SPIRIT_BOW,      16, 16);
@@ -344,9 +350,11 @@ public class ItemSpriteSheet {
 		assignItemRect(TRIDENT,         16, 16);
 		assignItemRect(THROWING_HAMMER, 12, 12);
 		assignItemRect(FORCE_CUBE,      11, 12);
+
+		assignItemRect(GUN,             12, 14);
 	}
 	
-	public static final int DARTS    =                                      xy(1, 11);  //16 slots
+	public static final int DARTS    =                                      xy(2, 11);  //16 slots
 	public static final int DART            = DARTS+0;
 	public static final int ROT_DART        = DARTS+1;
 	public static final int INCENDIARY_DART = DARTS+2;
@@ -409,8 +417,9 @@ public class ItemSpriteSheet {
 	public static final int WAND_WARDING        = WANDS+10;
 	public static final int WAND_REGROWTH       = WANDS+11;
 	public static final int WAND_TRANSFUSION    = WANDS+12;
+	public static final int WAND_DISPLACEMENT	= WANDS+13;
 	static {
-		for (int i = WANDS; i < WANDS+16; i++)
+		for (int i = WANDS; i < WANDS+17; i++)
 			assignItemRect(i, 14, 14);
 	}
 
@@ -457,6 +466,7 @@ public class ItemSpriteSheet {
 	public static final int ARTIFACT_ROSE2      = ARTIFACTS+21;
 	public static final int ARTIFACT_ROSE3      = ARTIFACTS+22;
 	public static final int ARTIFACT_TOME       = ARTIFACTS+23;
+	public static final int ARTIFACT_RINGBOX	= ARTIFACTS+24;
 	static{
 		assignItemRect(ARTIFACT_CLOAK,      9,  15);
 		assignItemRect(ARTIFACT_ARMBAND,    16, 13);
@@ -482,9 +492,10 @@ public class ItemSpriteSheet {
 		assignItemRect(ARTIFACT_ROSE2,      14, 14);
 		assignItemRect(ARTIFACT_ROSE3,      14, 14);
 		assignItemRect(ARTIFACT_TOME,       14, 16);
+		assignItemRect(ARTIFACT_RINGBOX,    16, 16);
 	}
 
-	private static final int TRINKETS        =                               xy(9, 17);  //24 slots
+	private static final int TRINKETS        =                               xy(10, 17);  //24 slots
 	public static final int RAT_SKULL       = TRINKETS+0;
 	public static final int PARCHMENT_SCRAP = TRINKETS+1;
 	public static final int PETRIFIED_SEED  = TRINKETS+2;
@@ -533,6 +544,7 @@ public class ItemSpriteSheet {
 	public static final int SCROLL_BERKANAN = SCROLLS+9;
 	public static final int SCROLL_ODAL     = SCROLLS+10;
 	public static final int SCROLL_TIWAZ    = SCROLLS+11;
+	public static final int SCROLL_EHWAZ	= SCROLLS+12;
 
 	public static final int ARCANE_RESIN    = SCROLLS+13;
 	static {
@@ -554,6 +566,7 @@ public class ItemSpriteSheet {
 	public static final int EXOTIC_BERKANAN = EXOTIC_SCROLLS+9;
 	public static final int EXOTIC_ODAL     = EXOTIC_SCROLLS+10;
 	public static final int EXOTIC_TIWAZ    = EXOTIC_SCROLLS+11;
+	public static final int EXOTIC_EHWAZ	= EXOTIC_SCROLLS+12;
 	static {
 		for (int i = EXOTIC_SCROLLS; i < EXOTIC_SCROLLS+16; i++)
 			assignItemRect(i, 15, 14);
@@ -572,6 +585,7 @@ public class ItemSpriteSheet {
 	public static final int STONE_FLOCK         = STONES+9;
 	public static final int STONE_INTUITION     = STONES+10;
 	public static final int STONE_SHOCK         = STONES+11;
+	public static final int STONE_BLIGHT		= STONES+12;
 	static {
 		for (int i = STONES; i < STONES+16; i++)
 			assignItemRect(i, 14, 12);
@@ -651,8 +665,9 @@ public class ItemSpriteSheet {
 	public static final int ELIXIR_ICY      = ELIXIRS+5;
 	public static final int ELIXIR_ARCANE   = ELIXIRS+6;
 	public static final int ELIXIR_FEATHER  = ELIXIRS+7;
+	public static final int ELIXIR_CLAWS	= ELIXIRS+8;
 	static{
-		for (int i = BREWS; i < BREWS+16; i++)
+		for (int i = BREWS; i < BREWS+17; i++)
 			assignItemRect(i, 12, 14);
 
 		assignItemRect(BREW_AQUA, 9, 11);
@@ -705,6 +720,7 @@ public class ItemSpriteSheet {
 	public static final int BERRY           = FOOD+10;
 	public static final int PHANTOM_MEAT    = FOOD+11;
 	public static final int SUPPLY_RATION   = FOOD+12;
+	public static final int BAT_MEMBRANE	= FOOD+13;
 	static{
 		assignItemRect(MEAT,            15, 11);
 		assignItemRect(STEAK,           15, 11);
@@ -719,6 +735,7 @@ public class ItemSpriteSheet {
 		assignItemRect(BERRY,           9,  11);
 		assignItemRect(PHANTOM_MEAT,    15, 11);
 		assignItemRect(SUPPLY_RATION,   16, 12);
+		assignItemRect(BAT_MEMBRANE,	16, 16);
 	}
 
 	private static final int HOLIDAY_FOOD   =                               xy(1, 29);  //16 slots
@@ -754,7 +771,8 @@ public class ItemSpriteSheet {
 	public static final int TOKEN   = QUEST+6;
 	public static final int BLOB    = QUEST+7;
 	public static final int SHARD   = QUEST+8;
-	static{
+	public static final int CLAW	= QUEST+9;
+	static {
 		assignItemRect(DUST,    12, 11);
 		assignItemRect(CANDLE,  12, 12);
 		assignItemRect(EMBER,   12, 11);
@@ -763,6 +781,7 @@ public class ItemSpriteSheet {
 		assignItemRect(TOKEN,   12, 12);
 		assignItemRect(BLOB,    10,  9);
 		assignItemRect(SHARD,    8, 10);
+		assignItemRect(CLAW,	12, 10);
 	}
 
 	private static final int BAGS       =                                   xy(1, 31);  //16 slots
@@ -863,6 +882,7 @@ public class ItemSpriteSheet {
 		public static final int SCROLL_RETRIB   = SCROLLS+9;
 		public static final int SCROLL_TERROR   = SCROLLS+10;
 		public static final int SCROLL_TRANSMUTE= SCROLLS+11;
+		public static final int SCROLL_DECAY	= SCROLLS+12;
 		static {
 			assignIconRect( SCROLL_UPGRADE,     7, 7 );
 			assignIconRect( SCROLL_IDENTIFY,    4, 7 );
@@ -876,6 +896,7 @@ public class ItemSpriteSheet {
 			assignIconRect( SCROLL_RETRIB,      5, 6 );
 			assignIconRect( SCROLL_TERROR,      5, 7 );
 			assignIconRect( SCROLL_TRANSMUTE,   7, 7 );
+			assignIconRect( SCROLL_DECAY, 		5, 6);
 		}
 
 		private static final int EXOTIC_SCROLLS =                            xy(1, 4);  //16 slots
@@ -891,6 +912,7 @@ public class ItemSpriteSheet {
 		public static final int SCROLL_PSIBLAST = EXOTIC_SCROLLS+9;
 		public static final int SCROLL_DREAD    = EXOTIC_SCROLLS+10;
 		public static final int SCROLL_METAMORPH= EXOTIC_SCROLLS+11;
+		public static final int SCROLL_GROWTH	= EXOTIC_SCROLLS+12;
 		static {
 			assignIconRect( SCROLL_ENCHANT,     7, 7 );
 			assignIconRect( SCROLL_DIVINATE,    7, 6 );
@@ -904,6 +926,7 @@ public class ItemSpriteSheet {
 			assignIconRect( SCROLL_PSIBLAST,    5, 6 );
 			assignIconRect( SCROLL_DREAD,       5, 7 );
 			assignIconRect( SCROLL_METAMORPH,   7, 7 );
+			assignIconRect( SCROLL_GROWTH,		5, 6 );
 		}
 
 		                                                                                //16 free slots

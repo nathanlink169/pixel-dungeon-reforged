@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -96,7 +99,7 @@ public class Item implements Bundlable {
 
 	// whether an item can be included in heroes remains
 	public boolean bones = false;
-
+	
 	public int customNoteID = -1;
 	
 	public static final Comparator<Item> itemComparator = new Comparator<Item>() {
@@ -385,7 +388,7 @@ public class Item implements Bundlable {
 		//only the hero can be affected by Degradation
 		if (Dungeon.hero != null && Dungeon.hero.buff( Degrade.class ) != null
 			&& (isEquipped( Dungeon.hero ) || Dungeon.hero.belongings.contains( this ))) {
-			return Degrade.reduceLevel(level());
+			return Dungeon.hero.buff(Degrade.class).reduceLevel(level());
 		} else {
 			return level();
 		}
@@ -521,7 +524,7 @@ public class Item implements Bundlable {
 			} else {
 				note = Notes.findCustomRecord(getClass());
 				if (note != null) {
-					//we swap underscore(0x5F) with low macron(0x2CD) here to avoid highlighting in the item window
+				//we swap underscore(0x5F) with low macron(0x2CD) here to avoid highlighting in the item window
 					return Messages.get(this, "custom_note_type", note.title().replace('_', 'ˍ')) + "\n\n" + desc();
 				}
 			}

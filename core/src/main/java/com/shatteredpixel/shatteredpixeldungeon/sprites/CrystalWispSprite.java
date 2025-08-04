@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,9 +40,14 @@ public abstract class CrystalWispSprite extends MobSprite {
 
 	private TorchHalo light;
 
-	public CrystalWispSprite() {
-		super();
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
 
+	@Override
+	protected void setupFrames() {
 		int c = texOffset();
 
 		texture( Assets.Sprites.CRYSTAL_WISP );
@@ -55,12 +63,8 @@ public abstract class CrystalWispSprite extends MobSprite {
 		attack = new Animation( 16, false );
 		attack.frames( frames, c+2, c+3, c+4, c+5 );
 
-		zap = attack.clone();
-
 		die = new Animation( 15, false );
 		die.frames( frames, c+6, c+7, c+8, c+9, c+10, c+11, c+12, c+11 );
-
-		play( idle );
 	}
 
 	public void zap( int cell ) {

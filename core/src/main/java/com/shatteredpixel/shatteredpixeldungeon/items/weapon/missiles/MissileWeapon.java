@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,10 +24,13 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
+
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldown;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
@@ -36,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
@@ -184,6 +191,10 @@ abstract public class MissileWeapon extends Weapon {
 			} else {
 				SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
 				if (bow != null && bow.hasEnchant(Projecting.class, user)) {
+					projecting = true;
+				}
+				Gun gun = Dungeon.hero.belongings.getItem(Gun.class);
+				if (gun != null && gun.hasEnchant(Projecting.class, user)) {
 					projecting = true;
 				}
 			}
@@ -390,6 +401,22 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public int damageRoll(Char owner, boolean isMaxDamage) {
+		if (((Hero)owner).hasTalent(EFFECTIVE_SHOT) && ((Hero)owner).heroClass != HeroClass.ARTIFICER) {
+			if (owner.buff(EffectiveShotCooldown.class) == null) {
+				isMaxDamage = true;
+				Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));
+			}
+			else {
+				EffectiveShotCooldown cd = owner.buff(EffectiveShotCooldown.class);
+				if (cd.left == 1) {
+					cd.detach();
+				}
+				else {
+					cd.left--;
+				}
+			}
+		}
+
 		int damage = augment.damageFactor(super.damageRoll( owner, isMaxDamage));
 		
 		if (owner instanceof Hero) {

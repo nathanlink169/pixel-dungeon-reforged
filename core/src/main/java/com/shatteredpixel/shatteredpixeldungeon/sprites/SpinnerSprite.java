@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,31 +34,31 @@ import com.watabou.utils.Callback;
 
 //TODO improvements here
 public class SpinnerSprite extends MobSprite {
-	
-	public SpinnerSprite() {
-		super();
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
 
+	@Override
+	protected void setupFrames() {
 		perspectiveRaise = 0f;
 
 		texture( Assets.Sprites.SPINNER );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 16, 16 );
-		
+
 		idle = new Animation( 10, true );
 		idle.frames( frames, 0, 0, 0, 0, 0, 1, 0, 1 );
-		
+
 		run = new Animation( 15, true );
 		run.frames( frames, 0, 2, 0, 3 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 0, 4, 5, 0 );
-		
-		zap = attack.clone();
-		
+
 		die = new Animation( 12, false );
 		die.frames( frames, 6, 7, 8, 9 );
-		
-		play( idle );
 	}
 
 	@Override

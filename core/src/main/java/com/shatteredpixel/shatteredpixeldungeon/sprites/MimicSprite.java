@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,8 +25,17 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalMimic;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.EbonyMimic;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GoldenMimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.watabou.noosa.Scene;
 import com.watabou.noosa.TextureFilm;
 
 public class MimicSprite extends MobSprite {
@@ -43,9 +55,50 @@ public class MimicSprite extends MobSprite {
 		return 0;
 	}
 
-	public MimicSprite() {
-		super();
+	// 0 = not set up
+	// 1 = normal
+	// 2 = monster unknown
+	private int spriteState = 0;
 
+	@Override
+	// base setup call
+	public void setup() {
+		int oldSpriteState = spriteState;
+		if (forcedNormalSprite) {
+			setupFrames();
+		} else {
+			boolean inGame = false;
+			Scene s = ShatteredPixelDungeon.scene();
+			if (s instanceof PixelScene) {
+				if (s instanceof GameScene) {
+					inGame = !((GameScene) s).getJournalOpen();
+				} else {
+					inGame = ((PixelScene) s).getIsInGameScene();
+				}
+			}
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN) && inGame) {
+				if (ch == null) {
+					setupFrames();
+				} else {
+					setupFramesMonsterUnknown();
+				}
+			} else {
+				setupFrames();
+			}
+		}
+
+		if (oldSpriteState != spriteState) {
+			play(idle);
+		}
+	}
+
+	@Override
+	protected void setupFrames() {
+		if (spriteState == 1) {
+			return;
+		}
+
+		spriteState = 1;
 		int c = texOffset();
 
 		texture( Assets.Sprites.MIMIC );
@@ -69,19 +122,37 @@ public class MimicSprite extends MobSprite {
 
 		die = new Animation( 5, false );
 		die.frames( frames, 10+c, 11+c, 12+c );
-
-		play( idle );
 	}
-	
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		if (spriteState == 2) {
+			return;
+		}
+
+		spriteState = 2;
+		super.setupFramesMonsterUnknown();
+		advancedHiding = idle;
+		hiding = idle;
+	}
+
+	@Override
+	public void play(Animation anim) {
+		setup();
+		super.play(anim);
+	}
+
 	@Override
 	public void linkVisuals(Char ch) {
 		super.linkVisuals(ch);
 		if (ch.alignment == Char.Alignment.NEUTRAL) {
+			setup();
 			hideMimic(ch);
 		}
 	}
 
 	public void hideMimic(Char ch){
+		setup();
 		if (ch instanceof Mimic && ((Mimic) ch).stealthy()){
 			play(advancedHiding);
 		} else {

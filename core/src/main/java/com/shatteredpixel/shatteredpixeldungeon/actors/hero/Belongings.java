@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,28 +25,53 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
+import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
+import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
+import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfHoneyedHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMight;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfMastery;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.InventoryScroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfDivination;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfEnchantment;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfForesight;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMysticalEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.stones.InventoryStone;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -387,6 +415,99 @@ public class Belongings implements Iterable<Item> {
 		if (owner.buff(LostInventory.class) != null) return null;
 
 		return Random.element( backpack.items );
+	}
+
+	public Item getThiefItemToSteal() {
+		if (owner.buff(LostInventory.class) != null) return null;
+
+		Item toReturn = null;
+
+		if (Thief.getRandomizerEnabled(Thief.RandomTraits.BOLD_FINGERS)) {
+			if (Random.Int(2) == 0 || true) { // 50% chance to steal something equipped
+				int attempts = 0;
+				do {
+					int itemToUnequip = Random.Int(5);
+					switch (itemToUnequip) {
+						case 0: // weapon
+							if (weapon() == null || weapon().unique) continue;
+							toReturn = weapon();
+							weapon = null;
+							break;
+						case 1: // armour
+							if (armor() == null || armor instanceof ClassArmor || armor.checkSeal() != null || armor().unique) continue;
+							toReturn = armor();
+							armor = null;
+							break;
+						case 2: // artifact
+							if (artifact() == null || artifact().unique) continue;
+							toReturn = artifact();
+							artifact = null;
+							break;
+						case 3: // misc
+							if (misc() == null || misc().unique) continue;
+							toReturn = misc();
+							misc = null;
+							break;
+						case 4: // ring
+							if (ring() == null || ring().unique) continue;
+							toReturn = ring();
+							ring = null;
+							break;
+					}
+				} while (toReturn == null && ++attempts < 100);
+				if (toReturn != null) {
+					Dungeon.quickslot.clearItem(toReturn);
+					toReturn.updateQuickslot();
+				}
+
+				return toReturn;
+			}
+			// otherwise, fallthrough to normal selection
+		}
+		if (Thief.getRandomizerEnabled(Thief.RandomTraits.MASTER_PICKPOCKET)) {
+			ArrayList<Item> highestPriority = new ArrayList<>();
+			ArrayList<Item> secondPriority = new ArrayList<>();
+
+			for (Item item : backpack.items) {
+				if (item instanceof ScrollOfUpgrade ||
+				    item instanceof PotionOfStrength ||
+				    item instanceof PotionOfMastery ||
+					item instanceof ElixirOfMight ||
+					item instanceof Ankh ||
+					item.level() > 5) {
+					highestPriority.add(item);
+				} else
+				if (item instanceof Artifact ||
+					item instanceof Trinket ||
+					item instanceof PotionOfHealing ||
+					item instanceof ElixirOfHoneyedHealing ||
+					item instanceof Honeypot ||
+					item instanceof Sungrass.Seed ||
+					item instanceof PotionOfExperience ||
+					item instanceof ScrollOfTransmutation) {
+					secondPriority.add(item);
+				}
+			}
+
+			if (!highestPriority.isEmpty()) {
+				return Random.element(highestPriority);
+			}
+			if (!secondPriority.isEmpty()) {
+				return Random.element(secondPriority);
+			}
+			// Fall through
+		}
+
+		boolean validSteal = false;
+		int attempts = 0;
+		do {
+			toReturn = Random.element(backpack.items);
+			validSteal = toReturn != null && !toReturn.unique && toReturn.level() < 1;
+		} while (validSteal && ++attempts < 100 );
+		if (!validSteal) {
+			return null;
+		}
+		return toReturn;
 	}
 	
 	public int charge( float charge ) {

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -50,8 +53,6 @@ import com.watabou.utils.Random;
 public class MirrorImage extends NPC {
 	
 	{
-		spriteClass = MirrorSprite.class;
-		
 		HP = HT = 1;
 		defenseSkill = 1;
 		
@@ -60,6 +61,11 @@ public class MirrorImage extends NPC {
 		
 		//before other mobs
 		actPriority = MOB_PRIO + 1;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return MirrorSprite.class;
 	}
 	
 	private Hero hero;
@@ -179,7 +185,7 @@ public class MirrorImage extends NPC {
 			damage = hero.belongings.weapon().proc( this, enemy, damage );
 			if (!enemy.isAlive() && enemy == Dungeon.hero){
 				Dungeon.fail(this);
-				GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+				GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 			}
 			return damage;
 		} else {

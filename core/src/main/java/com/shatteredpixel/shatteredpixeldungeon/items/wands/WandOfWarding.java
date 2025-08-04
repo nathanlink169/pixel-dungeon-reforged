@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -61,6 +64,10 @@ public class WandOfWarding extends Wand {
 		//usesTargeting = false; //player usually targets wards or spaces, not enemies
 	}
 
+	//cursed warding does use targeting as it's just doing regular cursed zaps
+	@Override
+	public boolean GetUsesTargetting() { return cursed && cursedKnown; }
+
 	@Override
 	public int collisionProperties(int target) {
 		if (cursed)                                 return super.collisionProperties(target);
@@ -70,8 +77,6 @@ public class WandOfWarding extends Wand {
 
 	@Override
 	public void execute(Hero hero, String action) {
-		//cursed warding does use targeting as it's just doing regular cursed zaps
-		usesTargeting = cursed && cursedKnown;
 		super.execute(hero, action);
 	}
 
@@ -234,8 +239,6 @@ public class WandOfWarding extends Wand {
 		public int totalZaps = 0;
 
 		{
-			spriteClass = WardSprite.class;
-
 			alignment = Alignment.ALLY;
 
 			properties.add(Property.IMMOVABLE);
@@ -244,9 +247,13 @@ public class WandOfWarding extends Wand {
 			viewDistance = 4;
 			state = WANDERING;
 		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return WardSprite.class;
+		}
 
 		@Override
-		public String name() {
+		public String name(boolean forceNoMonsterUnknown) {
 			return Messages.get(this, "name_" + tier );
 		}
 
@@ -371,7 +378,7 @@ public class WandOfWarding extends Wand {
 
 			if (!enemy.isAlive() && enemy == Dungeon.hero) {
 				Badges.validateDeathFromFriendlyMagic();
-				GLog.n(Messages.capitalize(Messages.get( this, "kill", name() )));
+				GLog.n(Messages.capitalize(Messages.get( this, "kill", name(false) )));
 				Dungeon.fail( WandOfWarding.class );
 			}
 
@@ -461,7 +468,7 @@ public class WandOfWarding extends Wand {
 		}
 
 		@Override
-		public String description() {
+		public String description(boolean forceNoMonsterUnknown) {
 			if (!Actor.chars().contains(this)){
 				//for viewing in the journal
 				if (tier < 4){

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.watabou.utils.Bundle;
 
 public class Degrade extends FlavourBuff {
 
@@ -34,6 +38,21 @@ public class Degrade extends FlavourBuff {
 	{
 		type = buffType.NEGATIVE;
 		announced = true;
+	}
+
+	public boolean poweredUp = false;
+	private static final String POWERED_UP    = "powered_up";
+
+	@Override
+	public void storeInBundle( Bundle bundle ) {
+		super.storeInBundle( bundle );
+		bundle.put( POWERED_UP, poweredUp );
+	}
+
+	@Override
+	public void restoreFromBundle( Bundle bundle ) {
+		super.restoreFromBundle( bundle );
+		poweredUp = bundle.getBoolean(POWERED_UP);
 	}
 
 	@Override
@@ -54,7 +73,7 @@ public class Degrade extends FlavourBuff {
 	}
 
 	//called in Item.buffedLevel()
-	public static int reduceLevel( int level ){
+	public int reduceLevel( int level ){
 		if (level <= 0){
 			//zero or negative levels are unaffected
 			return level;
@@ -63,7 +82,11 @@ public class Degrade extends FlavourBuff {
 			// This means that levels 1/2/3/4/5/6/7/8/9/10/11/12/...
 			// Are now instead:       1/2/3/3/4/4/4/5/5/ 5/ 5/ 6/...
 			// Basically every level starting with 3 sticks around for 1 level longer than the last
-			return (int)Math.round(Math.sqrt(2*(level-1)) + 1);
+			int newLevel = (int)Math.round(Math.sqrt(2*(level-1)) + 1);
+			if (poweredUp && newLevel > 0) {
+				newLevel = (int)Math.round(Math.sqrt(2*(newLevel-1)) + 1);
+			}
+			return newLevel;
 		}
 	}
 

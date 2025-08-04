@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -79,8 +82,6 @@ import java.util.ArrayList;
 public class DM300 extends Mob {
 
 	{
-		spriteClass = DM300Sprite.class;
-
 		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 400 : 300;
 		EXP = 30;
 		defenseSkill = 15;
@@ -88,6 +89,11 @@ public class DM300 extends Mob {
 		properties.add(Property.BOSS);
 		properties.add(Property.INORGANIC);
 		properties.add(Property.LARGE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return DM300Sprite.class;
 	}
 
 	@Override
@@ -468,13 +474,13 @@ public class DM300 extends Mob {
 	private boolean invulnWarned = false;
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (!BossHealthBar.isAssigned()){
 			notice();
 		}
 
 		int preHP = HP;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 		if (isInvulnerable(src.getClass())){
 			return;
 		}
@@ -523,7 +529,7 @@ public class DM300 extends Mob {
 		spend(Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 2f : 3f);
 		yell(Messages.get(this, "charging"));
 		sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "invulnerable"));
-		((DM300Sprite)sprite).updateChargeState(true);
+		((DM300Sprite)sprite).setup();
 		((DM300Sprite)sprite).charge();
 		chargeAnnounced = false;
 
@@ -535,7 +541,7 @@ public class DM300 extends Mob {
 
 	public void loseSupercharge(){
 		supercharged = false;
-		((DM300Sprite)sprite).updateChargeState(false);
+		((DM300Sprite)sprite).setup();
 
 		//adjust turns since last ability to prevent DM immediately using an ability when charge ends
 		turnsSinceLastAbility = Math.max(turnsSinceLastAbility, MIN_COOLDOWN-3);
@@ -582,7 +588,7 @@ public class DM300 extends Mob {
 			Dungeon.level.drop( new MetalShard(), pos + ofs ).sprite.drop( pos );
 		}
 
-		Badges.validateBossSlain();
+		Badges.validateBossSlain(this);
 		if (Statistics.qualifiedForBossChallengeBadge){
 			Badges.validateBossChallengeCompleted();
 		}
@@ -658,8 +664,8 @@ public class DM300 extends Mob {
 	}
 
 	@Override
-	public String description() {
-		String desc = super.description();
+	public String description(boolean forceNoMonsterUnknown) {
+		String desc = super.description(forceNoMonsterUnknown);
 		if (supercharged) {
 			desc += "\n\n" + Messages.get(this, "desc_supercharged");
 		}

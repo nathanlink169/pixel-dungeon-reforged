@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -41,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator;
@@ -188,10 +192,12 @@ public class Ratmogrify extends ArmorAbility {
 	public static class TransmogRat extends Mob {
 
 		{
-			spriteClass = RatSprite.class;
-
 			//always false, as we derive stats from what we are transmogging from (which was already added)
 			firstAdded = false;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return RatSprite.class;
 		}
 
 		private Mob original;
@@ -299,8 +305,8 @@ public class Ratmogrify extends ArmorAbility {
 		}
 
 		@Override
-		public String name() {
-			return Messages.get(this, "name", original.name());
+		public String name(boolean forceNoMonsterUnknown) {
+			return Messages.get(this, "name", original.name(false));
 		}
 
 		{

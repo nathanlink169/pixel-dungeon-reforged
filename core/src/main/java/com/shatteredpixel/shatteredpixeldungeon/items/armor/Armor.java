@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -236,7 +239,7 @@ public class Armor extends EquipableItem {
 
 	@Override
 	public boolean doEquip( Hero hero ) {
-
+		
 		// 15/25% chance
 		if (hero.heroClass != HeroClass.CLERIC && hero.hasTalent(Talent.HOLY_INTUITION)
 				&& cursed && !cursedKnown
@@ -398,7 +401,7 @@ public class Armor extends EquipableItem {
 
 	public int DRMax(int lvl){
 		int artificerDamageReduction = 0;
-		if (Dungeon.hero.subClass == HeroSubClass.ARMORER) {
+		if (Dungeon.hero != null && Dungeon.hero.subClass == HeroSubClass.ARMORER) {
 			artificerDamageReduction = 2;
 
 			if (Dungeon.hero.hasTalent(Talent.ARMOR_MOD_EMERGENCY_DEFENSE)) {
@@ -435,7 +438,7 @@ public class Armor extends EquipableItem {
 
 	public int DRMin(int lvl){
 		int artificerDamageReduction = 0;
-		if (Dungeon.hero.subClass == HeroSubClass.ARMORER) {
+		if (Dungeon.hero != null && Dungeon.hero.subClass == HeroSubClass.ARMORER) {
 			artificerDamageReduction = 2;
 
 			if (Dungeon.hero.hasTalent(Talent.ARMOR_MOD_EMERGENCY_DEFENSE)) {

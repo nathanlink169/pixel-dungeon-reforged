@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -85,8 +88,6 @@ import java.util.HashSet;
 public class Tengu extends Mob {
 	
 	{
-		spriteClass = TenguSprite.class;
-		
 		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 250 : 200;
 		EXP = 20;
 		defenseSkill = 15;
@@ -96,6 +97,11 @@ public class Tengu extends Mob {
 		properties.add(Property.BOSS);
 		
 		viewDistance = 12;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return TenguSprite.class;
 	}
 	
 	@Override
@@ -130,7 +136,7 @@ public class Tengu extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (!Dungeon.level.mobs.contains(this)){
 			return;
 		}
@@ -142,7 +148,7 @@ public class Tengu extends Mob {
 		int curbracket = HP / hpBracket;
 
 		int beforeHitHP = HP;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 
 		//cannot be hit through multiple brackets at a time
 		if (HP <= (curbracket-1)*hpBracket){
@@ -219,7 +225,7 @@ public class Tengu extends Mob {
 		GameScene.bossSlain();
 		super.die( cause );
 		
-		Badges.validateBossSlain();
+		Badges.validateBossSlain(this);
 		if (Statistics.qualifiedForBossChallengeBadge){
 			Badges.validateBossChallengeCompleted();
 		}
@@ -335,14 +341,14 @@ public class Tengu extends Mob {
 			BossHealthBar.assignBoss(this);
 			if (HP <= HT/2) BossHealthBar.bleed(true);
 			if (HP == HT) {
-				yell(Messages.get(this, "notice_gotcha", Dungeon.hero.name()));
+				yell(Messages.get(this, "notice_gotcha", Dungeon.hero.name(false)));
 				for (Char ch : Actor.chars()){
 					if (ch instanceof DriedRose.GhostHero){
 						((DriedRose.GhostHero) ch).sayBoss();
 					}
 				}
 			} else {
-				yell(Messages.get(this, "notice_have", Dungeon.hero.name()));
+				yell(Messages.get(this, "notice_have", Dungeon.hero.name(false)));
 			}
 		}
 	}
@@ -381,7 +387,7 @@ public class Tengu extends Mob {
 		BossHealthBar.assignBoss(this);
 		if (HP <= HT/2) BossHealthBar.bleed(true);
 	}
-
+	
 	//tengu is always hunting, and can use simpler rules because he never moves
 	private class Hunting extends Mob.Hunting{
 		
@@ -400,7 +406,7 @@ public class Tengu extends Mob {
 				return doAttack( enemy );
 				
 			} else {
-
+				
 				//Try to switch targets to another enemy that is closer
 				//unless we have already done that and still can't attack them, then move on.
 				if (!recursing) {
@@ -503,7 +509,7 @@ public class Tengu extends Mob {
 			} else {
 				abilityToUse = Random.Int(3);
 			}
-
+			
 			//all abilities always target the hero, even if something else is taking Tengu's normal attacks
 			
 			//If we roll the same ability as last time, 9/10 chance to reroll

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.remains.RemainsItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
@@ -34,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.EarthGuardianSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.HalfRipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WardSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
@@ -170,7 +175,7 @@ public class SurfaceScene extends PixelScene {
 		pet.y = SKY_HEIGHT - pet.height;
 		align(pet);
 		
-		//allies. Attempts to pick highest level, but prefers rose > earth > ward.
+		//allies. Attempts to pick highest level, but prefers halfripper > rose > earth > ward.
 		//Rose level is halved because it's easier to upgrade
 		CharSprite allySprite = null;
 		
@@ -198,8 +203,11 @@ public class SurfaceScene extends PixelScene {
 				wardLevel = Math.max(wardLevel, staff.level());
 			}
 		}
-		
-		if (roseLevel >= 3 && roseLevel >= earthLevel && roseLevel >= wardLevel){
+
+		if (HalfRipper.Quest.completed() && !HalfRipper.Quest.corrupted()) {
+			allySprite = new HalfRipperSprite();
+		}
+		else if (roseLevel >= 3 && roseLevel >= earthLevel && roseLevel >= wardLevel){
 			allySprite = new GhostSprite();
 			if (dayTime) allySprite.alpha(0.4f);
 		} else if (earthLevel >= 3 && earthLevel >= wardLevel){

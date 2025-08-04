@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -30,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.KingsCrown;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatKingSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.Holiday;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoArmorAbility;
@@ -40,9 +44,11 @@ import com.watabou.utils.Callback;
 public class RatKing extends NPC {
 
 	{
-		spriteClass = RatKingSprite.class;
-		
 		state = SLEEPING;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return RatKingSprite.class;
 	}
 	
 	@Override
@@ -61,7 +67,7 @@ public class RatKing extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		//do nothing
 	}
 
@@ -79,8 +85,9 @@ public class RatKing extends NPC {
 
 	@Override
 	protected void onAdd() {
+		boolean previousFirstAdded = firstAdded;
 		super.onAdd();
-		if (firstAdded && Dungeon.depth != 5){
+		if (previousFirstAdded && Dungeon.depth != 5){
 			yell(Messages.get(this, "confused"));
 		}
 	}
@@ -135,7 +142,7 @@ public class RatKing extends NPC {
 					public void call() {
 						GameScene.show(new WndOptions(
 								sprite(),
-								Messages.titleCase(name()),
+								Messages.titleCase(name(false)),
 								Messages.get(RatKing.class, "crown_desc"),
 								Messages.get(RatKing.class, "crown_yes"),
 								Messages.get(RatKing.class, "crown_info"),
@@ -166,7 +173,7 @@ public class RatKing extends NPC {
 	}
 	
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (Dungeon.hero != null && Dungeon.hero.armorAbility instanceof Ratmogrify){
 			return Messages.get(this, "desc_crown");
 		} else if (Holiday.getCurrentHoliday() == Holiday.APRIL_FOOLS){
@@ -174,7 +181,7 @@ public class RatKing extends NPC {
 		} else if (Holiday.getCurrentHoliday() == Holiday.WINTER_HOLIDAYS){
 			return Messages.get(this, "desc_winter");
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 }

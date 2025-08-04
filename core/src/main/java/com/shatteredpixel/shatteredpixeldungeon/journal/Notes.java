@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DemonSpawner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Statue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ImpShopkeeper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.RatKing;
@@ -48,6 +52,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BlacksmithSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.HalfRipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -57,6 +62,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.StatueSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WandmakerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndRandomizerDisplay;
 import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.Visual;
@@ -124,6 +130,7 @@ public class Notes {
 		SHOP,
 		ALCHEMY,
 		GARDEN,
+		RANDOMIZER,
 		DISTANT_WELL,
 		WELL_OF_HEALTH,
 		WELL_OF_AWARENESS,
@@ -138,6 +145,7 @@ public class Notes {
 		WANDMAKER,
 		TROLL,
 		IMP,
+		HALF_RIPPER,
 
 		DEMON_SPAWNER;
 	}
@@ -180,6 +188,8 @@ public class Notes {
 					return Icons.get(Icons.ALCHEMY);
 				case GARDEN:
 					return Icons.get(Icons.GRASS);
+				case RANDOMIZER:
+					return Icons.get(Icons.RANDOMIZER);
 				case DISTANT_WELL:
 					return Icons.get(Icons.DISTANT_WELL);
 				case WELL_OF_HEALTH:
@@ -206,6 +216,8 @@ public class Notes {
 					return new Image(new BlacksmithSprite());
 				case IMP:
 					return new Image(new ImpSprite());
+				case HALF_RIPPER:
+					return new Image(new HalfRipperSprite());
 
 				case DEMON_SPAWNER:
 					return new Image(new SpawnerSprite());
@@ -253,14 +265,22 @@ public class Notes {
 				case SACRIFICIAL_FIRE:  return Messages.get(SacrificialFire.class, "desc");
 				case STATUE:            return Messages.get(Statue.class, "desc");
 
+				case RANDOMIZER:
+					if (depth == 1)		return WndRandomizerDisplay.getRandomizerDescriptionForRegion(1);
+					if (depth == 6)		return WndRandomizerDisplay.getRandomizerDescriptionForRegion(2);
+					if (depth == 11)	return WndRandomizerDisplay.getRandomizerDescriptionForRegion(3);
+					if (depth == 16)	return WndRandomizerDisplay.getRandomizerDescriptionForRegion(4);
+					if (depth == 21)	return WndRandomizerDisplay.getRandomizerDescriptionForRegion(5);
+
 				case LOST_PACK:         return Messages.get(LostBackpack.class, "desc");
 				case BEACON_LOCATION:   return Messages.get(BeaconOfReturning.class, "desc");
 
 				case GHOST:         return Messages.get(Ghost.class, "desc");
-				case RAT_KING:      return new RatKing().description(); //variable description based on holiday/run state
+				case RAT_KING:      return new RatKing().description(false); //variable description based on holiday/run state
 				case WANDMAKER:     return Messages.get(Wandmaker.class, "desc");
 				case TROLL:         return Messages.get(Blacksmith.class, "desc");
 				case IMP:           return Messages.get(Imp.class, "desc");
+				case HALF_RIPPER:	return Messages.get(HalfRipper.class, "desc");
 
 				case DEMON_SPAWNER: return Messages.get(DemonSpawner.class, "desc");
 			}

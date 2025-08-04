@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,10 +35,8 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class DM201Sprite extends MobSprite {
-
-	public DM201Sprite () {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.DM200 );
 
 		TextureFilm frames = new TextureFilm( texture, 21, 18 );
@@ -55,8 +56,12 @@ public class DM201Sprite extends MobSprite {
 
 		die = new Animation( 8, false );
 		die.frames( frames, c+9, c+10, c+11 );
+	}
 
-		play( idle );
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		zap = attack.clone();
 	}
 
 	@Override

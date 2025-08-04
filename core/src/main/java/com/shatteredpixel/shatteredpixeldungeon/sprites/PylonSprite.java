@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,9 +35,8 @@ public class PylonSprite extends MobSprite {
 
 	private Animation activeIdle;
 
-	public PylonSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		perspectiveRaise = 5/16f; //1 pixel less
 		renderShadow = false;
 
@@ -54,8 +56,11 @@ public class PylonSprite extends MobSprite {
 
 		die = new Animation( 1, false );
 		die.frames( frames, 2 );
+	}
 
-		play( idle );
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		setupFrames(); // it feels like the pylon shouldn't be included because it's not really a creature?
 	}
 
 	@Override

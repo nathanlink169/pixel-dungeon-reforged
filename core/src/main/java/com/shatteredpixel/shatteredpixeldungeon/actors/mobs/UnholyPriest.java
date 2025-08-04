@@ -2,6 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
@@ -17,8 +18,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM100Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ShamanSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.UnholyPriestSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -29,8 +32,6 @@ import com.watabou.utils.Random;
 public class UnholyPriest extends Mob implements Callback {
 
     {
-        spriteClass = UnholyPriestSprite.class;
-
         HP = HT = 20;
         defenseSkill = 4;
 
@@ -41,6 +42,10 @@ public class UnholyPriest extends Mob implements Callback {
         lootChance = 0.25f;
 
         properties.add(Property.DEMONIC);
+    }
+    @Override
+    public Class<? extends CharSprite> GetSpriteClass() {
+        return UnholyPriestSprite.class;
     }
 
     @Override

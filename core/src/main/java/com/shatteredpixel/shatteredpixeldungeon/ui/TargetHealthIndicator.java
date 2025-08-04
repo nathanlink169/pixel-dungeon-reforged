@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Slime;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 
 public class TargetHealthIndicator extends HealthBar {
@@ -39,8 +43,11 @@ public class TargetHealthIndicator extends HealthBar {
 	@Override
 	public void update() {
 		super.update();
-		
-		if (target != null && target.isAlive() && target.isActive()
+
+		if (target != null && target instanceof Slime && ((Slime) target).stealthy()) {
+			visible = false;
+		}
+		else if (target != null && target.isAlive() && target.isActive()
 				&& target.sprite != null && target.sprite.visible) {
 			CharSprite sprite = target.sprite;
 			width = sprite.width();

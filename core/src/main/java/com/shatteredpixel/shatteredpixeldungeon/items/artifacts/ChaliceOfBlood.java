@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -189,11 +192,11 @@ public class ChaliceOfBlood extends Artifact {
 			if (cursed)
 				desc += Messages.get(this, "desc_cursed");
 			else if (level() == 0)
-				desc += Messages.get(this, "desc_1");
+				desc += Messages.get(this, "desc_1", 5 + 3*(level()*level()));
 			else if (level() < levelCap)
-				desc += Messages.get(this, "desc_2");
+				desc += Messages.get(this, "desc_2", 5 + 3*(level()*level()));
 			else
-				desc += Messages.get(this, "desc_3");
+				desc += Messages.get(this, "desc_3", 5 + 3*(level()*level()));
 		}
 
 		return desc;

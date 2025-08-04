@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,10 +30,8 @@ import com.watabou.noosa.MovieClip;
 import com.watabou.noosa.TextureFilm;
 
 public class GuardSprite extends MobSprite {
-
-	public GuardSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.GUARD );
 
 		TextureFilm frames = new TextureFilm( texture, 12, 16 );
@@ -46,8 +47,6 @@ public class GuardSprite extends MobSprite {
 
 		die = new MovieClip.Animation( 8, false );
 		die.frames( frames, 11, 12, 13, 14 );
-
-		play( idle );
 	}
 
 	@Override

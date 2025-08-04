@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -65,8 +68,10 @@ public class SpiritBow extends Weapon {
 		
 		unique = true;
 		bones = false;
+
+		damageType = DamageType.PIERCING;
 	}
-	
+
 	@Override
 	public boolean GetUsesTargetting() { return true; }
 	
@@ -189,7 +194,7 @@ public class SpiritBow extends Weapon {
 	@Override
 	public int min(int lvl) {
 		int dmg = 1 + Dungeon.hero.lvl/5
-				+ RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
+				+ (RingOfSharpshooting.levelDamageBonus(Dungeon.hero) / 2)
 				+ (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0);
 		return Math.max(0, dmg);
 	}
@@ -197,7 +202,7 @@ public class SpiritBow extends Weapon {
 	@Override
 	public int max(int lvl) {
 		int dmg = 6 + (int)(Dungeon.hero.lvl/2.5f)
-				+ 2*RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
+				+ /*2**/RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
 				+ (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
 		return Math.max(0, dmg);
 	}
@@ -297,6 +302,8 @@ public class SpiritBow extends Weapon {
 			image = ItemSpriteSheet.SPIRIT_ARROW;
 
 			hitSound = Assets.Sounds.HIT_ARROW;
+
+			damageType = DamageType.PIERCING;
 		}
 
 		@Override

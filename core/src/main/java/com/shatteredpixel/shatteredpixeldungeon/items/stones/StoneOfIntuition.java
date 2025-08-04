@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.stones;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Identification;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -136,6 +140,7 @@ public class StoneOfIntuition extends InventoryStone {
 						}
 						Talent.onRunestoneUsed(curUser, curUser.pos, StoneOfIntuition.class);
 					}
+
 					curGuess = null;
 					hide();
 				}
@@ -218,6 +223,13 @@ public class StoneOfIntuition extends InventoryStone {
 			
 			resize(WIDTH, 100);
 			
+		}
+
+		@Override
+		public void onBackPressed() {
+			super.onBackPressed();
+
+			new StoneOfIntuition().collect();
 		}
 
 	}

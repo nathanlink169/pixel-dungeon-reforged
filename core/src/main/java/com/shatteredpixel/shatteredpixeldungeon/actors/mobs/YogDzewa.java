@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -66,8 +69,6 @@ import java.util.HashSet;
 public class YogDzewa extends Mob {
 
 	{
-		spriteClass = YogSprite.class;
-
 		HP = HT = 1000;
 
 		EXP = 50;
@@ -81,6 +82,12 @@ public class YogDzewa extends Mob {
 		properties.add(Property.IMMOVABLE);
 		properties.add(Property.DEMONIC);
 		properties.add(Property.STATIC);
+	}
+
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return YogSprite.class;
 	}
 
 	private int phase = 0;
@@ -232,7 +239,7 @@ public class YogDzewa extends Mob {
 						if (!ch.isAlive() && ch == Dungeon.hero) {
 							Badges.validateDeathFromEnemyMagic();
 							Dungeon.fail(this);
-							GLog.n(Messages.get(Char.class, "kill", name()));
+							GLog.n(Messages.get(Char.class, "kill", name(false)));
 						}
 					} else {
 						ch.sprite.showStatus( CharSprite.NEUTRAL,  ch.defenseVerb() );
@@ -384,10 +391,10 @@ public class YogDzewa extends Mob {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 
 		int preHP = HP;
-		super.damage( dmg, src );
+		super.damage( dmg, src, damageType );
 
 		if (phase == 0 || findFist() != null) return;
 
@@ -569,8 +576,8 @@ public class YogDzewa extends Mob {
 	}
 
 	@Override
-	public String description() {
-		String desc = super.description();
+	public String description(boolean forceNoMonsterUnknown) {
+		String desc = super.description(forceNoMonsterUnknown);
 
 		if (Statistics.spawnersAlive > 0){
 			desc += "\n\n" + Messages.get(this, "desc_spawners");
@@ -636,8 +643,6 @@ public class YogDzewa extends Mob {
 	public static class Larva extends Mob {
 
 		{
-			spriteClass = LarvaSprite.class;
-
 			HP = HT = 20;
 			defenseSkill = 12;
 			viewDistance = Light.DISTANCE;
@@ -647,6 +652,10 @@ public class YogDzewa extends Mob {
 
 			properties.add(Property.DEMONIC);
 			properties.add(Property.BOSS_MINION);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return LarvaSprite.class;
 		}
 
 		@Override

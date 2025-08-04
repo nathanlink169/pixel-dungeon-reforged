@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -34,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.watabou.noosa.audio.Sample;
 
 import java.util.ArrayList;
@@ -72,6 +76,25 @@ public class Stylus extends Item {
 			GameScene.selectItem( itemSelector );
 			
 		}
+	}
+
+	private void confirmCancelation() {
+		GameScene.show( new WndOptions( Messages.titleCase(name()), Messages.get(this, "warning"),
+				Messages.get(this, "yes"), Messages.get(this, "no") ) {
+			@Override
+			protected void onSelect( int index ) {
+				switch (index) {
+					case 0:
+						curUser.spendAndNext( TIME_TO_INSCRIBE );
+						detach(curUser.belongings.backpack);
+						break;
+					case 1:
+						execute(curUser,AC_INSCRIBE);
+						break;
+				}
+			}
+			public void onBackPressed() {}
+		} );
 	}
 	
 	@Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -54,7 +57,7 @@ public class ScrollOfTerror extends Scroll {
 				chance = 5;
 			}
 			if (rand > chance) { // Failed Roll
-		detach(curUser.belongings.backpack);
+				detach(curUser.belongings.backpack);
 			}
 			else {
 				GLog.p( Messages.get(Potion.class, "saved") );
@@ -84,7 +87,7 @@ public class ScrollOfTerror extends Scroll {
 			GLog.i( Messages.get(this, "none") );
 			break;
 		case 1:
-			GLog.i( Messages.get(this, "one", affected.name()) );
+			GLog.i( Messages.get(this, "one", affected.name(false)) );
 			break;
 		default:
 			GLog.i( Messages.get(this, "many") );

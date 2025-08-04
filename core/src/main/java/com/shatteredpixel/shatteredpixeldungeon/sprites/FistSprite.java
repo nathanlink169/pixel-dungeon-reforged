@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -50,8 +53,8 @@ public abstract class FistSprite extends MobSprite {
 	private Emitter particles;
 	protected abstract Emitter createEmitter();
 
-	public FistSprite() {
-		super();
+	@Override
+	protected void setupFrames() {
 
 		int c = texOffset();
 
@@ -73,8 +76,12 @@ public abstract class FistSprite extends MobSprite {
 
 		die = new Animation( 10, false );
 		die.frames( frames, c+0, c+2, c+3, c+4 );
+	}
 
-		play( idle );
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		zap = attack.clone();
 	}
 
 	@Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -29,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollExileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.BArray;
@@ -43,10 +48,9 @@ public class GnollExile extends Gnoll {
 	//in exchange, they do not aggro automatically, and drop extra loot
 
 	{
-		spriteClass = GnollExileSprite.class;
-
 		PASSIVE = new Passive();
 		WANDERING = new Wandering();
+		HUNTING = new Hunting();
 		state = PASSIVE;
 
 		defenseSkill = 6;
@@ -54,9 +58,15 @@ public class GnollExile extends Gnoll {
 
 		lootChance = 0f; //see rollToDropLoot
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return GnollExileSprite.class;
+	}
 
 	@Override
-	public int damageRoll() {
+	public int damageRoll( boolean isMaxDamage)	{
+		if (isMaxDamage)
+			return 10;
 		return Random.NormalIntRange( 1, 10 );
 	}
 
@@ -127,12 +137,14 @@ public class GnollExile extends Gnoll {
 	}
 
 	@Override
-	public String description() {
-		String desc = super.description();
-		if (state == PASSIVE){
-			desc += "\n\n" + Messages.get(this, "desc_passive");
-		} else {
-			desc += "\n\n" + Messages.get(this, "desc_aggro");
+	public String description(boolean forceNoMonsterUnknown) {
+		String desc = super.description(forceNoMonsterUnknown);
+		if (!Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			if (state == PASSIVE) {
+				desc += "\n\n" + Messages.get(this, "desc_passive");
+			} else {
+				desc += "\n\n" + Messages.get(this, "desc_aggro");
+			}
 		}
 		return desc;
 	}
@@ -185,5 +197,4 @@ public class GnollExile extends Gnoll {
 			return super.noticeEnemy();
 		}
 	}
-
 }

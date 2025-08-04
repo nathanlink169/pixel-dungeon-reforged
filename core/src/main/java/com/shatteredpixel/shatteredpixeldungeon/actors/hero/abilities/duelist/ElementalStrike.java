@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -63,6 +66,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Dazzling;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Displacing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Explosive;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Friendly;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Leech;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Polarized;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Sacrificial;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Wayward;
@@ -122,6 +126,7 @@ public class ElementalStrike extends ArmorAbility {
 		effectTypes.put(Displacing.class,   MagicMissile.SHADOW_CONE);
 		effectTypes.put(Dazzling.class,     MagicMissile.SHADOW_CONE);
 		effectTypes.put(Explosive.class,    MagicMissile.SHADOW_CONE);
+		effectTypes.put(Leech.class,		MagicMissile.SHADOW_CONE);
 		effectTypes.put(Sacrificial.class,  MagicMissile.SHADOW_CONE);
 		effectTypes.put(Wayward.class,      MagicMissile.SHADOW_CONE);
 		effectTypes.put(Polarized.class,    MagicMissile.SHADOW_CONE);
@@ -267,7 +272,7 @@ public class ElementalStrike extends ArmorAbility {
 			}
 
 		//*** Sacrificial ***
-		} else if (ench instanceof Sacrificial){
+		} else if (ench instanceof Sacrificial || ench instanceof Leech){
 			Buff.affect(hero, Bleeding.class).set(10 * powerMulti);
 		}
 
@@ -520,8 +525,8 @@ public class ElementalStrike extends ArmorAbility {
 				if (exploding != null) new Bomb.ConjuredBomb().explode(exploding.pos);
 			}
 
-		//*** Sacrificial ***
-		} else if (ench instanceof Sacrificial){
+		//*** Sacrificial and Leech ***
+		} else if (ench instanceof Sacrificial || ench instanceof Leech){
 			for (Char ch : affected){
 				Buff.affect(ch, Bleeding.class).set(12f*powerMulti);
 			}

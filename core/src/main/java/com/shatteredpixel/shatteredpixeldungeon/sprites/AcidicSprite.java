@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,29 +28,29 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.watabou.noosa.TextureFilm;
 
 public class AcidicSprite extends ScorpioSprite {
-	
-	public AcidicSprite() {
-		super();
-		
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.SCORPIO );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 17, 17 );
-		
+
 		idle = new Animation( 12, true );
 		idle.frames( frames, 15, 15, 15, 15, 15, 15, 15, 15, 16, 17, 16, 17, 16, 17 );
-		
+
 		run = new Animation( 4, true );
 		run.frames( frames, 20, 21 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, 15, 18, 19 );
-		
-		zap = attack.clone();
-		
+
 		die = new Animation( 12, false );
 		die.frames( frames, 15, 22, 23, 24, 25 );
-		
-		play( idle );
 	}
 	
 	@Override

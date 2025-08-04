@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -39,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MimicTooth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -50,22 +54,25 @@ import java.util.ArrayList;
 public class CrystalMimic extends Mimic {
 
 	{
-		spriteClass = MimicSprite.Crystal.class;
-
 		FLEEING = new Fleeing();
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return MimicSprite.Crystal.class;
 	}
 
 	@Override
-	public String name() {
+	public String name(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(Heap.class, "crystal_chest");
 		} else {
-			return super.name();
+			return super.name(forceNoMonsterUnknown);
 		}
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			String desc = null;
 			for (Item i : items){
@@ -88,7 +95,7 @@ public class CrystalMimic extends Mimic {
 			}
 			return desc;
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +25,9 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
@@ -41,6 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.EyeSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -49,11 +55,9 @@ import com.watabou.utils.Random;
 public class Eye extends Mob {
 	
 	{
-		spriteClass = EyeSprite.class;
-		
-		HP = HT = 100;
+		HP = HT = getRandomizerEnabled(RandomTraits.DURABLE_EYE) ? 150 : 110;
 		defenseSkill = 20;
-		viewDistance = Light.DISTANCE;
+		viewDistance = Light.DISTANCE - 1;
 		
 		EXP = 13;
 		maxLvl = 26;
@@ -66,6 +70,11 @@ public class Eye extends Mob {
 		lootChance = 1f;
 
 		properties.add(Property.DEMONIC);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return EyeSprite.class;
 	}
 
 	@Override
@@ -96,7 +105,8 @@ public class Eye extends Mob {
 			Ballistica aim = new Ballistica(pos, enemy.pos, Ballistica.STOP_SOLID);
 
 			if (enemy.invisible == 0 && !isCharmedBy(enemy) && fieldOfView[enemy.pos]
-					&& (super.canAttack(enemy) || aim.subPath(1, aim.dist).contains(enemy.pos))){
+					&& (super.canAttack(enemy) || aim.subPath(1, aim.dist).contains(enemy.pos)) &&
+					!(getRandomizerEnabled(RandomTraits.MYOPIC_VISION) && distance(enemy) > 3)){
 				beam = aim;
 				beamTarget = enemy.pos;
 				return true;
@@ -132,7 +142,13 @@ public class Eye extends Mob {
 			return super.doAttack(enemy);
 		} else if (!beamCharged){
 			((EyeSprite)sprite).charge( enemy.pos );
-			spend( attackDelay()*2f );
+			if (getRandomizerEnabled(RandomTraits.RAPID_CHARGE)) {
+				spend (attackDelay());
+			} else if (getRandomizerEnabled(RandomTraits.SLUGGISH_CHARGE)) {
+				spend (attackDelay() * 4f);
+			} else {
+				spend(attackDelay() * 2f);
+			}
 			beamCharged = true;
 			return true;
 		} else {
@@ -152,9 +168,9 @@ public class Eye extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (beamCharged) dmg /= 4;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -191,7 +207,16 @@ public class Eye extends Mob {
 				continue;
 			}
 
-			if (hit( this, ch, true )) {
+			boolean isHit;
+			if (getRandomizerEnabled(RandomTraits.UNDODGEABLE_BEAM)) {
+				isHit = hit(this, ch, 10000.0f, true);
+			} else if (getRandomizerEnabled(RandomTraits.PREDICTABLE_BEAM)) {
+				isHit = hit(this, ch, 2.0f / 3.0f, true);
+			} else {
+				isHit = hit(this, ch, true);
+			}
+
+			if (isHit) {
 				int dmg = Random.NormalIntRange( 30, 50 );
 				dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
 
@@ -294,5 +319,21 @@ public class Eye extends Mob {
 			}
 			return super.act(enemyInFOV, justAlerted);
 		}
+	}
+
+	public enum RandomTraits {
+		UNDODGEABLE_BEAM, RAPID_CHARGE, DURABLE_EYE, MYOPIC_VISION, SLUGGISH_CHARGE, PREDICTABLE_BEAM
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case UNDODGEABLE_BEAM: return Randomizer.getCreatureBuff(Eye.class) == 1;
+			case RAPID_CHARGE: return Randomizer.getCreatureBuff(Eye.class) == 2;
+			case DURABLE_EYE: return Randomizer.getCreatureBuff(Eye.class) == 3;
+			case MYOPIC_VISION: return Randomizer.getCreatureNerf(Eye.class) == 1;
+			case SLUGGISH_CHARGE: return Randomizer.getCreatureNerf(Eye.class) == 2;
+			case PREDICTABLE_BEAM: return Randomizer.getCreatureNerf(Eye.class) == 3;
+		}
+		return false;
 	}
 }

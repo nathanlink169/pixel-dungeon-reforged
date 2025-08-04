@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -39,6 +43,9 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoo
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BlacksmithSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBlacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
@@ -53,9 +60,12 @@ import java.util.Collection;
 public class Blacksmith extends NPC {
 	
 	{
-		spriteClass = BlacksmithSprite.class;
-
 		properties.add(Property.IMMOVABLE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return BlacksmithSprite.class;
 	}
 
 	@Override
@@ -186,7 +196,7 @@ public class Blacksmith extends NPC {
 	}
 	
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		//do nothing
 	}
 
@@ -365,8 +375,6 @@ public class Blacksmith extends NPC {
 				type = Random.IntRange(1, 3);
 				if (type == 3)
 					type = 4; // skip the fungi quest, move to kobold quest
-
-				type = 4; // debug, testing kobold quest
 				
 				given = false;
 				generateRewards( true );

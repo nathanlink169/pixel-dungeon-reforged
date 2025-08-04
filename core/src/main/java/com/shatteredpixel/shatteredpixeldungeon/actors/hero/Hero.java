@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -41,7 +45,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barkskin;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Berserk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Combo;
@@ -67,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.TimeStasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.artificer.Reflection;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.AscendedForm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Challenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.ElementalStrike;
@@ -80,20 +84,25 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Smite;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Monk;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Slime;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Snake;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Succubus;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wyrm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CheckedCell;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
+import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
+import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap.Type;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -140,9 +149,11 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfCha
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ThirteenLeafClover;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses.Leech;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -171,15 +182,16 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
-import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StatusPane;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHero;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndResurrect;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndTradeItem;
 import com.watabou.noosa.Game;
+import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.tweeners.Delayer;
 import com.watabou.utils.BArray;
@@ -237,7 +249,7 @@ public class Hero extends Char {
 	
 	public int lvl = 1;
 	public int exp = 0;
-	
+
 	private int constructRespawnTimer = 0;
 	private boolean doesConstructExist = false;
 	
@@ -436,7 +448,7 @@ public class Hero extends Char {
 	}
 
 	@Override
-	public String name(){
+	public String name(boolean forceNoMonsterUnknown){
 		if (buff(HeroDisguise.class) != null) {
 			return buff(HeroDisguise.class).getDisguise().title();
 		} else {
@@ -494,10 +506,14 @@ public class Hero extends Char {
 		//TODO improve this!
 		belongings.thrownWeapon = wep;
 		float accuracy = 1.0f;
-		if (this.hasTalent(Talent.EFFECTIVE_SHOT) && wep instanceof Gun.Bullet && this.buff(EffectiveShotCooldown.class) == null) {
-			accuracy = 1000000.0f;
+		if (this.hasTalent(Talent.EFFECTIVE_SHOT) && this.buff(EffectiveShotCooldown.class) == null) {
+			if (wep instanceof Gun.Bullet) {
+				accuracy = 1000000.0f;
+			} else if (wep instanceof MissileWeapon && heroClass != HeroClass.ARTIFICER) {
+				accuracy = 1000000.0f;
+			}
 		}
-		boolean hit = attack( enemy, 1.0f, 0.0f, accuracy );
+		boolean hit = attack( enemy, 1.0f, 0.0f, accuracy, wep.damageType );
 		Invisibility.dispel();
 		belongings.thrownWeapon = null;
 
@@ -703,6 +719,10 @@ public class Hero extends Char {
 			dmg = Math.round(dmg * 1.025f + (.025f*pointsInTalent(Talent.WEAPON_RECHARGING)));
 		}
 
+		if (isCharmedBy( enemy ) && enemy instanceof Succubus && Succubus.getRandomizerEnabled(Succubus.RandomTraits.PARTIAL_RESISTANCE)){
+			dmg /= 2;
+		}
+
 		if (dmg < 0) dmg = 0;
 		return dmg;
 	}
@@ -722,6 +742,7 @@ public class Hero extends Char {
 		float speed = super.speed();
 
 		speed *= RingOfHaste.speedMultiplier(this);
+		speed *= Reflection.speedMultiplier(this);
 		
 		if (belongings.armor() != null) {
 			speed = belongings.armor().speedFactor(this, speed);
@@ -819,11 +840,13 @@ public class Hero extends Char {
 
 	@Override
 	public void spend( float time ) {
+		checkLeech(time);
 		super.spend(time);
 	}
 
 	@Override
 	public void spendConstant(float time) {
+		checkLeech(time);
 		justMoved = false;
 		super.spendConstant(time);
 	}
@@ -838,6 +861,17 @@ public class Hero extends Char {
 		busy();
 		spend( time );
 		next();
+	}
+
+	private void checkLeech( float time ) {
+		ArrayList<Weapon> weapons = belongings.getAllItems(Weapon.class);
+		for (Weapon weapon : weapons) {
+			if (weapon.isEquipped(this)) {
+				if (weapon.enchantment instanceof Leech) {
+					((Leech) weapon.enchantment).triggerDamage(this, time);
+				}
+			}
+		}
 	}
 	
 	@Override
@@ -937,7 +971,7 @@ public class Hero extends Char {
 		if(hasTalent(Talent.BARKSKIN) && Dungeon.level.map[pos] == Terrain.FURROWED_GRASS){
 			Barkskin.conditionallyAppend(this, (lvl*pointsInTalent(Talent.BARKSKIN))/2, 1 );
 		}
-		
+
 		if (subClass == HeroSubClass.CONSTRUCTOR ) {
 			if (constructRespawnTimer <= 0 && !doesConstructExist) {
 				// Check to see if one already exists
@@ -960,6 +994,7 @@ public class Hero extends Char {
 
 					if (spawnPoints.size() > 0) {
 						ConstructHero construct = new ConstructHero();
+						construct.setupActionIndicator();
 						construct.id();
 						construct.pos = Random.element(spawnPoints);
 
@@ -976,7 +1011,7 @@ public class Hero extends Char {
 		
 		return actResult;
 	}
-	
+
 	public void NotifyConstructDeath() {
 		constructRespawnTimer = 50;
 		doesConstructExist = false;
@@ -1137,6 +1172,15 @@ public class Hero extends Char {
 				Item item = heap.peek();
 				if (item.doPickUp( this )) {
 					heap.pickUp();
+					int count = 0;
+					Item existing = belongings.getItem(item.getClass());
+					if (existing != null) {
+						count = existing.quantity();
+					} else if (item instanceof Gold) {
+						count = Dungeon.gold;
+					} else if (item instanceof EnergyCrystal) {
+						count = Dungeon.energy;
+					}
 
 					if (item instanceof Dewdrop
 							|| item instanceof TimekeepersHourglass.sandBag
@@ -1145,7 +1189,6 @@ public class Hero extends Char {
 							|| item instanceof Guidebook) {
 						//Do Nothing
 					} else if (item instanceof DarkGold) {
-						DarkGold existing = belongings.getItem(DarkGold.class);
 						if (existing != null){
 							if (existing.quantity() >= 40) {
 								GLog.p(Messages.get(DarkGold.class, "you_now_have", existing.quantity()));
@@ -1159,9 +1202,19 @@ public class Hero extends Char {
 						boolean important = item.unique && item.isIdentified() &&
 								(item instanceof Scroll || item instanceof Potion);
 						if (important) {
-							GLog.p( Messages.capitalize(Messages.get(this, "you_now_have", item.name())) );
+							if (item.stackable) {
+								GLog.p(Messages.capitalize(Messages.get(this, "you_now_have_count", item.name(), count)));
+							}
+							else {
+								GLog.p(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
+							}
 						} else {
-							GLog.i( Messages.capitalize(Messages.get(this, "you_now_have", item.name())) );
+							if (item.stackable) {
+								GLog.i(Messages.capitalize(Messages.get(this, "you_now_have_count", item.name(), count)));
+							}
+							else {
+								GLog.i(Messages.capitalize(Messages.get(this, "you_now_have", item.name())));
+							}
 						}
 					}
 					
@@ -1444,8 +1497,61 @@ public class Hero extends Char {
 			return false;
 
 		} else if (!Dungeon.level.locked && transition != null && transition.inside(pos)) {
-
-			if (Dungeon.level.activateTransition(this, transition)){
+			if (Dungeon.depth >= 21 && Dungeon.depth <= 24 && HalfRipper.Quest.started() && !HalfRipper.Quest.failed() && !HalfRipper.Quest.completed()) {
+				HalfRipper hr = null;
+				for (Mob m : Dungeon.level.mobs) {
+					if (m instanceof HalfRipper) {
+						hr = (HalfRipper) m;
+						break;
+					}
+				}
+				if (hr != null) {
+					// If the half ripper is close enough, just ascend it
+					if (Dungeon.level.trueDistance(pos, hr.pos) < 5.0f && Dungeon.level.getTransition(pos).type == LevelTransition.Type.REGULAR_ENTRANCE) {
+						hr.ascend();
+						if (Dungeon.depth == 21) {
+							ready();
+						} else if (Dungeon.level.activateTransition(this, transition)){
+							curAction = null;
+						} else {
+							ready();
+						}
+					} else {
+						HalfRipper finalHr = hr;
+						final String abandonTitle = HalfRipper.Quest.GetAbandonTitleKey();
+						final String abandonDescriptionKey = HalfRipper.Quest.GetAbandonDescriptionKey(Dungeon.level.getTransition(pos).type == LevelTransition.Type.REGULAR_ENTRANCE);
+						Game.runOnRenderThread(new Callback() {
+							public void call() {
+								GameScene.show(
+										new	WndOptions(new Image(finalHr.sprite),
+														Messages.get(HalfRipper.class, abandonTitle),
+														Messages.get(HalfRipper.class, abandonDescriptionKey),
+														Messages.get(HalfRipper.class, "hero_leave"), Messages.get(HalfRipper.class, "hero_stay")) {
+													@Override
+													protected void onSelect(int index) {
+														if (index == 0) {
+															if (Dungeon.level.activateTransition(Hero.this, transition)) {
+																curAction = null;
+															} else {
+																ready();
+															}
+														}
+														else {
+															ready();
+														}
+													}
+												}
+								);
+							}
+						});
+					}
+				} else if (Dungeon.level.activateTransition(this, transition)) {
+					curAction = null;
+				} else {
+					ready();
+				}
+			}
+			else if (Dungeon.level.activateTransition(this, transition)) {
 				curAction = null;
 			} else {
 				ready();
@@ -1468,9 +1574,11 @@ public class Hero extends Char {
 		enemy = action.target;
 
 		if (isCharmedBy( enemy )){
-			GLog.w( Messages.get(Charm.class, "cant_attack"));
-			ready();
-			return false;
+			if (!(enemy instanceof Succubus && Succubus.getRandomizerEnabled(Succubus.RandomTraits.PARTIAL_RESISTANCE))) {
+				GLog.w( Messages.get(Charm.class, "cant_attack"));
+				ready();
+				return false;
+			}
 		}
 
 		if (enemy.isAlive() && canAttack( enemy ) && enemy.invisible == 0) {
@@ -1631,7 +1739,7 @@ public class Hero extends Char {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		if (buff(TimekeepersHourglass.timeStasis.class) != null
 				|| buff(TimeStasis.class) != null) {
 			return;
@@ -1657,6 +1765,7 @@ public class Hero extends Char {
 			if (endure != null){
 				damage = endure.adjustDamageTaken(dmg);
 			}
+
 			//the same also applies to challenge scroll damage reduction
 			if (buff(ScrollOfChallenge.ChallengeArena.class) != null){
 				damage *= 0.67f;
@@ -1666,6 +1775,9 @@ public class Hero extends Char {
 				damage *= 0.2f;
 			}
 		}
+
+		Reflection.ReflectionTracker reflection = buff(Reflection.ReflectionTracker.class);
+		if (reflection != null) damage = reflection.handledamageTaken((src instanceof Char ? (Char)src : null), damage);
 
 		//unused, could be removed
 		CapeOfThorns.Thorns thorns = buff( CapeOfThorns.Thorns.class );
@@ -1680,12 +1792,11 @@ public class Hero extends Char {
 
 		dmg = Math.round(damage);
 
-		//we ceil this one to avoid letting the player easily take 0 dmg from tenacity early
-		dmg = (int)Math.ceil(dmg * RingOfTenacity.damageMultiplier( this ));
+		dmg = RingOfTenacity.getDamageTaken(this, dmg);
 
 		int preHP = HP + shielding();
 		if (src instanceof Hunger) preHP -= shielding();
-		super.damage( dmg, src );
+		super.damage( dmg, src, damageType );
 		int postHP = HP + shielding();
 		if (src instanceof Hunger) postHP -= shielding();
 		int effectiveDamage = preHP - postHP;
@@ -1727,6 +1838,11 @@ public class Hero extends Char {
 		for (Mob m : Dungeon.level.mobs.toArray(new Mob[0])) {
 			if (fieldOfView[ m.pos ] && m.landmark() != null){
 				Notes.add(m.landmark());
+			}
+			if (m instanceof Slime && Slime.getRandomizerEnabled(Slime.RandomTraits.CHAMELEON_OOZE)) {
+				if (((Slime) m).stealthy()) {
+					continue;
+				}
 			}
 
 			if (fieldOfView[ m.pos ] && m.alignment == Alignment.ENEMY) {
@@ -2006,7 +2122,7 @@ public class Hero extends Char {
 				&& !Dungeon.level.plants.containsKey(cell)
 				&& (Dungeon.depth < 26 || Dungeon.level.getTransition(cell).type == LevelTransition.Type.REGULAR_ENTRANCE) ) {
 
-			curAction = new HeroAction.LvlTransition( cell );
+				curAction = new HeroAction.LvlTransition(cell);
 			
 		}  else {
 			
@@ -2365,7 +2481,9 @@ public class Hero extends Char {
 		boolean wasEnemy = enemy.alignment == Alignment.ENEMY
 				|| (enemy instanceof Mimic && enemy.alignment == Alignment.NEUTRAL);
 
-		boolean hit = attack( enemy );
+		KindOfWeapon wep = this.belongings.attackingWeapon();
+
+		boolean hit = attack( enemy, wep != null ? wep.damageType : DamageType.NONE );
 		
 		Invisibility.dispel();
 		spend( attackDelay() );
@@ -2532,6 +2650,11 @@ public class Hero extends Char {
 						//unintentional trap detection scales from 40% at floor 0 to 30% at floor 25
 						} else if (Dungeon.level.map[curr] == Terrain.SECRET_TRAP) {
 							chance = 0.4f - (Dungeon.depth / 250f);
+
+							// Bonus for adaptive minefield
+							if (heroClass != HeroClass.ARTIFICER) {
+								chance += 0.1f * pointsInTalent(Talent.ADAPTIVE_MINEFIELD);
+							}
 							
 						//unintentional door detection scales from 20% at floor 0 to 0% at floor 20
 						} else {

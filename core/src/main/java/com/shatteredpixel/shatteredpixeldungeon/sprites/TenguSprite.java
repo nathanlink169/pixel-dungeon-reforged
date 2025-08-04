@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -29,30 +32,32 @@ import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.Callback;
 
 public class TenguSprite extends MobSprite {
-	
-	public TenguSprite() {
-		super();
-		
-		texture( Assets.Sprites.TENGU );
-		
-		TextureFilm frames = new TextureFilm( texture, 14, 16 );
-		
-		idle = new Animation( 2, true );
-		idle.frames( frames, 0, 0, 0, 1 );
-		
-		run = new Animation( 15, false );
-		run.frames( frames, 2, 3, 4, 5, 0 );
-		
-		attack = new Animation( 15, false );
-		attack.frames( frames, 6, 7, 7, 0 );
-		
+	@Override
+	public void setup() {
+		super.setup();
 		zap = attack.clone();
-		
-		die = new Animation( 8, false );
-		die.frames( frames, 8, 9, 10, 10, 10, 10, 10, 10 );
 		
 		play( run );
 		isMoving = true;
+	}
+
+	@Override
+	protected void setupFrames() {
+		texture( Assets.Sprites.TENGU );
+
+		TextureFilm frames = new TextureFilm( texture, 14, 16 );
+
+		idle = new Animation( 2, true );
+		idle.frames( frames, 0, 0, 0, 1 );
+
+		run = new Animation( 15, false );
+		run.frames( frames, 2, 3, 4, 5, 0 );
+
+		attack = new Animation( 15, false );
+		attack.frames( frames, 6, 7, 7, 0 );
+
+		die = new Animation( 8, false );
+		die.frames( frames, 8, 9, 10, 10, 10, 10, 10, 10 );
 	}
 
 	@Override

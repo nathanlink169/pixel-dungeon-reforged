@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,9 +40,8 @@ public class LotusSprite extends MobSprite {
 
 	private ArrayList<Emitter> grassVfx;
 
-	public LotusSprite(){
-		super();
-
+	@Override
+	protected void setupFrames() {
 		perspectiveRaise = 0f;
 
 		texture( Assets.Sprites.LOTUS );
@@ -57,8 +59,11 @@ public class LotusSprite extends MobSprite {
 
 		die = new MovieClip.Animation( 1, false );
 		die.frames( frames, 0 );
+	}
 
-		play( idle );
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		setupFrames(); // is plant
 	}
 
 	@Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,24 +24,37 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Pasty;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SeniorSprite;
 import com.watabou.utils.Random;
 
 public class Senior extends Monk {
 
 	{
-		spriteClass = SeniorSprite.class;
-
 		loot = Pasty.class;
 		lootChance = 1f;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return SeniorSprite.class;
 	}
 	
 	@Override
 	public void move( int step, boolean travelling) {
 		// on top of the existing move bonus, senior monks get a further 1.66 cooldown reduction
 		// for a total of 3.33, double the normal 1.67 for regular monks
-		if (travelling) focusCooldown -= 1.66f;
+		if (travelling) {
+			focusCooldown -= 1.66f;
+			if (getRandomizerEnabled(RandomTraits.RAPID_MEDITATION)) {
+				focusCooldown = -1.0f; // Moving immediate focus
+			}
+		}
 		super.move( step, travelling);
 	}
 	

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -29,29 +32,40 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class WarlockSprite extends MobSprite {
-	
-	public WarlockSprite() {
-		super();
-		
+	private Animation dancing;
+
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.WARLOCK );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
-		
+
 		idle = new Animation( 2, true );
 		idle.frames( frames, 0, 0, 0, 1, 0, 0, 1, 1 );
-		
+
 		run = new Animation( 15, true );
 		run.frames( frames, 0, 2, 3, 4 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 0, 5, 6 );
-		
-		zap = attack.clone();
-		
+
 		die = new Animation( 15, false );
 		die.frames( frames, 0, 7, 8, 8, 9, 10 );
-		
-		play( idle );
+
+		dancing = new Animation(5, true);
+		dancing.frames( frames, 11, 15, 17, 13, 14, 18, 11, 16, 17, 12, 14, 19 );
+	}
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		dancing = idle.clone();
 	}
 	
 	public void zap( int cell ) {
@@ -77,5 +91,12 @@ public class WarlockSprite extends MobSprite {
 			idle();
 		}
 		super.onComplete( anim );
+	}
+
+	public boolean isDancing() {
+		return (curAnim == dancing);
+	}
+	public void dance(){
+		play(dancing);
 	}
 }

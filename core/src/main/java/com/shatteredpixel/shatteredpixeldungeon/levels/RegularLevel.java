@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -99,6 +102,8 @@ public abstract class RegularLevel extends Level {
 	
 	protected Room roomEntrance;
 	protected Room roomExit;
+	public Room GetEntranceRoom() { return roomEntrance; }
+	public Room GetExitRoom() { return roomExit; }
 	
 	@Override
 	protected boolean build() {
@@ -211,6 +216,9 @@ public abstract class RegularLevel extends Level {
 		int mobs = 3 + Dungeon.depth % 5 + Random.Int(3);
 		if (feeling == Feeling.LARGE){
 			mobs = (int)Math.ceil(mobs * 1.33f);
+		}
+		if (Dungeon.isChallenged(Challenges.HORDE)) {
+			mobs *= 2;
 		}
 		return mobs;
 	}

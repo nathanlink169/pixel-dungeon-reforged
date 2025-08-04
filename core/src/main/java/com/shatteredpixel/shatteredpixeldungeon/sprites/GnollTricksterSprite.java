@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,9 +35,14 @@ public class GnollTricksterSprite extends MobSprite {
 
 	private Animation cast;
 
-	public GnollTricksterSprite() {
-		super();
+	@Override
+	public void setup() {
+		super.setup();
+		cast = attack.clone();
+	}
 
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.GNOLL );
 
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
@@ -50,12 +58,8 @@ public class GnollTricksterSprite extends MobSprite {
 		attack = new MovieClip.Animation( 12, false );
 		attack.frames( frames, 2+c, 3+c, 0+c );
 
-		cast = attack.clone();
-
 		die = new Animation( 12, false );
 		die.frames( frames, 8+c, 9+c, 10+c );
-
-		play( idle );
 	}
 
 	@Override

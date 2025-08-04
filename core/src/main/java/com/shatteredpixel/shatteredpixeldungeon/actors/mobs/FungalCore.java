@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,14 +24,18 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.FungalCoreSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 
 public class FungalCore extends Mob {
 
 	{
 		HP = HT = 300;
-		spriteClass = FungalCoreSprite.class;
 
 		EXP = 20;
 
@@ -36,6 +43,10 @@ public class FungalCore extends Mob {
 
 		properties.add(Property.IMMOVABLE);
 		properties.add(Property.BOSS);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return FungalCoreSprite.class;
 	}
 
 	@Override

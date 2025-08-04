@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -414,7 +417,7 @@ public class WndRanking extends WndTabbed {
 			camera = WndRanking.this.camera;
 
 			Component badges;
-			if (Badges.filterReplacedBadges(false).size() <= 8){
+			if (Badges.GetVisibleBadges(false).size() <= 8){
 				badges = new BadgesList(false);
 			} else {
 				badges = new BadgesGrid(false);

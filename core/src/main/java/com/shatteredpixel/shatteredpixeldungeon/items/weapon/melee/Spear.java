@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -29,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -47,6 +51,8 @@ public class Spear extends MeleeWeapon {
 		tier = 2;
 		DLY = 1.5f; //0.67x speed
 		RCH = 2;    //extra reach
+
+		damageType = DamageType.PIERCING;
 	}
 
 	@Override
@@ -108,7 +114,7 @@ public class Spear extends MeleeWeapon {
 				AttackIndicator.target(enemy);
 				int oldPos = enemy.pos;
 				//do not push if enemy has moved, or another push is active (e.g. elastic)
-				if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY)) {
+				if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING)) {
 					if (enemy.isAlive() && enemy.pos == oldPos && !Pushing.pushingExistsForChar(enemy)){
 						//trace a ballistica to our target (which will also extend past them
 						Ballistica trajectory = new Ballistica(hero.pos, enemy.pos, Ballistica.STOP_TARGET);

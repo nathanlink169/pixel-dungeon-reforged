@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,15 +26,18 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Freezing;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
@@ -63,11 +69,12 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 
 public abstract class Elemental extends Mob {
 
 	{
-		HP = HT = 60;
+		HP = HT = getRandomizerEnabled(RandomTraits.EMPOWERED_FORM, this) ? 90 : 60;
 		defenseSkill = 20;
 		
 		EXP = 10;
@@ -119,6 +126,9 @@ public abstract class Elemental extends Mob {
 	protected boolean act() {
 		if (state == HUNTING){
 			rangedCooldown--;
+			if (getRandomizerEnabled(RandomTraits.RANGED_MASTERY, this)) {
+				rangedCooldown = 0;
+			}
 		}
 		
 		return super.act();
@@ -181,6 +191,9 @@ public abstract class Elemental extends Mob {
 		}
 
 		rangedCooldown = Random.NormalIntRange( 3, 5 );
+		if (getRandomizerEnabled(RandomTraits.RANGED_MASTERY, this)) {
+			rangedCooldown = 0;
+		}
 	}
 	
 	public void onZapComplete() {
@@ -224,24 +237,100 @@ public abstract class Elemental extends Mob {
 			setSummonedALly();
 		}
 	}
+	@Override
+	protected HashSet<Char> getPotentialAttackTargets() {
+		if (!getRandomizerEnabled(RandomTraits.CHAOTIC_RAMPAGE, this)) {
+			return super.getPotentialAttackTargets();
+		}
+		// exact same as super, but we want to target anything that's not neutral
+		HashSet<Char> enemies = new HashSet<>();
+
+		//if we are amoked...
+		if ( buff(Amok.class) != null) {
+			//try to find an enemy mob to attack first.
+			for (Mob mob : Dungeon.level.mobs)
+				if (mob.alignment == Alignment.ENEMY && mob != this
+						&& fieldOfView[mob.pos] && mob.invisible <= 0) {
+					enemies.add(mob);
+				}
+
+			if (enemies.isEmpty()) {
+				//try to find ally mobs to attack second.
+				for (Mob mob : Dungeon.level.mobs)
+					if (mob.alignment == Alignment.ALLY && mob != this
+							&& fieldOfView[mob.pos] && mob.invisible <= 0) {
+						enemies.add(mob);
+					}
+
+				if (enemies.isEmpty()) {
+					//try to find the hero third
+					if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
+						enemies.add(Dungeon.hero);
+					}
+				}
+			}
+
+			//if we are an ally...
+		} else if ( alignment == Alignment.ALLY ) {
+			//look for hostile mobs to attack
+			for (Mob mob : Dungeon.level.mobs)
+				if (mob.alignment == Alignment.ENEMY && fieldOfView[mob.pos]
+						&& mob.invisible <= 0 && !mob.isInvulnerable(getClass()))
+					//do not target passive mobs
+					//intelligent allies also don't target mobs which are wandering or asleep
+					if (mob.state != mob.PASSIVE &&
+							(!intelligentAlly || (mob.state != mob.SLEEPING && mob.state != mob.WANDERING))) {
+						enemies.add(mob);
+					}
+
+			//if we are an enemy...
+		} else if (alignment == Alignment.ENEMY) {
+			//look for mobs to attack
+			for (Mob mob : Dungeon.level.mobs)
+				if ((mob.alignment != Alignment.NEUTRAL && fieldOfView[mob.pos] && mob.invisible <= 0))
+					enemies.add(mob);
+
+			//and look for the hero
+			if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
+				enemies.add(Dungeon.hero);
+			}
+
+		}
+
+		//do not target anything that's charming us
+		Charm charm = buff( Charm.class );
+		if (charm != null){
+			Char source = (Char) Actor.findById( charm.object );
+			if (source != null && enemies.contains(source) && enemies.size() > 1){
+				enemies.remove(source);
+			}
+		}
+		return enemies;
+	}
 	
 	public static class FireElemental extends Elemental {
 		
 		{
-			spriteClass = ElementalSprite.Fire.class;
-			
 			loot = PotionOfLiquidFlame.class;
-			lootChance = 1/8f;
+			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 0.75f : 1/8f;
 			
 			properties.add( Property.FIERY );
 			
 			harmfulBuffs.add( com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost.class );
 			harmfulBuffs.add( Chill.class );
 		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ElementalSprite.Fire.class;
+		}
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
-			if (Random.Int( 2 ) == 0 && !Dungeon.level.water[enemy.pos]) {
+			if (getRandomizerEnabled(RandomTraits.INSULATION, this)) {
+				return;
+			}
+
+			if (Random.Int( 2 ) == 0 && !Dungeon.level.water[enemy.pos] || getRandomizerEnabled(RandomTraits.ELEMENTAL_OVERLOAD, this)) {
 				Buff.affect( enemy, Burning.class ).reignite( enemy );
 				if (enemy.sprite.visible) Splash.at( enemy.sprite.center(), sprite.blood(), 5);
 			}
@@ -261,11 +350,14 @@ public abstract class Elemental extends Mob {
 	public static class NewbornFireElemental extends FireElemental {
 		
 		{
-			spriteClass = ElementalSprite.NewbornFire.class;
-
+			HP = HT = 60; // not affected by randomizer
 			defenseSkill = 12;
 			
 			properties.add(Property.MINIBOSS);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ElementalSprite.NewbornFire.class;
 		}
 
 		private int targetingPos = -1;
@@ -438,8 +530,8 @@ public abstract class Elemental extends Mob {
 		}
 
 		@Override
-		public String description() {
-			String desc = super.description();
+		public String description(boolean forceNoMonsterUnknown) {
+			String desc = super.description(forceNoMonsterUnknown);
 
 			if (summonedALly){
 				desc += " " + Messages.get(this, "desc_ally");
@@ -479,19 +571,25 @@ public abstract class Elemental extends Mob {
 	public static class FrostElemental extends Elemental {
 		
 		{
-			spriteClass = ElementalSprite.Frost.class;
-			
 			loot = PotionOfFrost.class;
-			lootChance = 1/8f;
+			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 0.75f : 1/8f;
 			
 			properties.add( Property.ICY );
 			
 			harmfulBuffs.add( Burning.class );
 		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ElementalSprite.Frost.class;
+		}
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
-			if (Random.Int( 3 ) == 0 || Dungeon.level.water[enemy.pos]) {
+			if (getRandomizerEnabled(RandomTraits.INSULATION, this)) {
+				return;
+			}
+
+			if (Random.Int( 3 ) == 0 || Dungeon.level.water[enemy.pos] || getRandomizerEnabled(RandomTraits.ELEMENTAL_OVERLOAD, this)) {
 				Freezing.freeze( enemy.pos );
 				if (enemy.sprite.visible) Splash.at( enemy.sprite.center(), sprite.blood(), 5);
 			}
@@ -507,12 +605,14 @@ public abstract class Elemental extends Mob {
 	public static class ShockElemental extends Elemental {
 		
 		{
-			spriteClass = ElementalSprite.Shock.class;
-			
 			loot = ScrollOfRecharging.class;
-			lootChance = 1/4f;
+			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 1.0f : 1/4f;
 			
 			properties.add( Property.ELECTRIC );
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ElementalSprite.Shock.class;
 		}
 		
 		@Override
@@ -529,7 +629,7 @@ public abstract class Elemental extends Mob {
 				ch.damage( Math.round( damage * 0.4f ), new Shocking() );
 				if (ch == Dungeon.hero && !ch.isAlive()){
 					Dungeon.fail(this);
-					GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+					GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 				}
 			}
 
@@ -556,10 +656,12 @@ public abstract class Elemental extends Mob {
 	public static class ChaosElemental extends Elemental {
 		
 		{
-			spriteClass = ElementalSprite.Chaos.class;
-			
 			loot = ScrollOfTransmutation.class;
 			lootChance = 1f;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return ElementalSprite.Chaos.class;
 		}
 		
 		@Override
@@ -613,5 +715,24 @@ public abstract class Elemental extends Mob {
 		} else {
 			return ShockElemental.class;
 		}
+	}
+
+	public enum RandomTraits {
+		ELEMENTAL_OVERLOAD, RANGED_MASTERY, EMPOWERED_FORM, GENEROUS_SPIRIT, CHAOTIC_RAMPAGE, INSULATION
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r, Elemental e) {
+		if (e instanceof NewbornFireElemental) {
+			return false;
+		}
+		switch (r) {
+			case ELEMENTAL_OVERLOAD: return Randomizer.getCreatureBuff(Elemental.class) == 1;
+			case RANGED_MASTERY: return Randomizer.getCreatureBuff(Elemental.class) == 2;
+			case EMPOWERED_FORM: return Randomizer.getCreatureBuff(Elemental.class) == 3;
+			case GENEROUS_SPIRIT: return Randomizer.getCreatureNerf(Elemental.class) == 1;
+			case CHAOTIC_RAMPAGE: return Randomizer.getCreatureNerf(Elemental.class) == 2;
+			case INSULATION: return Randomizer.getCreatureNerf(Elemental.class) == 3;
+		}
+		return false;
 	}
 }

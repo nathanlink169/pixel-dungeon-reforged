@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,9 +43,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.S
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Slime;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.RatKing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Wandmaker;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -54,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
+import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesLevel;
@@ -182,6 +189,8 @@ public class Dungeon {
 
 	public static int challenges;
 	public static int difficulty;
+	public static boolean randomizerEnabled;
+	public static long randomizer;
 	public static int mobsToChampion;
 
 	public static Hero hero;
@@ -242,6 +251,8 @@ public class Dungeon {
 		initialVersion = version = Game.versionCode;
 		challenges = SPDSettings.challenges();
 		difficulty = SPDSettings.difficulty();
+		randomizerEnabled = SPDSettings.randomizerEnabled();
+		Randomizer.initialize();
 		mobsToChampion = -1;
 
 		Actor.clear();
@@ -273,6 +284,12 @@ public class Dungeon {
 		generatedLevels.clear();
 
 		Boss1Version = Random.Int(2);
+		if (!Badges.isUnlocked(Badges.Badge.BOSS_SLAIN_GOO)) { // Ensure Goo is always seen and beaten first
+			Boss1Version = 0;
+		}
+		if (!Bestiary.isSeen(RatKing.class)) { // Ensure rat king has been seen before we see the rat usurper
+			Boss1Version = 0;
+		}
 		Boss2Version = 1;
 		Boss3Version = 1;
 		Boss4Version = 1;
@@ -290,6 +307,7 @@ public class Dungeon {
 		Wandmaker.Quest.reset();
 		Blacksmith.Quest.reset();
 		Imp.Quest.reset();
+		HalfRipper.Quest.reset();
 
 		hero = new Hero();
 		hero.live();
@@ -322,9 +340,6 @@ public class Dungeon {
 					level = new SewerLevel();
 					break;
 				case 5:
-					if (!Badges.isUnlocked(Badges.Badge.BOSS_SLAIN_GOO)) { // Ensure Goo is always seen and beaten first
-						Boss1Version = 0;
-					}
 					if (Boss1Version == 1) level = new SewerBossUsurperLevel();
 					else /* if (Boss1Version == 0) */ level = new SewerBossGooLevel();
 					break;
@@ -410,7 +425,7 @@ public class Dungeon {
 		
 		if (branch == 0) Statistics.qualifiedForNoKilling = !bossLevel();
 		Statistics.qualifiedForBossChallengeBadge = false;
-		
+
 		// This feels really hacky, but it's the only way I can think of to ensure that
 		// the artificer only gains mind vision when going to new levels.
 		if (Dungeon.hero != null) {
@@ -495,9 +510,15 @@ public class Dungeon {
 		}
 		
 		PathFinder.setMapSize(level.width(), level.height());
-		
+
+		if (Dungeon.depth != HalfRipper.Quest.depth() && HalfRipper.Quest.started() && !HalfRipper.Quest.completed() && !HalfRipper.Quest.failed()) {
+			HalfRipper.Quest.abandon();
+		}
+
 		Dungeon.level = level;
 		hero.pos = pos;
+
+		HalfRipper.Quest.checkNeedToKill();
 
 		if (hero.buff(AscensionChallenge.class) != null){
 			hero.buff(AscensionChallenge.class).onLevelSwitch();
@@ -638,6 +659,8 @@ public class Dungeon {
 	private static final String LAST_PLAYED = "last_played";
 	private static final String CHALLENGES	= "challenges";
 	private static final String DIFFICULTY  = "difficulty";
+	private static final String RANDOMIZER  = "randomizer";
+	private static final String RANDOMIZER_ENABLED = "randomizer_enabled";
 	private static final String MOBS_TO_CHAMPION	= "mobs_to_champion";
 	private static final String HERO		= "hero";
 	private static final String DEPTH		= "depth";
@@ -669,7 +692,9 @@ public class Dungeon {
 			bundle.put( DAILY_REPLAY, dailyReplay );
 			bundle.put( LAST_PLAYED, lastPlayed = Game.realTime);
 			bundle.put( CHALLENGES, challenges );
-			bundle.put ( DIFFICULTY, difficulty);
+			bundle.put( DIFFICULTY, difficulty);
+			bundle.put( RANDOMIZER, randomizer);
+			bundle.put( RANDOMIZER_ENABLED, randomizerEnabled );
 			bundle.put( MOBS_TO_CHAMPION, mobsToChampion );
 			bundle.put( HERO, hero );
 			bundle.put( DEPTH, depth );
@@ -705,6 +730,7 @@ public class Dungeon {
 			Wandmaker	.Quest.storeInBundle( quests );
 			Blacksmith	.Quest.storeInBundle( quests );
 			Imp			.Quest.storeInBundle( quests );
+			HalfRipper	.Quest.storeInBundle( quests );
 			bundle.put( QUESTS, quests );
 			
 			SpecialRoom.storeRoomsInBundle( bundle );
@@ -783,6 +809,8 @@ public class Dungeon {
 
 		Dungeon.challenges = bundle.getInt( CHALLENGES );
 		Dungeon.difficulty = bundle.getInt( DIFFICULTY );
+		Dungeon.randomizer = bundle.getLong( RANDOMIZER );
+		Dungeon.randomizerEnabled = bundle.getBoolean( RANDOMIZER_ENABLED );
 		Dungeon.mobsToChampion = bundle.getInt( MOBS_TO_CHAMPION );
 		
 		Dungeon.level = null;
@@ -812,11 +840,13 @@ public class Dungeon {
 				Wandmaker.Quest.restoreFromBundle( quests );
 				Blacksmith.Quest.restoreFromBundle( quests );
 				Imp.Quest.restoreFromBundle( quests );
+				HalfRipper.Quest.restoreFromBundle( quests );
 			} else {
 				Ghost.Quest.reset();
 				Wandmaker.Quest.reset();
 				Blacksmith.Quest.reset();
 				Imp.Quest.reset();
+				HalfRipper.Quest.reset();
 			}
 			
 			SpecialRoom.restoreRoomsFromBundle(bundle);
@@ -883,6 +913,7 @@ public class Dungeon {
 		if (level == null){
 			throw new IOException();
 		} else {
+			level.returnTo();
 			return level;
 		}
 	}
@@ -996,6 +1027,9 @@ public class Dungeon {
 		if (hero.buff(MindVision.class) != null || hero.buff(DivineSense.DivineSenseTracker.class) != null){
 			for (Mob m : level.mobs.toArray(new Mob[0])){
 				if (m instanceof Mimic && m.alignment == Char.Alignment.NEUTRAL && ((Mimic) m).stealthy()){
+					continue;
+				}
+				if (m instanceof Slime && Slime.getRandomizerEnabled(Slime.RandomTraits.CHAMELEON_OOZE) && ((Slime)m).stealthy()) {
 					continue;
 				}
 

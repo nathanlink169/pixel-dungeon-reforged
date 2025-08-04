@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -146,9 +149,9 @@ public abstract class YogFist extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		int preHP = HP;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 		int dmgTaken = preHP - HP;
 
 		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
@@ -196,7 +199,7 @@ public abstract class YogFist extends Mob {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		return Messages.get(YogFist.class, "desc") + "\n\n" + Messages.get(this, "desc");
 	}
 
@@ -217,9 +220,12 @@ public abstract class YogFist extends Mob {
 	public static class BurningFist extends YogFist {
 
 		{
-			spriteClass = FistSprite.Burning.class;
-
 			properties.add(Property.FIERY);
+		}
+
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Burning.class;
 		}
 
 		@Override
@@ -288,9 +294,9 @@ public abstract class YogFist extends Mob {
 	}
 
 	public static class SoiledFist extends YogFist {
-
-		{
-			spriteClass = FistSprite.Soiled.class;
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Soiled.class;
 		}
 
 		@Override
@@ -324,7 +330,7 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src) {
+		public void damage(int dmg, Object src, int damageType) {
 			int grassCells = 0;
 			for (int i : PathFinder.NEIGHBOURS9) {
 				if (Dungeon.level.map[pos+i] == Terrain.FURROWED_GRASS
@@ -339,7 +345,7 @@ public abstract class YogFist extends Mob {
 				return;
 			}
 
-			super.damage(dmg, src);
+			super.damage(dmg, src, damageType);
 		}
 
 		@Override
@@ -385,9 +391,11 @@ public abstract class YogFist extends Mob {
 	public static class RottingFist extends YogFist {
 
 		{
-			spriteClass = FistSprite.Rotting.class;
-
 			properties.add(Property.ACIDIC);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Rotting.class;
 		}
 
 		@Override
@@ -404,7 +412,7 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src) {
+		public void damage(int dmg, Object src, int damageType) {
 			if (!isInvulnerable(src.getClass())
 					&& !(src instanceof Bleeding)
 					&& buff(Sickle.HarvestBleedTracker.class) == null){
@@ -421,7 +429,7 @@ public abstract class YogFist extends Mob {
 				b.attachTo(this);
 				sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " " + (int)b.level());
 			} else{
-				super.damage(dmg, src);
+				super.damage(dmg, src, damageType);
 			}
 		}
 
@@ -452,10 +460,12 @@ public abstract class YogFist extends Mob {
 	public static class RustedFist extends YogFist {
 
 		{
-			spriteClass = FistSprite.Rusted.class;
-
 			properties.add(Property.LARGE);
 			properties.add(Property.INORGANIC);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Rusted.class;
 		}
 
 		@Override
@@ -465,7 +475,7 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src) {
+		public void damage(int dmg, Object src, int damageType) {
 			if (!isInvulnerable(src.getClass()) && !(src instanceof Viscosity.DeferedDamage)){
 				dmg = Math.round( dmg * resist( src.getClass() ));
 				if (dmg >= 0) {
@@ -473,7 +483,7 @@ public abstract class YogFist extends Mob {
 					sprite.showStatus(CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", dmg));
 				}
 			} else{
-				super.damage(dmg, src);
+				super.damage(dmg, src, damageType);
 			}
 		}
 
@@ -488,11 +498,13 @@ public abstract class YogFist extends Mob {
 	public static class BrightFist extends YogFist {
 
 		{
-			spriteClass = FistSprite.Bright.class;
-
 			properties.add(Property.ELECTRIC);
 
 			canRangedInMelee = false;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Bright.class;
 		}
 
 		@Override
@@ -517,7 +529,7 @@ public abstract class YogFist extends Mob {
 				if (!enemy.isAlive() && enemy == Dungeon.hero) {
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail( this );
-					GLog.n( Messages.get(Char.class, "kill", name()) );
+					GLog.n( Messages.get(Char.class, "kill", name(false)) );
 				}
 
 			} else {
@@ -528,9 +540,9 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src) {
+		public void damage(int dmg, Object src, int damageType) {
 			int beforeHP = HP;
-			super.damage(dmg, src);
+			super.damage(dmg, src, damageType);
 			if (isAlive() && beforeHP > HT/2 && HP < HT/2){
 				HP = HT/2;
 				Buff.prolong( Dungeon.hero, Blindness.class, Blindness.DURATION*1.5f );
@@ -556,9 +568,11 @@ public abstract class YogFist extends Mob {
 	public static class DarkFist extends YogFist {
 
 		{
-			spriteClass = FistSprite.Dark.class;
-
 			canRangedInMelee = false;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return FistSprite.Dark.class;
 		}
 
 		@Override
@@ -587,7 +601,7 @@ public abstract class YogFist extends Mob {
 				if (!enemy.isAlive() && enemy == Dungeon.hero) {
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail( this );
-					GLog.n( Messages.get(Char.class, "kill", name()) );
+					GLog.n( Messages.get(Char.class, "kill", name(false)) );
 				}
 
 			} else {
@@ -598,9 +612,9 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src) {
+		public void damage(int dmg, Object src, int damageType) {
 			int beforeHP = HP;
-			super.damage(dmg, src);
+			super.damage(dmg, src, damageType);
 			if (isAlive() && beforeHP > HT/2 && HP < HT/2){
 				HP = HT/2;
 				Light l = Dungeon.hero.buff(Light.class);

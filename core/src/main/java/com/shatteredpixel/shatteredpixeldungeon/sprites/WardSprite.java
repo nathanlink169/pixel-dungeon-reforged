@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,12 +36,13 @@ import com.watabou.noosa.tweeners.AlphaTweener;
 
 public class WardSprite extends MobSprite {
 
-	private Animation tierIdles[] = new Animation[7];
+	private Animation[] tierIdles;
 
-	public WardSprite(){
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture(Assets.Sprites.WARDS);
+
+		tierIdles = new Animation[7];
 
 		tierIdles[1] = new Animation( 1, true );
 		tierIdles[1].frames(texture.uvRect(0, 0, 9, 10));
@@ -57,7 +61,11 @@ public class WardSprite extends MobSprite {
 
 		tierIdles[6] = new Animation( 1, true );
 		tierIdles[6].frames(texture.uvRect(52, 0, 60, 15));
+	}
 
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		setupFrames(); // ward
 	}
 
 	@Override
@@ -104,6 +112,7 @@ public class WardSprite extends MobSprite {
 		}
 	}
 
+	@Override
 	public void linkVisuals(Char ch ){
 		
 		if (ch == null) return;

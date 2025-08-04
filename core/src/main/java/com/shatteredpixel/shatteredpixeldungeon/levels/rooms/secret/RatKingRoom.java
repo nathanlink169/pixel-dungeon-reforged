@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
+import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossUsurperLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
@@ -52,7 +56,11 @@ public class RatKingRoom extends SecretRoom {
 		Painter.fill( level, this, 1, Terrain.EMPTY_SP );
 		
 		Door entrance = entrance();
-		entrance.set( Door.Type.HIDDEN );
+		if (level instanceof SewerBossUsurperLevel) {
+			entrance.set(Door.Type.CRYSTAL);
+		} else {
+			entrance.set(Door.Type.HIDDEN);
+		}
 		int door = entrance.x + entrance.y * level.width();
 		
 		for (int i=left + 1; i < right; i++) {

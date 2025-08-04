@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -34,9 +37,8 @@ public class RipperSprite extends MobSprite {
 
 	private boolean alt = Random.Int(2) == 0;
 
-	public RipperSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.RIPPER );
 
 		TextureFilm frames = new TextureFilm( texture, 15, 14 );
@@ -61,8 +63,13 @@ public class RipperSprite extends MobSprite {
 
 		die = new Animation( 15, false );
 		die.frames( frames, 1, 13, 14, 15, 16 );
+	}
 
-		play( idle );
+	@Override
+	public void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		stab = attack.clone();
+		prep = idle.clone();
 	}
 
 	public void leapPrep( int cell ){

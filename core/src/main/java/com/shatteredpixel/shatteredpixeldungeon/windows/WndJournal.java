@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,10 +31,13 @@ import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Feint;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalSpire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Pylon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.PrismaticImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -43,8 +49,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotio
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -60,6 +68,8 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MirrorSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.TerrainFeaturesTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BadgesGrid;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BadgesList;
@@ -79,11 +89,20 @@ import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.Visual;
 import com.watabou.noosa.ui.Component;
+import com.watabou.utils.DeviceCompat;
 import com.watabou.utils.RectF;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class WndJournal extends WndTabbed {
 	
@@ -744,9 +763,65 @@ public class WndJournal extends WndTabbed {
 
 	//also includes item-like things such as enchantments, glyphs, curses.
 	private static void addGridItems( ScrollingGridPane grid, Collection<Class<?>> classes) {
-		for (Class<?> itemClass : classes) {
+		final List<Class<?>> sortedClasses = new ArrayList<Class<?>>(classes);
 
-			boolean seen = Catalog.isSeen(itemClass);;
+		// preserve original order, for weapons and armour
+		final Map<Class<?>, Integer> originalOrder = new HashMap<Class<?>, Integer>();
+		int index = 0;
+		for (Class<?> cls : classes) {
+			originalOrder.put(cls, index++);
+		}
+
+		// Grab the cursed class list here so we only query once
+		final Set<Class<?>> cursedEnchantments = new HashSet<Class<?>>(Arrays.asList(Weapon.Enchantment.curses));
+		final Set<Class<?>> cursedGlyphs = new HashSet<Class<?>>(Arrays.asList(Armor.Glyph.curses));
+
+		// Make comparison. General category order: weapon -> armor -> enchantment -> glyph -> wand -> ring -> artifact -> trinket -> item
+		// Keep original weapon and armour order (to ensure tiers are kept properly
+		// Enchantment and glyphs: alphabetical, but non-cursed before cursed
+		// Everything else: alphabetical
+		Collections.sort(sortedClasses, new Comparator<Class<?>>() {
+			@Override
+			public int compare(Class<?> a, Class<?> b) {
+				int catA = categoryIndex(a);
+				int catB = categoryIndex(b);
+
+				if (catA != catB) {
+					return Integer.compare(catA, catB);
+				}
+
+				// Same category — handle subtype-specific logic
+				switch (catA) {
+					case 0: // Weapon
+					case 1: // Armor
+						return Integer.compare(originalOrder.get(a), originalOrder.get(b));
+
+					case 2: // Enchantment
+						boolean cursedA = cursedEnchantments.contains(a);
+						boolean cursedB = cursedEnchantments.contains(b);
+						if (cursedA != cursedB) {
+							return Boolean.compare(cursedA, cursedB); // false < true
+						}
+						return a.getName().compareTo(b.getName());
+
+					case 3: // Glyph
+						cursedA = cursedGlyphs.contains(a);
+						cursedB = cursedGlyphs.contains(b);
+						if (cursedA != cursedB) {
+							return Boolean.compare(cursedA, cursedB);
+						}
+						return a.getName().compareTo(b.getName());
+
+					default: // Wand, Ring, Artifact, Trinket, Item
+						return a.getName().compareTo(b.getName());
+				}
+			}
+		});
+
+		// Actually process the sorted class list
+		for (Class<?> itemClass : sortedClasses) {
+
+			boolean seen = Catalog.isSeen(itemClass) || DeviceCompat.isDebug();
 			ItemSprite sprite = null;
 			Image secondIcon = null;
 			String title = "";
@@ -778,7 +853,7 @@ public class WndJournal extends WndTabbed {
 				} else {
 					title = Messages.titleCase( item.name() );
 					//some items don't include direct stats, generally when they're not applicable
-					if (item instanceof ClassArmor || item instanceof SpiritBow){
+					if (item instanceof ClassArmor || item instanceof SpiritBow || item instanceof Gun){
 						desc += item.desc();
 					} else {
 						desc += item.info();
@@ -831,7 +906,7 @@ public class WndJournal extends WndTabbed {
 
 				Armor.Glyph glyph = (Armor.Glyph) Reflection.newInstance(itemClass);
 
-				if (seen){
+				if (seen) {
 					sprite = new ItemSprite(ItemSpriteSheet.ARMOR_CLOTH, glyph.glowing());
 					title = Messages.titleCase(glyph.name());
 					desc = glyph.desc();
@@ -874,6 +949,19 @@ public class WndJournal extends WndTabbed {
 		}
 	}
 
+	private static int categoryIndex(Class<?> cls) {
+		if (Weapon.class.isAssignableFrom(cls))   			return 0;
+		if (Armor.class.isAssignableFrom(cls))    			return 1;
+		if (Weapon.Enchantment.class.isAssignableFrom(cls)) return 2;
+		if (Armor.Glyph.class.isAssignableFrom(cls))    	return 3;
+		if (Wand.class.isAssignableFrom(cls))    			return 4;
+		if (Ring.class.isAssignableFrom(cls))   			return 5;
+		if (Artifact.class.isAssignableFrom(cls)) 			return 6;
+		if (Trinket.class.isAssignableFrom(cls))  			return 7;
+		if (Item.class.isAssignableFrom(cls))     			return 8;
+		return 9; // fallback for unknowns
+	}
+
 	private static void addGridEntities(ScrollingGridPane grid, Collection<Class<?>> classes) {
 		for (Class<?> entityCls : classes){
 
@@ -886,6 +974,9 @@ public class WndJournal extends WndTabbed {
 			if (Mob.class.isAssignableFrom(entityCls)) {
 
 				mob = (Mob) Reflection.newInstance(entityCls);
+				if (mob.sprite() instanceof MobSprite) {
+					((MobSprite) mob.sprite()).forceNoMonsterUnknown();
+				}
 
 				if (mob instanceof Mimic || mob instanceof Pylon || mob instanceof CrystalSpire) {
 					mob.alignment = Char.Alignment.ENEMY;
@@ -906,8 +997,8 @@ public class WndJournal extends WndTabbed {
 
 				icon = new Image(sprite);
 				if (seen) {
-					title = Messages.titleCase(mob.name());
-					desc = mob.description();
+					title = Messages.titleCase(mob.name(true));
+					desc = mob.description(true);
 					if (Bestiary.encounterCount(entityCls) > 1){
 						desc += "\n\n" + Messages.get(CatalogTab.class, "enemy_count", Bestiary.encounterCount(entityCls));
 					}
@@ -1106,7 +1197,7 @@ public class WndJournal extends WndTabbed {
 				btnGlobal.icon(Icons.BADGES.get());
 				add(btnGlobal);
 
-				if (Badges.filterReplacedBadges(false).size() <= 8){
+				if (Badges.GetVisibleBadges(false).size() <= 8){
 					badgesLocal = new BadgesList(false);
 				} else {
 					badgesLocal = new BadgesGrid(false);

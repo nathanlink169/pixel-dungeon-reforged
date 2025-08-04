@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -33,8 +36,9 @@ import com.watabou.utils.Random;
 
 public class ArmoredStatue extends Statue {
 
-	{
-		spriteClass = StatueSprite.class;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return StatueSprite.class;
 	}
 
 	protected Armor armor;
@@ -97,10 +101,12 @@ public class ArmoredStatue extends Statue {
 	@Override
 	public CharSprite sprite() {
 		CharSprite sprite = super.sprite();
-		if (armor != null) {
-			((StatueSprite) sprite).setArmor(armor.tier);
-		} else {
-			((StatueSprite) sprite).setArmor(3);
+		if (sprite instanceof StatueSprite) {
+			if (armor != null) {
+				((StatueSprite) sprite).setArmor(armor.tier);
+			} else {
+				((StatueSprite) sprite).setArmor(3);
+			}
 		}
 		return sprite;
 	}
@@ -118,7 +124,7 @@ public class ArmoredStatue extends Statue {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		String desc = Messages.get(this, "desc");
 		if (weapon != null && armor != null){
 			desc += "\n\n" + Messages.get(this, "desc_arm_wep", weapon.name(), armor.name());

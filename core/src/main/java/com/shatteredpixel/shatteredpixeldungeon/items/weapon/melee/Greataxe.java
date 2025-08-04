@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -42,6 +46,8 @@ public class Greataxe extends MeleeWeapon {
 		hitSoundPitch = 1f;
 
 		tier = 5;
+
+		damageType = DamageType.SLASHING;
 	}
 
 	@Override
@@ -54,7 +60,7 @@ public class Greataxe extends MeleeWeapon {
 	public int STRReq(int lvl) {
 		int req = STRReq(tier+1, lvl); //20 base strength req, up from 18
 		if (masteryPotionBonus){
-			req -= 2;
+			req -= 4;
 		}
 		return req;
 	}
@@ -98,7 +104,7 @@ public class Greataxe extends MeleeWeapon {
 				//+(15+(2*lvl)) damage, roughly +60% base damage, +55% scaling
 				int dmgBoost = augment.damageFactor(15 + 2*buffedLvl());
 
-				if (hero.attack(enemy, 1, dmgBoost, Char.INFINITE_ACCURACY)){
+				if (hero.attack(enemy, 1, dmgBoost, Char.INFINITE_ACCURACY, damageType)){
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
 

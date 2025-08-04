@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,9 +34,14 @@ public abstract class CrystalGuardianSprite extends MobSprite {
 
 	private Animation crumple;
 
-	public CrystalGuardianSprite() {
-		super();
+	@Override
+	public void setup() {
+		super.setup();
+		crumple = die.clone();
+	}
 
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.CRYSTAL_GUARDIAN );
 
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
@@ -52,12 +60,8 @@ public abstract class CrystalGuardianSprite extends MobSprite {
 		die = new MovieClip.Animation( 5, false );
 		die.frames( frames, 11+c, 12+c, 13+c, 14+c, 15+c, 15+c );
 
-		crumple = die.clone();
-
 		//this is temporary, as ideally the sprite itself should be scaled to 15x19 or so
 		scale.set(1.25f);
-
-		play( idle );
 	}
 
 	public void crumple(){

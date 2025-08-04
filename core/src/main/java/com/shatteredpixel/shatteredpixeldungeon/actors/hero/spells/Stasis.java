@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -144,7 +147,7 @@ public class Stasis extends ClericSpell {
 
 		@Override
 		public String desc() {
-			return Messages.get(this, "desc", Messages.titleCase(stasisAlly.name()), dispTurns());
+			return Messages.get(this, "desc", Messages.titleCase(stasisAlly.name(false)), dispTurns());
 		}
 
 		@Override

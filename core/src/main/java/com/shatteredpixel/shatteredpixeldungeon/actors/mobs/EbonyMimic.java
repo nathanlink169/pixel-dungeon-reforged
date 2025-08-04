@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,31 +40,34 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWea
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 
 public class EbonyMimic extends Mimic {
 
-	{
-		spriteClass = MimicSprite.Ebony.class;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return MimicSprite.Ebony.class;
 	}
 
 	@Override
-	public String name() {
+	public String name(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(this, "hidden_name");
 		} else {
-			return super.name();
+			return super.name(forceNoMonsterUnknown);
 		}
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(this, "hidden_desc");
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 

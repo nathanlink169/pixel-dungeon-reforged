@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -40,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ShopkeeperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.CurrencyIndicator;
@@ -61,9 +65,11 @@ import java.util.ArrayList;
 public class Shopkeeper extends NPC {
 
 	{
-		spriteClass = ShopkeeperSprite.class;
-
 		properties.add(Property.IMMOVABLE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return ShopkeeperSprite.class;
 	}
 
 	public static int MAX_BUYBACK_HISTORY = 3;
@@ -89,7 +95,7 @@ public class Shopkeeper extends NPC {
 	}
 	
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		processHarm();
 	}
 	
@@ -252,14 +258,14 @@ public class Shopkeeper extends NPC {
 					i++;
 				}
 				CurrencyIndicator.showGold = true;
-				GameScene.show(new WndOptions(sprite(), Messages.titleCase(name()), description(), options){
+				GameScene.show(new WndOptions(sprite(), Messages.titleCase(name(false)), description(false), options){
 					@Override
 					protected void onSelect(int index) {
 						super.onSelect(index);
 						if (index == 0){
 							sell();
 						} else if (index == 1){
-							GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name()), chatText()));
+							GameScene.show(new WndTitledMessage(sprite(), Messages.titleCase(name(false)), chatText()));
 						} else if (index > 1){
 							GLog.i(Messages.get(Shopkeeper.this, "buyback"));
 							Item returned = buybackItems.remove(index-2);

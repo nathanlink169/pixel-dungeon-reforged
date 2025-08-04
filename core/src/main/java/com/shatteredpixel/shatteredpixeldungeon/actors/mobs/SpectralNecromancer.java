@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -29,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpectralNecromancerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -39,8 +43,9 @@ import java.util.ArrayList;
 
 public class SpectralNecromancer extends Necromancer {
 
-	{
-		spriteClass = SpectralNecromancerSprite.class;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return SpectralNecromancerSprite.class;
 	}
 
 	private ArrayList<Integer> wraithIDs = new ArrayList<>();
@@ -135,7 +140,7 @@ public class SpectralNecromancer extends Necromancer {
 					if (blocker == Dungeon.hero && !blocker.isAlive()){
 						Badges.validateDeathFromEnemyMagic();
 						Dungeon.fail(this);
-						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 					}
 				}
 

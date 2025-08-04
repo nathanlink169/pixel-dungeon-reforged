@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -47,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RotGardenRoom
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WandmakerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndWandmaker;
@@ -54,7 +58,6 @@ import com.watabou.noosa.Game;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
-import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -62,9 +65,12 @@ import java.util.ArrayList;
 public class Wandmaker extends NPC {
 
 	{
-		spriteClass = WandmakerSprite.class;
-
 		properties.add(Property.IMMOVABLE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return WandmakerSprite.class;
 	}
 
 	@Override
@@ -87,7 +93,7 @@ public class Wandmaker extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		//do nothing
 	}
 
@@ -136,13 +142,13 @@ public class Wandmaker extends NPC {
 				String msg;
 				switch(Quest.type){
 					case 1: default:
-						msg = Messages.get(this, "reminder_dust", Messages.titleCase(Dungeon.hero.name()));
+						msg = Messages.get(this, "reminder_dust", Messages.titleCase(Dungeon.hero.name(false)));
 						break;
 					case 2:
-						msg = Messages.get(this, "reminder_ember", Messages.titleCase(Dungeon.hero.name()));
+						msg = Messages.get(this, "reminder_ember", Messages.titleCase(Dungeon.hero.name(false)));
 						break;
 					case 3:
-						msg = Messages.get(this, "reminder_berry", Messages.titleCase(Dungeon.hero.name()));
+						msg = Messages.get(this, "reminder_berry", Messages.titleCase(Dungeon.hero.name(false)));
 						break;
 				}
 				Game.runOnRenderThread(new Callback() {
@@ -165,7 +171,7 @@ public class Wandmaker extends NPC {
 					msg1 += Messages.get(this, "intro_rogue");
 					break;
 				case MAGE:
-					msg1 += Messages.get(this, "intro_mage", Messages.titleCase(Dungeon.hero.name()));
+					msg1 += Messages.get(this, "intro_mage", Messages.titleCase(Dungeon.hero.name(false)));
 					break;
 				case HUNTRESS:
 					msg1 += Messages.get(this, "intro_huntress");

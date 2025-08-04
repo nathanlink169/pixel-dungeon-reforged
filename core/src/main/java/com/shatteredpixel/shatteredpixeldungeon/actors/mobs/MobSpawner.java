@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -74,7 +77,7 @@ public class MobSpawner extends Actor {
 			case 1: default:
 				//3x rat, 1x snake
 				return new ArrayList<>(Arrays.asList(
-						RatUsurper.class, RatUsurper.class, RatUsurper.class,
+						Rat.class, Rat.class, Rat.class,
 						Snake.class));
 			case 2:
 				//2x rat, 1x snake, 2x gnoll, 1x Spitter
@@ -137,28 +140,31 @@ public class MobSpawner extends Actor {
 						Shaman.random(),
 						UnholyPriest.class));
 			case 12:
-				//2x bat, 2x brute, 1x shaman, 1x spinner
+				//2x bat, 1x brute, 1x shaman, 1x spinner, 1x Ballista
 				return new ArrayList<>(Arrays.asList(
 						Bat.class, Bat.class,
-						Brute.class, Brute.class,
+						Brute.class,
 						Shaman.random(),
-						Spinner.class));
+						Spinner.class,
+						Ballista.class));
 			case 13:
-				//1x bat, 2x brute, 2x shaman, 2x spinner, 1x DM-200
+				//1x bat, 2x brute, 2x shaman, 1x spinner, 1x DM-200, 1x Ballista
 				return new ArrayList<>(Arrays.asList(
 						Bat.class,
 						Brute.class, Brute.class,
 						Shaman.random(), Shaman.random(),
-						Spinner.class, Spinner.class,
-						DM200.class));
+						Spinner.class,
+						DM200.class,
+						Ballista.class));
 			case 14: case 15:
-				//1x bat, 1x brute, 2x shaman, 2x spinner, 2x DM-200
+				//1x bat, 1x brute, 1x shaman, 2x spinner, 2x DM-200, 2x Ballista
 				return new ArrayList<>(Arrays.asList(
 						Bat.class,
 						Brute.class,
-						Shaman.random(), Shaman.random(),
+						Shaman.random(),
 						Spinner.class, Spinner.class,
-						DM200.class, DM200.class));
+						DM200.class, DM200.class,
+						Ballista.class, Ballista.class));
 
 			// City
 			case 16:
@@ -175,20 +181,22 @@ public class MobSpawner extends Actor {
 						Warlock.class,
 						Monk.class));
 			case 18:
-				//1x ghoul, 1x elemental, 2x warlock, 2x monk, 1x golem
+				//1x ghoul, 1x elemental, 2x warlock, 1x monk, 1x golem, 1x fiend
 				return new ArrayList<>(Arrays.asList(
 						Ghoul.class,
 						Elemental.random(),
 						Warlock.class, Warlock.class,
-						Monk.class, Monk.class,
-						Golem.class));
+						Monk.class,
+						Golem.class,
+						Fiend.class));
 			case 19: case 20:
-				//1x elemental, 2x warlock, 2x monk, 3x golem
+				//1x elemental, 2x warlock, 2x monk, 2x golem, 1x fiend
 				return new ArrayList<>(Arrays.asList(
 						Elemental.random(),
 						Warlock.class, Warlock.class,
 						Monk.class, Monk.class,
-						Golem.class, Golem.class, Golem.class));
+						Golem.class, Golem.class,
+						Fiend.class));
 
 			// Halls
 			case 21:
@@ -202,17 +210,19 @@ public class MobSpawner extends Actor {
 						Succubus.class,
 						Eye.class));
 			case 23:
-				//1x succubus, 2x evil eye, 1x scorpio
+				//1x succubus, 2x evil eye, 1x scorpio, 1x demon goo
 				return new ArrayList<>(Arrays.asList(
 						Succubus.class,
 						Eye.class, Eye.class,
-						Scorpio.class));
+						Scorpio.class,
+						DemonGoo.class));
 			case 24: case 25: case 26:
-				//1x succubus, 2x evil eye, 3x scorpio
+				//1x succubus, 2x evil eye, 2x scorpio, 2x demon goo
 				return new ArrayList<>(Arrays.asList(
 						Succubus.class,
 						Eye.class, Eye.class,
-						Scorpio.class, Scorpio.class, Scorpio.class));
+						Scorpio.class, Scorpio.class,
+						DemonGoo.class, DemonGoo.class));
 		}
 
 	}
@@ -246,12 +256,23 @@ public class MobSpawner extends Actor {
 		}
 	}
 
+	private static final float RANDOMIZER_ALT_CHANCE = 0.5f;
 	//switches out regular mobs for their alt versions when appropriate
 	private static void swapMobAlts(ArrayList<Class<?extends Mob>> rotation) {
 		float altChance = 1 / 50f * RatSkull.exoticChanceMultiplier();
 		for (int i = 0; i < rotation.size(); i++) {
-			if (Random.Float() < altChance) {
-				Class<? extends Mob> cl = rotation.get(i);
+			Class<? extends Mob> cl = rotation.get(i);
+			float currentAltChance = altChance;
+			if ((cl == Rat.class && Rat.getRandomizerEnabled(Rat.RandomTraits.ALBINO_INFESTATION)) ||
+			    (cl == Crab.class && Crab.getRandomizerEnabled(Crab.RandomTraits.HERMIT_INVASION)) ||
+			    (cl == Thief.class && Thief.getRandomizerEnabled(Thief.RandomTraits.BANDIT_RECRUITMENT)) ||
+			    (cl == Brute.class && Brute.getRandomizerEnabled(Brute.RandomTraits.ARMORED_LEGION)) ||
+			    (cl == Scorpio.class && Scorpio.getRandomizerEnabled(Scorpio.RandomTraits.ACIDIC_INFESTATION)) ||
+			    (cl == Monk.class && Monk.getRandomizerEnabled(Monk.RandomTraits.SENIOR_PRESENCE))) {
+				currentAltChance = RANDOMIZER_ALT_CHANCE;
+			}
+
+			if (Random.Float() < currentAltChance) {
 				if (cl == Rat.class)                cl = Albino.class;
 				else if (cl == Gnoll.class)         cl = GnollExile.class;
 				else if (cl == Crab.class)          cl = HermitCrab.class;
@@ -261,7 +282,8 @@ public class MobSpawner extends Actor {
 				else if (cl == Necromancer.class)   cl = SpectralNecromancer.class;
 
 				else if (cl == Brute.class)         cl = ArmoredBrute.class;
-				else if (cl == DM200.class)         cl = DM201.class;
+				else if (cl == DM200.class && !DM200.getRandomizerEnabled(DM200.RandomTraits.PRODUCTION_HALT))         cl = DM201.class;
+				else if (cl == Ballista.class)		cl = QuickFiringBallista.class;
 
 				else if (cl == Monk.class)          cl = Senior.class;
 				//chaos elemental spawning happens in Elemental.Random

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Spear;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollGuardSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -35,8 +39,6 @@ import com.watabou.utils.Random;
 public class GnollGuard extends Mob {
 
 	{
-		spriteClass = GnollGuardSprite.class;
-
 		HP = HT = 35;
 		defenseSkill = 15;
 
@@ -47,6 +49,11 @@ public class GnollGuard extends Mob {
 		lootChance = 0.1f;
 
 		WANDERING = new Wandering();
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return GnollGuardSprite.class;
 	}
 
 	private int sapperID = -1;
@@ -74,9 +81,9 @@ public class GnollGuard extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (hasSapper()) dmg /= 4;
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -118,11 +125,11 @@ public class GnollGuard extends Mob {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (hasSapper()){
-			return super.description() + "\n\n" + Messages.get(this, "desc_armor");
+			return super.description(forceNoMonsterUnknown) + "\n\n" + Messages.get(this, "desc_armor");
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 

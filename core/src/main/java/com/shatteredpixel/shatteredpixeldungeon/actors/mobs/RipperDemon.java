@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,17 +25,22 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -45,11 +53,9 @@ import com.watabou.utils.Random;
 public class RipperDemon extends Mob {
 
 	{
-		spriteClass = RipperSprite.class;
-
-		HP = HT = 60;
+		HP = HT = 70;
 		defenseSkill = 22;
-		viewDistance = Light.DISTANCE;
+		viewDistance = Light.DISTANCE - 1;
 
 		EXP = 9; //for corrupting
 		maxLvl = -2;
@@ -61,6 +67,11 @@ public class RipperDemon extends Mob {
 		properties.add(Property.DEMONIC);
 		properties.add(Property.UNDEAD);
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return RipperSprite.class;
+	}
 
 	@Override
 	public float spawningWeight() {
@@ -69,6 +80,10 @@ public class RipperDemon extends Mob {
 
 	@Override
 	public int damageRoll(boolean isMaxDamage) {
+		if (getRandomizerEnabled(RandomTraits.DULL_CLAWS)) {
+			if (isMaxDamage) return 20;
+			return Random.NormalIntRange(5, 20);
+		}
 		if (isMaxDamage) return 25;
 		return Random.NormalIntRange( 15, 25 );
 	}
@@ -130,6 +145,28 @@ public class RipperDemon extends Mob {
 		}
 
 		return result;
+	}
+
+	@Override
+	public int attackProc( Char enemy, int damage ) {
+		damage = super.attackProc( enemy, damage );
+		if (damage > 0 && Random.Int( 2 ) == 0) {
+			Buff.affect( enemy, Bleeding.class ).set( damage );
+		}
+		if (getRandomizerEnabled(RandomTraits.HEMORRHAGE)) {
+			if (Random.Int(4) != 0) { // 75% chance
+				int duration = Random.IntRange(10, 20);
+				Buff.affect(enemy, Bleeding.class).set(duration);
+			}
+		}
+		if (getRandomizerEnabled(RandomTraits.TOXIC_CLAWS)) {
+			if (Random.Int(3) == 0) { // 33% chance
+				int duration = Random.IntRange(10, 20);
+				Buff.affect(enemy, Poison.class).set(duration);
+			}
+		}
+
+		return damage;
 	}
 
 	private int leapPos = -1;
@@ -258,7 +295,11 @@ public class RipperDemon extends Mob {
 						//get ready to leap
 						leapPos = targetPos;
 						//don't want to overly punish players with slow move or attack speed
-						spend(GameMath.gate(attackDelay(), (int)Math.ceil(enemy.cooldown()), 3*attackDelay()));
+						if (getRandomizerEnabled(RandomTraits.SLUGGISH_LEAP)) {
+							spend(GameMath.gate(attackDelay() * 2, (int)Math.ceil(enemy.cooldown()) * 2, 6*attackDelay()));
+						} else {
+							spend(GameMath.gate(attackDelay(), (int) Math.ceil(enemy.cooldown()), 3 * attackDelay()));
+						}
 						if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[leapPos]){
 							GLog.w(Messages.get(RipperDemon.this, "leap"));
 							sprite.parent.addToBack(new TargetedCell(leapPos, 0xFF0000));
@@ -289,4 +330,19 @@ public class RipperDemon extends Mob {
 
 	}
 
+	public enum RandomTraits {
+		RAPID_DEPLOYMENT, HEMORRHAGE, TOXIC_CLAWS, SLUGGISH_LEAP, DULL_CLAWS, LAZY_SPAWNERS
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case RAPID_DEPLOYMENT: return Randomizer.getCreatureBuff(RipperDemon.class) == 1;
+			case HEMORRHAGE: return Randomizer.getCreatureBuff(RipperDemon.class) == 2;
+			case TOXIC_CLAWS: return Randomizer.getCreatureBuff(RipperDemon.class) == 3;
+			case SLUGGISH_LEAP: return Randomizer.getCreatureNerf(RipperDemon.class) == 1;
+			case DULL_CLAWS: return Randomizer.getCreatureNerf(RipperDemon.class) == 2;
+			case LAZY_SPAWNERS: return Randomizer.getCreatureNerf(RipperDemon.class) == 3;
+		}
+		return false;
+	}
 }

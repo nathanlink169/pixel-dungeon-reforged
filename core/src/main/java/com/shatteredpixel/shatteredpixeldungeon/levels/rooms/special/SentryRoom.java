@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,7 +26,6 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -225,9 +227,11 @@ public class SentryRoom extends SpecialRoom {
 	public static class Sentry extends NPC {
 
 		{
-			spriteClass = SentrySprite.class;
-
 			properties.add(Property.IMMOVABLE);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return SentrySprite.class;
 		}
 
 		private float initialChargeDelay;
@@ -294,7 +298,7 @@ public class SentryRoom extends SpecialRoom {
 				if (!Dungeon.hero.isAlive()) {
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail(this);
-					GLog.n(Messages.capitalize(Messages.get(Char.class, "kill", name())));
+					GLog.n(Messages.capitalize(Messages.get(Char.class, "kill", name(false))));
 				}
 			} else {
 				Dungeon.hero.sprite.showStatus( CharSprite.NEUTRAL,  Dungeon.hero.defenseVerb() );
@@ -312,7 +316,7 @@ public class SentryRoom extends SpecialRoom {
 		}
 
 		@Override
-		public void damage( int dmg, Object src ) {
+		public void damage( int dmg, Object src, int damageType ) {
 			//do nothing
 		}
 

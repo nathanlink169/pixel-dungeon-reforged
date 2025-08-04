@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -36,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -43,21 +47,22 @@ import com.watabou.utils.Random;
 
 public class GoldenMimic extends Mimic {
 
-	{
-		spriteClass = MimicSprite.Golden.class;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return MimicSprite.Golden.class;
 	}
 
 	@Override
-	public String name() {
+	public String name(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(Heap.class, "locked_chest");
 		} else {
-			return super.name();
+			return super.name(forceNoMonsterUnknown);
 		}
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			if (MimicTooth.stealthyMimics()){
 				return Messages.get(Heap.class, "locked_chest_desc");
@@ -65,7 +70,7 @@ public class GoldenMimic extends Mimic {
 				return Messages.get(Heap.class, "locked_chest_desc") + "\n\n" + Messages.get(this, "hidden_hint");
 			}
 		} else {
-			return super.description();
+			return super.description(forceNoMonsterUnknown);
 		}
 	}
 

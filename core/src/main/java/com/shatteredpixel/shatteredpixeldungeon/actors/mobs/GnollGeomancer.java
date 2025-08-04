@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -48,6 +51,7 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollGeomancerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
@@ -66,8 +70,6 @@ public class GnollGeomancer extends Mob {
 
 	{
 		HP = HT = 150;
-		spriteClass = GnollGeomancerSprite.class;
-
 		EXP = 20;
 
 		//acts after other mobs, just like sappers
@@ -84,6 +86,11 @@ public class GnollGeomancer extends Mob {
 
 		properties.add(Property.BOSS);
 		properties.add(Property.IMMOVABLE); //moves itself via ability, otherwise is static
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return GnollGeomancerSprite.class;
 	}
 
 	private int abilityCooldown = Random.NormalIntRange(3, 5);
@@ -266,7 +273,7 @@ public class GnollGeomancer extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		int hpBracket = HT / 3;
 
 		int curbracket = HP / hpBracket;
@@ -274,7 +281,7 @@ public class GnollGeomancer extends Mob {
 
 		inFinalBracket = curbracket == 0;
 
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 
 		abilityCooldown -= dmg/10f;
 
@@ -497,11 +504,11 @@ public class GnollGeomancer extends Mob {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (state == SLEEPING){
 			return Messages.get(this, "desc_sleeping");
 		} else {
-			String desc = super.description();
+			String desc = super.description(forceNoMonsterUnknown);
 			if (buff(RockArmor.class) != null){
 				if (hasSapper()){
 					desc += "\n\n" + Messages.get(this, "desc_armor_sapper");

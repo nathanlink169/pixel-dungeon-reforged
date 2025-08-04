@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
@@ -31,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ThiefSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -41,8 +46,6 @@ public class Thief extends Mob {
 	public Item item;
 	
 	{
-		spriteClass = ThiefSprite.class;
-		
 		HP = HT = 20;
 		defenseSkill = 12;
 		
@@ -57,20 +60,30 @@ public class Thief extends Mob {
 
 		properties.add(Property.UNDEAD);
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return ThiefSprite.class;
+	}
 
 	private static final String ITEM = "item";
+	private static final String MAX_GOLD = "max_gold";
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
 		bundle.put( ITEM, item );
+		bundle.put( MAX_GOLD, maxGold );
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		item = (Item)bundle.get( ITEM );
+		maxGold = bundle.getInt( MAX_GOLD );
 	}
+
+	private int maxGold = 0;
 
 	@Override
 	public float speed() {
@@ -86,6 +99,9 @@ public class Thief extends Mob {
 
 	@Override
 	public float attackDelay() {
+		if (getRandomizerEnabled(RandomTraits.SINGLE_STRIKE)) {
+			return super.attackDelay();
+		}
 		return super.attackDelay()*0.5f;
 	}
 
@@ -126,6 +142,12 @@ public class Thief extends Mob {
 	@Override
 	public int attackProc( Char enemy, int damage ) {
 		damage = super.attackProc( enemy, damage );
+
+		if (getRandomizerEnabled(RandomTraits.CLUMSY_HANDS)) {
+			if (Random.Int(3) > 0) {
+				return damage;
+			}
+		}
 		
 		if (alignment == Alignment.ENEMY && item == null
 				&& enemy instanceof Hero && steal( (Hero)enemy )) {
@@ -137,7 +159,14 @@ public class Thief extends Mob {
 
 	@Override
 	public int defenseProc(Char enemy, int damage) {
-		if (state == FLEEING) {
+		if (getRandomizerEnabled(RandomTraits.GOLD_BAGS)) {
+			if (maxGold == 0) {
+				maxGold = Random.Int(25, 50);
+			}
+			float percDamage = (float)damage / (float)HT;
+			Dungeon.level.drop( new Gold((int) (maxGold * percDamage)), pos ).sprite.drop();
+		}
+		else if (state == FLEEING) {
 			Dungeon.level.drop( new Gold(), pos ).sprite.drop();
 		}
 
@@ -146,9 +175,9 @@ public class Thief extends Mob {
 
 	protected boolean steal( Hero hero ) {
 
-		Item toSteal = hero.belongings.randomUnequipped();
+		Item toSteal = hero.belongings.getThiefItemToSteal();
 
-		if (toSteal != null && !toSteal.unique && toSteal.level() < 1 ) {
+		if (toSteal != null ) {
 
 			GLog.w( Messages.get(Thief.class, "stole", toSteal.name()) );
 			if (!toSteal.stackable) {
@@ -170,8 +199,8 @@ public class Thief extends Mob {
 	}
 
 	@Override
-	public String description() {
-		String desc = super.description();
+	public String description(boolean forceNoMonsterUnknown) {
+		String desc = super.description(forceNoMonsterUnknown);
 
 		if (item != null) {
 			desc += Messages.get(this, "carries", item.name() );
@@ -227,5 +256,22 @@ public class Thief extends Mob {
 				state = WANDERING;
 			}
 		}
+	}
+
+
+	public enum RandomTraits {
+		MASTER_PICKPOCKET, BANDIT_RECRUITMENT, BOLD_FINGERS, CLUMSY_HANDS, SINGLE_STRIKE, GOLD_BAGS
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case MASTER_PICKPOCKET: return Randomizer.getCreatureBuff(Thief.class) == 1;
+			case BANDIT_RECRUITMENT: return Randomizer.getCreatureBuff(Thief.class) == 2;
+			case BOLD_FINGERS: return Randomizer.getCreatureBuff(Thief.class) == 3;
+			case CLUMSY_HANDS: return Randomizer.getCreatureNerf(Thief.class) == 1;
+			case SINGLE_STRIKE: return Randomizer.getCreatureNerf(Thief.class) == 2;
+			case GOLD_BAGS: return Randomizer.getCreatureNerf(Thief.class) == 3;
+		}
+		return false;
 	}
 }

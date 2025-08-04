@@ -2,6 +2,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.Callback;
@@ -10,33 +11,48 @@ public class SpitterSprite extends MobSprite{
 
     private int cellToAttack;
 
-    public SpitterSprite() {
-        super();
-
-        texture( Assets.Sprites.SCORPIO );
-
-        TextureFilm frames = new TextureFilm( texture, 17, 17 );
-
-        idle = new Animation( 12, true );
-        idle.frames( frames, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 2, 1, 2 );
-
-        run = new Animation( 8, true );
-        run.frames( frames, 5, 5, 6, 6 );
-
-        attack = new Animation( 15, false );
-        attack.frames( frames, 0, 3, 4 );
-
+    @Override
+    public void setup() {
+        super.setup();
         zap = attack.clone();
+    }
+
+    @Override
+    protected void setupFrames() {
+        perspectiveRaise = 0f;
+
+        texture( Assets.Sprites.SPITTER );
+
+        TextureFilm frames = new TextureFilm( texture, 16, 16 );
+
+        idle = new Animation( 10, true );
+        idle.frames( frames, 0, 0, 0, 0, 0, 1, 0, 1 );
+
+        run = new Animation( 15, true );
+        run.frames( frames, 0, 2, 0, 3 );
+
+        attack = new Animation( 12, false );
+        attack.frames( frames, 0, 4, 5, 0 );
 
         die = new Animation( 12, false );
-        die.frames( frames, 0, 7, 8, 9, 10 );
+        die.frames( frames, 6, 7, 8, 9 );
+    }
 
-        play( idle );
+    @Override
+    public void link(Char ch) {
+        super.link(ch);
+        if (parent != null) {
+            parent.sendToBack(this);
+            if (aura != null){
+                parent.sendToBack(aura);
+            }
+        }
+        renderShadow = false;
     }
 
     @Override
     public int blood() {
-        return 0xFF44FF22;
+        return 0xFFFF4422;
     }
 
     @Override
@@ -59,7 +75,7 @@ public class SpitterSprite extends MobSprite{
             idle();
 
             ((MissileSprite)parent.recycle( MissileSprite.class )).
-                    reset( this, cellToAttack, new SpitterSprite.ScorpioShot(), new Callback() {
+                    reset( this, cellToAttack, new SpitterSprite.SpitterShot(), new Callback() {
                         @Override
                         public void call() {
                             ch.onAttackComplete();
@@ -70,7 +86,7 @@ public class SpitterSprite extends MobSprite{
         }
     }
 
-    public class ScorpioShot extends Item {
+    public class SpitterShot extends Item {
         {
             image = ItemSpriteSheet.FISHING_SPEAR;
         }

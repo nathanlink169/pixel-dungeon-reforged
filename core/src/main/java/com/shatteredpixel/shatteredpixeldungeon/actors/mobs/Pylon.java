@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -49,8 +52,6 @@ import java.util.ArrayList;
 public class Pylon extends Mob {
 
 	{
-		spriteClass = PylonSprite.class;
-
 		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 80 : 50;
 
 		maxLvl = -2;
@@ -64,6 +65,11 @@ public class Pylon extends Mob {
 
 		state = PASSIVE;
 		alignment = Alignment.NEUTRAL;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		// MonsterUnknown doesn't really apply to this one, I wouldn't really call it a mob tbh
+		return PylonSprite.class;
 	}
 
 	private int targetNeighbor = Random.Int(8);
@@ -167,7 +173,7 @@ public class Pylon extends Mob {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		if (alignment == Alignment.NEUTRAL){
 			return Messages.get(this, "desc_inactive");
 		} else {
@@ -196,7 +202,7 @@ public class Pylon extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (dmg >= 15){
 			//takes 15/16/17/18/19/20 dmg at 15/17/20/24/29/36 incoming dmg
 			dmg = 14 + (int)(Math.sqrt(8*(dmg - 14) + 1) - 1)/2;
@@ -207,7 +213,7 @@ public class Pylon extends Mob {
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmg/2f);
 			else                                                    lock.addTime(dmg);
 		}
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,7 +24,9 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
@@ -29,21 +34,32 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ScorpioSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.utils.Bundle;
+import com.watabou.utils.PathFinder;
+import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
 public class Scorpio extends Mob {
 	
 	{
-		spriteClass = ScorpioSprite.class;
-		
-		HP = HT = 110;
+		HP = HT = getRandomizerEnabled(RandomTraits.BRITTLE_SHELLS) ? 40 : 120;
 		defenseSkill = 24;
-		viewDistance = Light.DISTANCE;
+		viewDistance = Light.DISTANCE - 1;
+
+		if (getRandomizerEnabled(RandomTraits.LIGHTNING_FAST)) {
+			baseSpeed = 2.0f;
+		} else if (getRandomizerEnabled(RandomTraits.SLUGGISH_CRAWL)) {
+			baseSpeed = 0.25f;
+		}
 		
 		EXP = 14;
 		maxLvl = 27;
@@ -52,8 +68,38 @@ public class Scorpio extends Mob {
 		lootChance = 0.5f;
 
 		properties.add(Property.DEMONIC);
+
+		WANDERING = new Wandering();
 	}
-	
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return ScorpioSprite.class;
+	}
+
+	private int lastEnemyPosition = -1;
+
+	private static final String LAST_ENEMY_POSITION     = "last_enemy_position";
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		bundle.put( LAST_ENEMY_POSITION, lastEnemyPosition);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		lastEnemyPosition = bundle.getInt(LAST_ENEMY_POSITION);
+	}
+	@Override
+	protected boolean act() {
+		if (enemy != null && fieldOfView[enemy.pos]) {
+			lastEnemyPosition = enemy.pos;
+		}
+		return super.act();
+	}
+
 	@Override
 	public int damageRoll(boolean isMaxDamage) {
 		if (isMaxDamage) return 40;
@@ -105,8 +151,50 @@ public class Scorpio extends Mob {
 		}
 	}
 
+	public class Wandering extends Mob.Wandering {
+		@Override
+		protected int randomDestination() {
+			if (!getRandomizerEnabled(RandomTraits.TERRITORIAL_HUNTERS) || lastEnemyPosition == -1) {
+				return super.randomDestination();
+			}
+
+			int len = Dungeon.level.length();
+			boolean[] p = Dungeon.level.passable;
+			boolean[] v = Dungeon.level.visited;
+			boolean[] m = Dungeon.level.mapped;
+			boolean[] passable = new boolean[len];
+			for (int i = 0; i < len; i++) {
+				passable[i] = p[i] && (v[i] || m[i]);
+			}
+
+			int destination;
+			Point lastSeenEnemyPosition = Dungeon.level.cellToPoint(lastEnemyPosition);
+			boolean validPath = false;
+			int tries = 0;
+			do {
+				destination = super.randomDestination();
+				validPath = true;
+				PathFinder.Path newpath = Dungeon.findPath(Scorpio.this, destination, passable, fieldOfView, true);
+				for (int step : newpath) {
+					Point currentStepPosition = Dungeon.level.cellToPoint(step);
+					if ((currentStepPosition.x - lastSeenEnemyPosition.x) * (currentStepPosition.x - lastSeenEnemyPosition.x) + (currentStepPosition.y - lastSeenEnemyPosition.y) * (currentStepPosition.y - lastSeenEnemyPosition.y) < 3) {
+						validPath = false;
+						break;
+					}
+				}
+
+			} while (++tries < 100 && !validPath);
+
+			return destination;
+		}
+	}
+
 	@Override
 	public Item createLoot() {
+		if (getRandomizerEnabled(RandomTraits.ACIDIC_CARRIERS) && Random.Int(10) == 0) {
+			return new PotionOfExperience();
+		}
+
 		Class<?extends Potion> loot;
 		do{
 			loot = (Class<? extends Potion>) Random.oneOf(Generator.Category.POTION.classes);
@@ -114,5 +202,20 @@ public class Scorpio extends Mob {
 
 		return Reflection.newInstance(loot);
 	}
-	
+
+	public enum RandomTraits {
+		ACIDIC_INFESTATION, LIGHTNING_FAST, TERRITORIAL_HUNTERS, SLUGGISH_CRAWL, ACIDIC_CARRIERS, BRITTLE_SHELLS
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case ACIDIC_INFESTATION: return Randomizer.getCreatureBuff(Scorpio.class) == 1;
+			case LIGHTNING_FAST: return Randomizer.getCreatureBuff(Scorpio.class) == 2;
+			case TERRITORIAL_HUNTERS: return Randomizer.getCreatureBuff(Scorpio.class) == 3;
+			case SLUGGISH_CRAWL: return Randomizer.getCreatureNerf(Scorpio.class) == 1;
+			case ACIDIC_CARRIERS: return Randomizer.getCreatureNerf(Scorpio.class) == 2;
+			case BRITTLE_SHELLS: return Randomizer.getCreatureNerf(Scorpio.class) == 3;
+		}
+		return false;
+	}
 }

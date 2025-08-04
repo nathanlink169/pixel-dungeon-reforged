@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -57,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WondrousResin;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -102,7 +106,7 @@ public abstract class Wand extends Item {
 		defaultAction = AC_ZAP;
 		bones = true;
 	}
-	
+
 	@Override
 	public boolean GetUsesTargetting() { return true; }
 	
@@ -397,8 +401,8 @@ public abstract class Wand extends Item {
 			//inside staff, still need to apply degradation
 			if (charger.target == Dungeon.hero
 					&& !Dungeon.hero.belongings.contains(this)
-					&& Dungeon.hero.buff( Degrade.class ) != null){
-				lvl = Degrade.reduceLevel(lvl);
+					&& Dungeon.hero.buff( Degrade.class ) != null) {
+				lvl = Dungeon.hero.buff( Degrade.class ).reduceLevel(lvl);
 			}
 
 			if (charger.target.buff(ScrollEmpower.class) != null){
@@ -458,7 +462,7 @@ public abstract class Wand extends Item {
 		particle.radiateXY(0.5f);
 	}
 
-	public void wandUsed() {
+	public void wandUsed(int position) {
 		if (!isIdentified()) {
 			float uses = Math.min( availableUsesToID, Talent.itemIDSpeedFactor(Dungeon.hero, this) );
 			availableUsesToID -= uses;
@@ -518,6 +522,13 @@ public abstract class Wand extends Item {
 				&& charger != null && charger.target == Dungeon.hero){
 
 			Buff.prolong(Dungeon.hero, Talent.LingeringMagicTracker.class, 5f);
+		}
+
+		if (Dungeon.hero.hasTalent(Talent.VOLATILE_CHAIN) && Dungeon.hero.heroClass != HeroClass.ARTIFICER) {
+			Char enemy = Dungeon.level.findMob(position);
+			if (enemy.isAlive() && enemy.alignment == Char.Alignment.ENEMY) {
+				Buff.prolong(Dungeon.hero, Talent.VolatileChainTracker.class, 5f).object = enemy.id();
+			}
 		}
 
 		if (Dungeon.hero.hasTalent(ARCSHIELDING)) {
@@ -767,13 +778,14 @@ public abstract class Wand extends Item {
 						if (!curWand.cursedKnown){
 							GLog.n(Messages.get(Wand.class, "curse_discover", curWand.name()));
 						}
+						Ballistica b = new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT);
 						CursedWand.cursedZap(curWand,
 								curUser,
-								new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT),
+								b,
 								new Callback() {
 									@Override
 									public void call() {
-										curWand.wandUsed();
+										curWand.wandUsed(b.collisionPos);
 									}
 								});
 					} else {
@@ -782,17 +794,18 @@ public abstract class Wand extends Item {
 								curWand.onZap(shot);
 								if (Random.Float() < WondrousResin.extraCurseEffectChance()){
 									WondrousResin.forcePositive = true;
+									Ballistica b = new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT);
 									CursedWand.cursedZap(curWand,
 											curUser,
-											new Ballistica(curUser.pos, target, Ballistica.MAGIC_BOLT), new Callback() {
+											b, new Callback() {
 												@Override
 												public void call() {
 													WondrousResin.forcePositive = false;
-													curWand.wandUsed();
+													curWand.wandUsed(b.collisionPos);
 												}
 											});
 								} else {
-									curWand.wandUsed();
+									curWand.wandUsed(shot.collisionPos);
 								}
 							}
 						});

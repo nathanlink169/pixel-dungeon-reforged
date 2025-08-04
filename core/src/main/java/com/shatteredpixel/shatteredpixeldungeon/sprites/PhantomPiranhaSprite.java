@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,8 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -33,9 +38,8 @@ public class PhantomPiranhaSprite extends MobSprite {
 
 	private Emitter sparkles;
 
-	public PhantomPiranhaSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		renderShadow = false;
 		perspectiveRaise = 0.2f;
 
@@ -56,8 +60,6 @@ public class PhantomPiranhaSprite extends MobSprite {
 
 		die = new MovieClip.Animation( 4, false );
 		die.frames( frames, c+12, c+13, c+14 );
-
-		play( idle );
 	}
 
 	@Override
@@ -65,7 +67,7 @@ public class PhantomPiranhaSprite extends MobSprite {
 		super.link(ch);
 		renderShadow = false;
 
-		if (sparkles == null) {
+		if (sparkles == null && !Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
 			sparkles = emitter();
 			sparkles.pour( Speck.factory( Speck.LIGHT ), 0.5f );
 		}

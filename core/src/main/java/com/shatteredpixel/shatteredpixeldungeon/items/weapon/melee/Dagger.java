@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -50,6 +54,8 @@ public class Dagger extends MeleeWeapon {
 		tier = 1;
 		
 		bones = false;
+
+		damageType = DamageType.PIERCING;
 	}
 
 	@Override
@@ -68,10 +74,10 @@ public class Dagger extends MeleeWeapon {
 				int damage;
 				if (isMaxDamage) damage = augment.damageFactor(max());
 				else {
-				int diff = max() - min();
+					int diff = max() - min();
 					damage = augment.damageFactor(Hero.heroDamageIntRange(
 							min() + Math.round(diff * 0.75f),
-						max()));
+							max()));
 				}
 				int exStr = hero.STR() - STRReq();
 				if (exStr > 0) {

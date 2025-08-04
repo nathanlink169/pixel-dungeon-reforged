@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Adrenaline;
@@ -47,9 +51,7 @@ import com.watabou.utils.Random;
 public class Necromancer extends Mob {
 	
 	{
-		spriteClass = NecromancerSprite.class;
-		
-		HP = HT = 40;
+		HP = HT = getRandomizerEnabled(RandomTraits.FRAIL_FORM) ? 10 : 40;
 		defenseSkill = 14;
 		
 		EXP = 7;
@@ -61,6 +63,10 @@ public class Necromancer extends Mob {
 		properties.add(Property.UNDEAD);
 		
 		HUNTING = new Hunting();
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return NecromancerSprite.class;
 	}
 	
 	public boolean summoning = false;
@@ -108,18 +114,19 @@ public class Necromancer extends Mob {
 	
 	@Override
 	public void die(Object cause) {
-		if (storedSkeletonID != -1){
-			Actor ch = Actor.findById(storedSkeletonID);
-			storedSkeletonID = -1;
-			if (ch instanceof NecroSkeleton){
-				mySkeleton = (NecroSkeleton) ch;
+		if (!getRandomizerEnabled(RandomTraits.PERSISTENT_UNDEAD)) {
+			if (storedSkeletonID != -1) {
+				Actor ch = Actor.findById(storedSkeletonID);
+				storedSkeletonID = -1;
+				if (ch instanceof NecroSkeleton) {
+					mySkeleton = (NecroSkeleton) ch;
+				}
+			}
+
+			if (mySkeleton != null && mySkeleton.isAlive() && mySkeleton.alignment == alignment) {
+				mySkeleton.die(null);
 			}
 		}
-		
-		if (mySkeleton != null && mySkeleton.isAlive() && mySkeleton.alignment == alignment){
-			mySkeleton.die(null);
-		}
-		
 		super.die(cause);
 	}
 
@@ -181,11 +188,13 @@ public class Necromancer extends Mob {
 		//otherwise give it adrenaline
 		} else if (mySkeleton.buff(Adrenaline.class) == null) {
 
-			if (sprite.visible || mySkeleton.sprite.visible) {
-				sprite.parent.add(new Beam.HealthRay(sprite.center(), mySkeleton.sprite.center()));
+			if (!getRandomizerEnabled(RandomTraits.APPRENTICE)) {
+				if (sprite.visible || mySkeleton.sprite.visible) {
+					sprite.parent.add(new Beam.HealthRay(sprite.center(), mySkeleton.sprite.center()));
+				}
+
+				Buff.affect(mySkeleton, Adrenaline.class, 3f);
 			}
-			
-			Buff.affect(mySkeleton, Adrenaline.class, 3f);
 		}
 		
 		next();
@@ -225,7 +234,7 @@ public class Necromancer extends Mob {
 					if (blocker == Dungeon.hero && !blocker.isAlive()){
 						Badges.validateDeathFromEnemyMagic();
 						Dungeon.fail(this);
-						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+						GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 					}
 				}
 
@@ -305,13 +314,18 @@ public class Necromancer extends Mob {
 				if (summoningPos != -1){
 					
 					summoning = true;
-					sprite.zap( summoningPos );
+					if (getRandomizerEnabled(RandomTraits.BONE_ARMY)) {
+						sprite.zap(summoningPos);
+						summonMinion();
+					} else {
+						sprite.zap(summoningPos);
 
-					if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[summoningPos]){
-						Dungeon.hero.interrupt();
+						if (Dungeon.level.heroFOV[pos] || Dungeon.level.heroFOV[summoningPos]) {
+							Dungeon.hero.interrupt();
+						}
+
+						spend(firstSummon ? TICK : 2 * TICK);
 					}
-					
-					spend( firstSummon ? TICK : 2*TICK );
 				} else {
 					//wait for a turn
 					spend(TICK);
@@ -356,9 +370,15 @@ public class Necromancer extends Mob {
 					return true;
 					
 				} else {
-					
 					//zap skeleton
-					if (mySkeleton.HP < mySkeleton.HT || mySkeleton.buff(Adrenaline.class) == null) {
+					boolean shouldZapSkeleton;
+					if (getRandomizerEnabled(RandomTraits.APPRENTICE)) {
+						shouldZapSkeleton = mySkeleton.HP < mySkeleton.HT;
+					} else {
+						shouldZapSkeleton = mySkeleton.HP < mySkeleton.HT || mySkeleton.buff(Adrenaline.class) == null;
+					}
+
+					if (shouldZapSkeleton) {
 						if (sprite != null && sprite.visible){
 							sprite.zap(mySkeleton.pos);
 							return false;
@@ -366,7 +386,11 @@ public class Necromancer extends Mob {
 							onZapComplete();
 						}
 					}
-					
+					else if (getRandomizerEnabled(RandomTraits.COWARDLY) && fieldOfView[Dungeon.hero.pos]) {
+						int oldPos = pos;
+						getFurther(Dungeon.hero.pos);
+						moveSprite( oldPos, pos );
+					}
 				}
 				
 				return true;
@@ -382,14 +406,18 @@ public class Necromancer extends Mob {
 		
 		{
 			state = WANDERING;
-			
-			spriteClass = NecroSkeletonSprite.class;
-			
+
 			//no loot or exp
 			maxLvl = -5;
 			
 			//20/25 health to start
 			HP = 20;
+
+			baseSpeed = Necromancer.getRandomizerEnabled(Necromancer.RandomTraits.SHAMBLING_BONES) ? 0.25f : 1.0f;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return NecroSkeletonSprite.class;
 		}
 
 		@Override
@@ -415,5 +443,21 @@ public class Necromancer extends Mob {
 			}
 		}
 		
+	}
+
+	public enum RandomTraits {
+		BONE_ARMY, COWARDLY, PERSISTENT_UNDEAD, SHAMBLING_BONES, FRAIL_FORM, APPRENTICE
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case BONE_ARMY: return Randomizer.getCreatureBuff(Necromancer.class) == 1;
+			case COWARDLY: return Randomizer.getCreatureBuff(Necromancer.class) == 2;
+			case PERSISTENT_UNDEAD: return Randomizer.getCreatureBuff(Necromancer.class) == 3;
+			case SHAMBLING_BONES: return Randomizer.getCreatureNerf(Necromancer.class) == 1;
+			case FRAIL_FORM: return Randomizer.getCreatureNerf(Necromancer.class) == 2;
+			case APPRENTICE: return Randomizer.getCreatureNerf(Necromancer.class) == 3;
+		}
+		return false;
 	}
 }

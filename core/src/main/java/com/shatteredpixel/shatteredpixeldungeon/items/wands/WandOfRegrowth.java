@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.LotusSprite;
 import com.watabou.noosa.audio.Sample;
@@ -421,9 +422,11 @@ public class WandOfRegrowth extends Wand {
 			properties.add(Property.IMMOVABLE);
 			properties.add(Property.STATIC);
 
-			spriteClass = LotusSprite.class;
-
 			viewDistance = 1;
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return LotusSprite.class;
 		}
 
 		private int wandLvl = 0;
@@ -459,7 +462,7 @@ public class WandOfRegrowth extends Wand {
 		}
 
 		@Override
-		public void damage( int dmg, Object src ) {
+		public void damage( int dmg, Object src, int damageType ) {
 			//do nothing
 		}
 
@@ -485,7 +488,7 @@ public class WandOfRegrowth extends Wand {
 		}
 
 		@Override
-		public String description() {
+		public String description(boolean forceNoMonsterUnknown) {
 			String desc = Messages.get(this, "desc");
 			if (Actor.chars().contains(this)) {
 				int preservation = Math.round(seedPreservation()*100);

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,29 +25,31 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalMimic;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.EbonyMimic;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GoldenMimic;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.watabou.noosa.TextureFilm;
 
 public class RatSprite extends MobSprite {
-	
-	public RatSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.RAT );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 16, 15 );
-		
+
 		idle = new Animation( 2, true );
 		idle.frames( frames, 0, 0, 0, 1 );
-		
+
 		run = new Animation( 10, true );
 		run.frames( frames, 6, 7, 8, 9, 10 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, 2, 3, 4, 5, 0 );
-		
+
 		die = new Animation( 10, false );
 		die.frames( frames, 11, 12, 13, 14 );
-		
-		play( idle );
 	}
 }

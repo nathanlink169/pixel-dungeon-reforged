@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,7 +25,9 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
@@ -39,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SuccubusSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -53,11 +59,9 @@ public class Succubus extends Mob {
 	private int blinkCooldown = 0;
 	
 	{
-		spriteClass = SuccubusSprite.class;
-		
-		HP = HT = 80;
+		HP = HT = 90;
 		defenseSkill = 25;
-		viewDistance = Light.DISTANCE;
+		viewDistance = Light.DISTANCE - 1;
 		
 		EXP = 12;
 		maxLvl = 25;
@@ -66,6 +70,11 @@ public class Succubus extends Mob {
 		lootChance = 0.33f;
 
 		properties.add(Property.DEMONIC);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return SuccubusSprite.class;
 	}
 	
 	@Override
@@ -95,13 +104,23 @@ public class Succubus extends Mob {
 			if (Dungeon.level.heroFOV[pos]) {
 				Sample.INSTANCE.play( Assets.Sounds.CHARMS );
 			}
-		} else if (Random.Int( 3 ) == 0) {
-			Charm c = Buff.affect( enemy, Charm.class, Charm.DURATION/2f );
-			c.object = id();
-			c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
-			if (Dungeon.level.heroFOV[enemy.pos]) {
-				enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
-				Sample.INSTANCE.play(Assets.Sounds.CHARMS);
+		} else {
+			boolean shouldCharm;
+			if (getRandomizerEnabled(RandomTraits.CHARMING_DEMON)) {
+				shouldCharm = Random.Int(3) <= 1;
+			} else if (getRandomizerEnabled(RandomTraits.WEAK_ENCHANTMENT)) {
+				shouldCharm = Random.Int(10) == 0;
+			} else {
+				shouldCharm = Random.Int(3) == 0;
+			}
+			if (shouldCharm) {
+				Charm c = Buff.affect(enemy, Charm.class, Charm.DURATION / 2f);
+				c.object = id();
+				c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
+				if (Dungeon.level.heroFOV[enemy.pos]) {
+					enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
+					Sample.INSTANCE.play(Assets.Sounds.CHARMS);
+				}
 			}
 		}
 		
@@ -110,7 +129,7 @@ public class Succubus extends Mob {
 	
 	@Override
 	protected boolean getCloser( int target ) {
-		if (fieldOfView[target] && Dungeon.level.distance( pos, target ) > 2 && blinkCooldown <= 0 && !rooted) {
+		if (fieldOfView[target] && Dungeon.level.distance( pos, target ) > 2 && blinkCooldown <= 0 && !rooted && !getRandomizerEnabled(RandomTraits.EARTHBOUND)) {
 			
 			if (blink( target )) {
 				spend(-1 / speed());
@@ -159,6 +178,18 @@ public class Succubus extends Mob {
 		blinkCooldown = Random.IntRange(4, 6);
 		return true;
 	}
+
+	@Override
+	//Always spends exactly the specified amount of time, regardless of time-influencing factors
+	protected void spendConstant( float time ){
+		int oldTime = (int)this.getTime(); // cut it off
+		super.spendConstant(time);
+		if (HP > 0 && HP < HT && getRandomizerEnabled(RandomTraits.REGENERATIVE_ALLURE) && this.getTime() > oldTime) { // we go up one turn
+			int oldHP = HP;
+			HP = Math.min(HT, HP + 2);
+			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(HP - oldHP), FloatingText.HEALING);
+		}
+	}
 	
 	@Override
 	public int attackSkill( Char target ) {
@@ -196,5 +227,21 @@ public class Succubus extends Mob {
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
 		blinkCooldown = bundle.getInt(BLINK_CD);
+	}
+
+	public enum RandomTraits {
+		REGENERATIVE_ALLURE, CHARMING_DEMON, PERSISTENT_CHARM, EARTHBOUND, WEAK_ENCHANTMENT, PARTIAL_RESISTANCE
+	}
+
+	public static boolean getRandomizerEnabled(RandomTraits r) {
+		switch (r) {
+			case REGENERATIVE_ALLURE: return Randomizer.getCreatureBuff(Succubus.class) == 1;
+			case CHARMING_DEMON: return Randomizer.getCreatureBuff(Succubus.class) == 2;
+			case PERSISTENT_CHARM: return Randomizer.getCreatureBuff(Succubus.class) == 3;
+			case EARTHBOUND: return Randomizer.getCreatureNerf(Succubus.class) == 1;
+			case WEAK_ENCHANTMENT: return Randomizer.getCreatureNerf(Succubus.class) == 2;
+			case PARTIAL_RESISTANCE: return Randomizer.getCreatureNerf(Succubus.class) == 3;
+		}
+		return false;
 	}
 }

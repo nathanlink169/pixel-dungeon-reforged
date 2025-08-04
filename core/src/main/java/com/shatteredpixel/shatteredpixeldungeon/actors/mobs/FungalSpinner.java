@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,25 +24,31 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Regrowth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.FungalSpinnerSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.PathFinder;
 
 public class FungalSpinner extends Spinner {
 
 	{
-		spriteClass = FungalSpinnerSprite.class;
-
 		HP = HT = 40;
 		defenseSkill = 16;
 
 		EXP = 7;
 		maxLvl = -2;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return FungalSpinnerSprite.class;
 	}
 
 	@Override
@@ -48,7 +57,7 @@ public class FungalSpinner extends Spinner {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		int grassCells = 0;
 		for (int i : PathFinder.NEIGHBOURS9) {
 			if (Dungeon.level.map[pos+i] == Terrain.FURROWED_GRASS
@@ -59,7 +68,7 @@ public class FungalSpinner extends Spinner {
 		//first adjacent grass cell reduces damage taken by 30%, each one after reduces by another 10%
 		if (grassCells > 0) dmg = Math.round(dmg * (8-grassCells)/10f);
 
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override

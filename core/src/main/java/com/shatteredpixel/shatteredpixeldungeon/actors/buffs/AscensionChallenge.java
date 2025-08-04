@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -56,9 +60,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Swarm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.UnholyPriest;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Shopkeeper;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
+import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -265,7 +271,15 @@ public class AscensionChallenge extends Buff {
 						Dungeon.level.mobs.remove( mob );
 					}
 				}
-				Dungeon.level.spawnMob(12);
+				if (Dungeon.depth == 1 && HalfRipper.Quest.corrupted() && HalfRipper.Quest.completed()) {
+					RipperDemon r = new RipperDemon();
+					do {
+						r.pos = Dungeon.level.pointToCell(((RegularLevel)Dungeon.level).GetEntranceRoom().random());
+					} while (r.pos == -1 || Dungeon.level.solid[r.pos] || !Dungeon.level.passable[r.pos] || !Dungeon.level.openSpace[r.pos] || r.pos == Dungeon.level.entrance());
+					r.state = r.HUNTING;
+					Dungeon.level.mobs.add(r);
+				}
+				Dungeon.level.spawnMob(Dungeon.isChallenged(Challenges.HORDE) ? 24 : 12);
 
 			}
 		}

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -104,7 +107,8 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 		ANGULAR_SPEEDS.put(SpiritBow.SpiritArrow.class,       0);
 		ANGULAR_SPEEDS.put(ScorpioSprite.ScorpioShot.class,   0);
 		ANGULAR_SPEEDS.put(HolyLance.HolyLanceVFX.class,      0);
-		ANGULAR_SPEEDS.put(Gun.Bullet.class, 				  0);
+		ANGULAR_SPEEDS.put(BallistaSprite.BallistaShot.class, 0);
+		ANGULAR_SPEEDS.put(SpitterSprite.SpitterShot.class,	  0);
 		
 		//720 is default
 
@@ -170,6 +174,7 @@ public class MissileSprite extends ItemSprite implements Tweener.Listener {
 			
 		} else if (item instanceof SpiritBow.SpiritArrow
 				|| item instanceof ScorpioSprite.ScorpioShot
+				|| item instanceof BallistaSprite.BallistaShot
 				|| item instanceof TenguSprite.TenguShuriken){
 			speed *= 1.5f;
 		}

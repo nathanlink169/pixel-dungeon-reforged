@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,9 +35,8 @@ public class RotHeartSprite extends MobSprite {
 
 	private Emitter cloud;
 
-	public RotHeartSprite(){
-		super();
-
+	@Override
+	protected void setupFrames() {
 		perspectiveRaise = 0.2f;
 
 		texture( Assets.Sprites.ROT_HEART );
@@ -52,8 +54,6 @@ public class RotHeartSprite extends MobSprite {
 
 		die = new MovieClip.Animation( 8, false );
 		die.frames( frames, 1, 2, 3, 4, 5, 6, 7, 7, 7 );
-
-		play( idle );
 	}
 
 	@Override

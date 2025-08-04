@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -23,30 +26,28 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
+import com.watabou.noosa.MovieClip;
 import com.watabou.noosa.TextureFilm;
 
 public class LarvaSprite extends MobSprite {
-	
-	public LarvaSprite() {
-		super();
-		
+	@Override
+	protected void setupFrames() {
+
 		texture( Assets.Sprites.LARVA );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 8 );
-		
+
 		idle = new Animation( 5, true );
 		idle.frames( frames, 4, 4, 4, 4, 4, 5, 5 );
-		
+
 		run = new Animation( 12, true );
 		run.frames( frames, 0, 1, 2, 3 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, 6, 5, 7 );
-		
+
 		die = new Animation( 10, false );
 		die.frames( frames, 8 );
-		
-		play( idle );
 	}
 	
 	@Override

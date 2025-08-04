@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.PrismaticImage;
 import com.watabou.noosa.Game;
 
@@ -28,6 +33,10 @@ public class PrismaticSprite extends MirrorSprite {
 
 	public PrismaticSprite(){
 		super();
+
+		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			return;
+		}
 
 		float interval = (Game.timeTotal % 9 ) /3f;
 		tint(interval > 2 ? interval - 2 : Math.max(0, 1 - interval),
@@ -43,7 +52,11 @@ public class PrismaticSprite extends MirrorSprite {
 	@Override
 	public void update() {
 		super.update();
-		
+
+		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			return;
+		}
+
 		if (flashTime <= 0){
 			float interval = (Game.timeTotal % 9 ) /3f;
 			tint(interval > 2 ? interval - 2 : Math.max(0, 1 - interval),

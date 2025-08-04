@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Spinner;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WebParticle;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -65,8 +69,12 @@ public class Web extends Blob {
 	}
 
 	//affects characters as they step on it. See Level.OccupyCell and Level.PressCell
-	public static void affectChar( Char ch ){
-		Buff.prolong( ch, Roots.class, Roots.DURATION );
+	public static void affectChar( Char ch ) {
+		if (Spinner.getRandomizerEnabled(Spinner.RandomTraits.LASTING_WEBS)) {
+			Buff.prolong(ch, Roots.class, Roots.DURATION * 3.0f);
+		} else {
+			Buff.prolong(ch, Roots.class, Roots.DURATION);
+		}
 	}
 	
 	@Override

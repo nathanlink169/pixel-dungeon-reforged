@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -22,6 +25,8 @@
 package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Elemental;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
@@ -45,30 +50,31 @@ public abstract class ElementalSprite extends MobSprite {
 	private Emitter particles;
 	protected abstract Emitter createEmitter();
 	
-	public ElementalSprite() {
-		super();
-		
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
+
+	@Override
+	protected void setupFrames() {
 		int c = texOffset();
-		
+
 		texture( Assets.Sprites.ELEMENTAL );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 12, 14 );
-		
+
 		idle = new Animation( 10, true );
 		idle.frames( frames, c+0, c+1, c+2 );
-		
+
 		run = new Animation( 12, true );
 		run.frames( frames, c+0, c+1, c+3 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, c+4, c+5, c+6 );
-		
-		zap = attack.clone();
-		
+
 		die = new Animation( 15, false );
 		die.frames( frames, c+7, c+8, c+9, c+10, c+11, c+12, c+13, c+12 );
-		
-		play( idle );
 	}
 	
 	@Override
@@ -142,6 +148,9 @@ public abstract class ElementalSprite extends MobSprite {
 		
 		@Override
 		protected Emitter createEmitter() {
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+				return null;
+			}
 			Emitter emitter = emitter();
 			emitter.pour( FlameParticle.FACTORY, 0.06f );
 			return emitter;
@@ -166,6 +175,9 @@ public abstract class ElementalSprite extends MobSprite {
 		
 		@Override
 		protected Emitter createEmitter() {
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+				return null;
+			}
 			Emitter emitter = emitter();
 			emitter.pour( ElmoParticle.FACTORY, 0.06f );
 			return emitter;
@@ -190,6 +202,9 @@ public abstract class ElementalSprite extends MobSprite {
 		
 		@Override
 		protected Emitter createEmitter() {
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+				return null;
+			}
 			Emitter emitter = emitter();
 			emitter.pour( MagicMissile.MagicParticle.FACTORY, 0.06f );
 			return emitter;
@@ -219,6 +234,9 @@ public abstract class ElementalSprite extends MobSprite {
 		
 		@Override
 		protected Emitter createEmitter() {
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+				return null;
+			}
 			Emitter emitter = emitter();
 			emitter.pour( SparkParticle.STATIC, 0.06f );
 			return emitter;
@@ -246,6 +264,9 @@ public abstract class ElementalSprite extends MobSprite {
 		
 		@Override
 		protected Emitter createEmitter() {
+			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+				return null;
+			}
 			Emitter emitter = emitter();
 			emitter.pour( RainbowParticle.BURST, 0.025f );
 			return emitter;

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,10 +28,14 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.watabou.noosa.TextureFilm;
 
 public class GnollSapperSprite extends MobSprite {
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
 
-	public GnollSapperSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture(Assets.Sprites.GNOLL_SAPPER );
 
 		TextureFilm frames = new TextureFilm( texture, 12, 15 );
@@ -42,12 +49,8 @@ public class GnollSapperSprite extends MobSprite {
 		attack = new Animation( 12, false );
 		attack.frames( frames, 2, 3, 0 );
 
-		zap = attack.clone();
-
 		die = new Animation( 12, false );
 		die.frames( frames, 8, 9, 10 );
-
-		play( idle );
 	}
 
 	@Override

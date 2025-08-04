@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -28,30 +31,33 @@ import com.watabou.utils.Random;
 public class MonkSprite extends MobSprite {
 	
 	private Animation kick;
-	
-	public MonkSprite() {
-		super();
-		
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.MONK );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 15, 14 );
-		
+
 		idle = new Animation( 6, true );
 		idle.frames( frames, 1, 0, 1, 2 );
-		
+
 		run = new Animation( 15, true );
 		run.frames( frames, 11, 12, 13, 14, 15, 16 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 3, 4, 3, 4 );
-		
+
 		kick = new Animation( 10, false );
 		kick.frames( frames, 5, 6, 5 );
-		
+
 		die = new Animation( 15, false );
 		die.frames( frames, 1, 7, 8, 8, 9, 10 );
-		
-		play( idle );
+	}
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		kick = attack.clone();
 	}
 	
 	@Override

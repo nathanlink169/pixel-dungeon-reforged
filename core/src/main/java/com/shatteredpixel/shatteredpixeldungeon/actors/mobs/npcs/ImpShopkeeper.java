@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,14 +27,15 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 
 public class ImpShopkeeper extends Shopkeeper {
 
-	{
-		spriteClass = ImpSprite.class;
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return ImpSprite.class;
 	}
-	
 	private boolean seenBefore = false;
 	
 	@Override
@@ -39,9 +43,9 @@ public class ImpShopkeeper extends Shopkeeper {
 
 		if (!seenBefore && Dungeon.level.heroFOV[pos]) {
 			if (Dungeon.hero.buff(AscensionChallenge.class) == null) {
-				yell(Messages.get(this, "greetings", Messages.titleCase(Dungeon.hero.name())));
+				yell(Messages.get(this, "greetings", Messages.titleCase(Dungeon.hero.name(false))));
 			} else {
-				yell(Messages.get(this, "greetings_ascent", Messages.titleCase(Dungeon.hero.name())));
+				yell(Messages.get(this, "greetings_ascent", Messages.titleCase(Dungeon.hero.name(false))));
 			}
 			seenBefore = true;
 		}

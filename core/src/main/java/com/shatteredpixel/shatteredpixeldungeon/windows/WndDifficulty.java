@@ -1,5 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -9,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.utils.DeviceCompat;
 
 import java.util.ArrayList;
 
@@ -21,13 +24,13 @@ public class WndDifficulty extends Window {
     private final boolean editable;
     private final ArrayList<CheckBox> boxes;
 
-    public WndDifficulty( int currentDifficulty, boolean editable ) {
+    public WndDifficulty( int currentDifficulty, boolean randomizerEnabled, boolean editable ) {
 
         super();
 
         this.editable = editable;
 
-        RenderedTextBlock title = PixelScene.renderTextBlock( "Difficulty", 12 );
+        RenderedTextBlock title = PixelScene.renderTextBlock( Messages.get(this, "difficulty"), 12 );
         title.hardlight( TITLE_COLOR );
         title.setPos(
                 (WIDTH - title.width()) / 2,
@@ -46,7 +49,7 @@ public class WndDifficulty extends Window {
         CheckBox impossibleCb;
 
         // Easy
-        easyCb = new CheckBox( Messages.titleCase("Easy") ) {
+        easyCb = new CheckBox( Messages.get(WndDifficulty.class,"easy.name") ) {
             @Override
             protected void onClick() {
                 if (checked()) {
@@ -69,7 +72,7 @@ public class WndDifficulty extends Window {
             protected void onClick() {
                 super.onClick();
                 ShatteredPixelDungeon.scene().add(
-                        new WndMessage("An easier experience. Recommended for those just starting out.\n\n- Maximum health is increased\n- Increased chance to hit\n- More scrolls of upgrade\n- Surprise attacks deal significantly higher damage")
+                        new WndMessage(Messages.get(WndDifficulty.class, "easy.desc"))
                 );
             }
         };
@@ -79,7 +82,7 @@ public class WndDifficulty extends Window {
         // End Easy
 
         // Medium
-        mediumCb = new CheckBox( Messages.titleCase("Medium") ) {
+        mediumCb = new CheckBox( Messages.get(WndDifficulty.class,"medium.name") ) {
             @Override
             protected void onClick() {
                 if (checked()) {
@@ -102,7 +105,7 @@ public class WndDifficulty extends Window {
             protected void onClick() {
                 super.onClick();
                 ShatteredPixelDungeon.scene().add(
-                        new WndMessage("The intended experience.\n\nThere are no significant difficulty modifiers for medium difficulty.")
+                        new WndMessage(Messages.get(WndDifficulty.class,"medium.desc"))
                 );
             }
         };
@@ -112,7 +115,7 @@ public class WndDifficulty extends Window {
         // End Medium
 
         // Hard
-        hardCb = new CheckBox( Messages.titleCase("Hard") ) {
+        hardCb = new CheckBox( Messages.get(WndDifficulty.class,"hard.name") ) {
             @Override
             protected void onClick() {
                 if (checked()) {
@@ -135,7 +138,7 @@ public class WndDifficulty extends Window {
             protected void onClick() {
                 super.onClick();
                 ShatteredPixelDungeon.scene().add(
-                        new WndMessage("An more challenging experience. You will need your wits about you.\n\n- Maximum health is decreased\n- Enemies have an increased chance to hit")
+                        new WndMessage(Messages.get(WndDifficulty.class, "hard.desc"))
                 );
             }
         };
@@ -145,7 +148,7 @@ public class WndDifficulty extends Window {
         // End Hard
 
         // Impossible
-        impossibleCb = new CheckBox( Messages.titleCase("Impossible") ) {
+        impossibleCb = new CheckBox( Messages.get(WndDifficulty.class,"impossible.name") ) {
             @Override
             protected void onClick() {
                 if (checked()) {
@@ -168,7 +171,7 @@ public class WndDifficulty extends Window {
             protected void onClick() {
                 super.onClick();
                 ShatteredPixelDungeon.scene().add(
-                        new WndMessage("You will die.\n\n- Maximum health is decreased further\n- Enemies have an increased to hit\n- Less scrolls of upgrade")
+                        new WndMessage(Messages.get(WndDifficulty.class, "impossible.desc"))
                 );
             }
         };
@@ -176,6 +179,37 @@ public class WndDifficulty extends Window {
         add(impossibleInfo);
         pos = impossibleCb.bottom();
         // End Impossible
+
+        // Randomizer
+        if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()) {
+            CheckBox randomizerButton = new CheckBox(Messages.get(WndDifficulty.class, "randomize.name")) {
+                @Override
+                protected void onClick() {
+                    super.onClick();
+                    Dungeon.randomizerEnabled = checked();
+                    SPDSettings.randomizerEnabled(checked());
+                }
+            };
+            randomizerButton.checked( randomizerEnabled );
+            randomizerButton.active = editable;
+            pos += GAP;
+            randomizerButton.setRect( 0, pos, WIDTH-16, BTN_HEIGHT );
+            add( randomizerButton );
+
+            IconButton randomizeInfo = new IconButton(Icons.get(Icons.INFO)){
+                @Override
+                protected void onClick() {
+                    super.onClick();
+                    ShatteredPixelDungeon.scene().add(
+                            new WndMessage(Messages.get(WndDifficulty.class, "randomize.desc"))
+                    );
+                }
+            };
+            randomizeInfo.setRect(impossibleCb.right(), pos, 16, BTN_HEIGHT);
+            add(randomizeInfo);
+            pos = randomizerButton.bottom();
+        }
+        // End Randomizer
 
         resize( WIDTH, (int)pos );
     }

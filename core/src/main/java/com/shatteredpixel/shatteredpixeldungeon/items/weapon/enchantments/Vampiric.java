@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -37,9 +40,10 @@ public class Vampiric extends Weapon.Enchantment {
 	@Override
 	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
 		
-		//chance to heal scales from 5%-30% based on missing HP
+		//chance to heal scales from 10%-60% based on missing HP
 		float missingPercent = (attacker.HT - attacker.HP) / (float)attacker.HT;
 		float healChance = 0.05f + .25f*missingPercent;
+		healChance *= 2.0f;
 
 		healChance *= procChanceMultiplier(attacker);
 		
@@ -49,8 +53,8 @@ public class Vampiric extends Weapon.Enchantment {
 
 			float powerMulti = Math.max(1f, healChance);
 			
-			//heals for 50% of damage dealt
-			int healAmt = Math.round(damage * 0.5f * powerMulti);
+			//heals for 25% of damage dealt
+			int healAmt = Math.round(damage * 0.25f * powerMulti);
 			healAmt = Math.min( healAmt, attacker.HT - attacker.HP );
 			
 			if (healAmt > 0 && attacker.isAlive()) {

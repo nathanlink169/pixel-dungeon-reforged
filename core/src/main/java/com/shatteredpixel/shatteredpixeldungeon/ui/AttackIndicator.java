@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -25,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Slime;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -117,6 +121,12 @@ public class AttackIndicator extends Tag {
 		int v = Dungeon.hero.visibleEnemies();
 		for (int i=0; i < v; i++) {
 			Mob mob = Dungeon.hero.visibleEnemy( i );
+			if (mob instanceof Slime && Slime.getRandomizerEnabled(Slime.RandomTraits.CHAMELEON_OOZE)) {
+				if (((Slime) mob).stealthy()) {
+					continue;
+				}
+			}
+
 			if ( Dungeon.hero.canAttack( mob) ) {
 				candidates.add( mob );
 			}
@@ -149,7 +159,7 @@ public class AttackIndicator extends Tag {
 			sprite = null;
 		}
 		
-		sprite = Reflection.newInstance(lastTarget.spriteClass);
+		sprite = Reflection.newInstance(lastTarget.GetSpriteClass());
 		active = true;
 		sprite.linkVisuals(lastTarget);
 		sprite.idle();

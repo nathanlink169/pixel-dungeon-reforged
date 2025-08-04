@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -149,7 +152,7 @@ public class Chasm implements Hero.Doom {
 		//Hero has a 50% chance to bleed out at 66% HP, and begins to risk instant-death at 25%
 		if (!hero.hasTalent(Talent.ARMOR_MOD_INFINITE_FALLING)) {
 			Buff.prolong(hero, Cripple.class, Cripple.DURATION);
-		Buff.affect( hero, Bleeding.class).set( Math.round(hero.HT / (6f + (6f*(hero.HP/(float)hero.HT)))), Chasm.class);
+			Buff.affect( hero, Bleeding.class).set( Math.round(hero.HT / (6f + (6f*(hero.HP/(float)hero.HT)))), Chasm.class);
 		}
 
 		float damageMultiplier = 1.0f;

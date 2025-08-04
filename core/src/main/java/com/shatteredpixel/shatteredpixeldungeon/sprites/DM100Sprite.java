@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,25 +30,29 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM100;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.PointF;
 
 public class DM100Sprite extends MobSprite {
-	
-	public DM100Sprite () {
-		super();
-		
+
+	private Emitter auraParticles = null;
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.DM100 );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 16, 14 );
-		
+
 		idle = new Animation( 1, true );
 		idle.frames( frames, 0, 1 );
 
 		run = new Animation( 12, true );
 		run.frames( frames, 6, 7, 8, 9 );
-		
+
 		attack = new Animation( 12, false );
 		attack.frames( frames, 2, 3, 4, 0 );
 
@@ -54,8 +61,43 @@ public class DM100Sprite extends MobSprite {
 
 		die = new Animation( 12, false );
 		die.frames( frames, 10, 11, 12, 13, 14, 15 );
-		
-		play( idle );
+	}
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		zap = attack.clone();
+	}
+
+	@Override
+	public void link(Char ch) {
+		super.link(ch);
+
+		if (DM100.getRandomizerEnabled(DM100.RandomTraits.ELECTRICAL_AURA)) {
+			auraParticles = emitter();
+			auraParticles.autoKill = false;
+			auraParticles.on = true;
+			auraParticles.fillTarget = false;
+			auraParticles.pour(SparkParticle.FACTORY, 0.05f);
+		}
+	}
+
+	@Override
+	public void update() {
+		super.update();
+		if (auraParticles != null){
+			auraParticles.pos( this );
+			auraParticles.visible = visible;
+		}
+	}
+
+	@Override
+	public void kill() {
+		super.kill();
+
+		if (auraParticles != null) {
+			auraParticles.on = false;
+		}
 	}
 	
 	public void zap( int pos ) {

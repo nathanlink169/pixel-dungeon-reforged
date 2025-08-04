@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.StatueSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -40,12 +44,15 @@ import com.watabou.utils.Random;
 public class Statue extends Mob {
 	
 	{
-		spriteClass = StatueSprite.class;
-
 		EXP = 0;
 		state = PASSIVE;
 		
 		properties.add(Property.INORGANIC);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return StatueSprite.class;
 	}
 	
 	protected Weapon weapon;
@@ -122,13 +129,13 @@ public class Statue extends Mob {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 
 		if (state == PASSIVE) {
 			state = HUNTING;
 		}
 		
-		super.damage( dmg, src );
+		super.damage( dmg, src, damageType );
 	}
 	
 	@Override
@@ -137,7 +144,7 @@ public class Statue extends Mob {
 		damage = weapon.proc( this, enemy, damage );
 		if (!enemy.isAlive() && enemy == Dungeon.hero){
 			Dungeon.fail(this);
-			GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name())) );
+			GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
 		}
 		return damage;
 	}
@@ -180,7 +187,7 @@ public class Statue extends Mob {
 	}
 
 	@Override
-	public String description() {
+	public String description(boolean forceNoMonsterUnknown) {
 		String desc = Messages.get(this, "desc");
 		if (weapon != null){
 			desc += "\n\n" + Messages.get(this, "desc_weapon", weapon.name());

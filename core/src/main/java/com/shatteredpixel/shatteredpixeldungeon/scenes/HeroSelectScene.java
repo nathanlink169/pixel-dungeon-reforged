@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -594,14 +597,14 @@ public class HeroSelectScene extends PixelScene {
 
 			buttons = new ArrayList<>();
 			spacers = new ArrayList<>();
-			StyledButton difficultyButton = new StyledButton(Chrome.Type.BLANK, "Difficulty", 6){
+			StyledButton difficultyButton = new StyledButton(Chrome.Type.BLANK, Messages.get(HeroSelectScene.class, "difficulty"), 6){
 				@Override
 				protected void onClick() {
-					ShatteredPixelDungeon.scene().addToFront(new WndDifficulty(SPDSettings.difficulty(), true));
+					ShatteredPixelDungeon.scene().addToFront(new WndDifficulty(SPDSettings.difficulty(), SPDSettings.randomizerEnabled(), true));
 				}
 			};
 			difficultyButton.leftJustify = true;
-			difficultyButton.icon(Icons.get(Icons.SEED));
+			difficultyButton.icon(Icons.get(Icons.DIFFICULTY));
 			buttons.add(difficultyButton);
 			add(difficultyButton);
 

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -24,12 +27,15 @@ package com.shatteredpixel.shatteredpixeldungeon.items.stones;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Sample;
 
 import java.util.ArrayList;
@@ -86,6 +92,24 @@ public abstract class InventoryStone extends Runestone {
 	}
 	
 	protected abstract void onItemSelected( Item item );
+
+	protected void confirmCancelation() {
+		GameScene.show( new WndOptions( Messages.titleCase(name()), Messages.get(this, "warning"),
+				Messages.get(this, "yes"), Messages.get(this, "no") ) {
+			@Override
+			protected void onSelect( int index ) {
+				switch (index) {
+					case 0:
+						curUser.spendAndNext( 1f );
+						break;
+					case 1:
+						activate(curUser.pos);
+						break;
+				}
+			}
+			public void onBackPressed() {}
+		} );
+	}
 	
 	protected WndBag.ItemSelector itemSelector = new WndBag.ItemSelector() {
 

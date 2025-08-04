@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -26,25 +29,22 @@ import com.watabou.noosa.TextureFilm;
 
 public class AlbinoSprite extends MobSprite {
 
-	public AlbinoSprite() {
-		super();
-		
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.RAT );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 16, 15 );
-		
+
 		idle = new Animation( 2, true );
 		idle.frames( frames, 16, 16, 16, 17 );
-		
+
 		run = new Animation( 10, true );
 		run.frames( frames, 22, 23, 24, 25, 26 );
-		
+
 		attack = new Animation( 15, false );
 		attack.frames( frames, 18, 19, 20, 21 );
-		
+
 		die = new Animation( 10, false );
 		die.frames( frames, 27, 28, 29, 30 );
-		
-		play( idle );
 	}
 }

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -31,9 +34,8 @@ public class FetidRatSprite extends MobSprite {
 	
 	private Emitter cloud;
 
-	public FetidRatSprite() {
-		super();
-
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.RAT );
 
 		TextureFilm frames = new TextureFilm( texture, 16, 15 );
@@ -49,8 +51,6 @@ public class FetidRatSprite extends MobSprite {
 
 		die = new Animation( 10, false );
 		die.frames( frames, 43, 44, 45, 46 );
-
-		play( idle );
 	}
 	
 	@Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -30,7 +34,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.PhantomMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PhantomPiranhaSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -40,14 +47,16 @@ import java.util.ArrayList;
 public class PhantomPiranha extends Piranha {
 
 	{
-		spriteClass = PhantomPiranhaSprite.class;
-
 		loot = PhantomMeat.class;
 		lootChance = 1f;
 	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return PhantomPiranhaSprite.class;
+	}
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		Char dmgSource = null;
 		if (src instanceof Char) dmgSource = (Char)src;
 		if (src instanceof Wand || src instanceof ClericSpell) dmgSource = Dungeon.hero;
@@ -55,7 +64,7 @@ public class PhantomPiranha extends Piranha {
 		if (dmgSource == null || !Dungeon.level.adjacent(pos, dmgSource.pos)){
 			dmg = Math.round(dmg/2f); //halve damage taken if we are going to teleport
 		}
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 
 		if (isAlive() && !(src instanceof Corruption)) {
 			if (dmgSource != null) {

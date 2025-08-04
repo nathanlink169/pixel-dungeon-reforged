@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -146,6 +149,7 @@ public class GamesInProgress {
 		info.depth = Dungeon.depth;
 		info.challenges = Dungeon.challenges;
 		info.difficulty = Dungeon.difficulty;
+		info.randomized = Dungeon.randomizerEnabled;
 
 		info.seed = Dungeon.seed;
 		info.customSeed = Dungeon.customSeedText;
@@ -184,6 +188,7 @@ public class GamesInProgress {
 		public int version;
 		public int challenges;
 		public int difficulty;
+		public boolean randomized;
 
 		public long seed;
 		public String customSeed;

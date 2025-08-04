@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,14 +45,15 @@ public class BannerSprites {
 			case TITLE_PORT:
 				icon.frame( icon.texture.uvRect( 0, 0, 139, 100 ) );
 				break;
+				// TODO: Re-implement title glows
 			case TITLE_GLOW_PORT:
 				icon.frame( icon.texture.uvRect( 139, 0, 278, 100 ) );
 				break;
 			case TITLE_LAND:
-				icon.frame( icon.texture.uvRect( 0, 100, 240, 157) );
+				icon.frame( icon.texture.uvRect( 0, 100, 258, 157) );
 				break;
 			case TITLE_GLOW_LAND:
-				icon.frame( icon.texture.uvRect( 240, 100, 480, 157 ) );
+				icon.frame( icon.texture.uvRect( 258, 100, 516, 157 ) );
 				break;
 			case BOSS_SLAIN:
 				icon.frame( icon.texture.uvRect( 0, 157, 128, 192 ) );

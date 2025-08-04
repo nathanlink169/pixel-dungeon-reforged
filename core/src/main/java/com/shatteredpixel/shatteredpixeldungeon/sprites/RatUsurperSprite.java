@@ -26,9 +26,8 @@ import com.watabou.noosa.TextureFilm;
 
 public class RatUsurperSprite extends MobSprite {
 
-    public RatUsurperSprite() {
-        super();
-
+    @Override
+    protected void setupFrames() {
         texture( Assets.Sprites.RAT_USURPER );
 
         TextureFilm frames = new TextureFilm( texture, 16, 15 );
@@ -45,6 +44,6 @@ public class RatUsurperSprite extends MobSprite {
         die = new Animation( 10, false );
         die.frames( frames, 11, 12, 13, 14 );
 
-        play( idle );
+        scale.set(1.1f);
     }
 }

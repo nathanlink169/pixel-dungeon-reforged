@@ -100,7 +100,7 @@ public class Ringbox extends Artifact {
 
             IconTitle titlebar = new IconTitle();
             titlebar.icon( new ItemSprite(ringbox) );
-            titlebar.label( "Ringbox" );
+            titlebar.label( Messages.get(Ringbox.class, "name") );
             titlebar.setRect( 0, 0, WIDTH, 0 );
             add( titlebar );
 
@@ -121,10 +121,10 @@ public class Ringbox extends Artifact {
 
             String desc;
             if (thirdRingPower > 0) {
-                desc = "There are three slots for rings. You can feel the ringbox will give you their power at a lower rate.\n- Slot 1 will give you " + Float.toString(firstRingPower) + "% of its power\n- Slot 2 will give you " + Float.toString(secondRingPower) + "% of its power\n- Slot 3 will give you " + Float.toString(thirdRingPower) + "% of its power";
+                desc = Messages.get(Ringbox.class, "equipwindowthree", firstRingPower, secondRingPower, thirdRingPower);
             }
             else {
-                desc = "There are two slots for rings. You can feel the ringbox will give you their power at a lower rate.\n- Slot 1 will give you " + Float.toString(firstRingPower) + "% of its power\n- Slot 2 will give you " + Float.toString(secondRingPower) + "% of its power";
+                desc = Messages.get(Ringbox.class, "equipwindowtwo", firstRingPower, secondRingPower);
             }
 
             RenderedTextBlock message =
@@ -147,7 +147,7 @@ public class Ringbox extends Artifact {
 
                             @Override
                             public String textPrompt() {
-                                return "Select a Ring";
+                                return Messages.get(Ringbox.class, "selectring");
                             }
 
                             @Override
@@ -165,10 +165,10 @@ public class Ringbox extends Artifact {
                                 if (!(item instanceof Ring)) {
                                     //do nothing, should only happen when window is cancelled
                                 } else if (!item.isIdentified()) {
-                                    GLog.w( "You can only place identified rings" );
+                                    GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                     hide();
                                 } else if (item.cursed) {
-                                    GLog.w( "You can only place uncursed rings" );
+                                    GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                     hide();
                                 } else {
                                     if (item.isEquipped(Dungeon.hero)){
@@ -222,7 +222,7 @@ public class Ringbox extends Artifact {
 
                             @Override
                             public String textPrompt() {
-                                return "Select a Ring";
+                                return Messages.get(Ringbox.class, "selectring");
                             }
 
                             @Override
@@ -240,10 +240,10 @@ public class Ringbox extends Artifact {
                                 if (!(item instanceof Ring)) {
                                     //do nothing, should only happen when window is cancelled
                                 } else if (!item.isIdentified()) {
-                                    GLog.w( "You can only place identified rings" );
+                                    GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                     hide();
                                 } else if (item.cursed) {
-                                    GLog.w( "You can only place uncursed rings" );
+                                    GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                     hide();
                                 } else {
                                     if (item.isEquipped(Dungeon.hero)){
@@ -295,7 +295,7 @@ public class Ringbox extends Artifact {
 
                                 @Override
                                 public String textPrompt() {
-                                    return "Select a Ring";
+                                    return Messages.get(Ringbox.class, "selectring");
                                 }
 
                                 @Override
@@ -313,10 +313,10 @@ public class Ringbox extends Artifact {
                                     if (!(item instanceof Ring)) {
                                         //do nothing, should only happen when window is cancelled
                                     } else if (!item.isIdentified()) {
-                                        GLog.w( "You can only place identified rings" );
+                                        GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                         hide();
                                     } else if (item.cursed) {
-                                        GLog.w( "You can only place uncursed rings" );
+                                        GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                         hide();
                                     } else {
                                         if (item.isEquipped(Dungeon.hero)){
@@ -350,7 +350,7 @@ public class Ringbox extends Artifact {
                     slot3.item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
                 }
                 add( slot3 );
-                resize(WIDTH, (int) (slot3.bottom() + GAP));
+                resize((int) (slot3.right() + GAP), (int) (slot3.bottom() + GAP));
             }
         }
 
@@ -377,9 +377,11 @@ public class Ringbox extends Artifact {
 
             if (exp > 100+level()*100 && level() < levelCap){
                 exp -= 100+level()*100;
-                GLog.p( Messages.get(this, "levelup") );
-                Catalog.countUses(EtherealChains.class, 2);
+                GLog.p( Messages.get(Ringbox.class, "levelup") );
                 upgrade();
+                if (level() == 3) {
+                    GLog.p(Messages.get(Ringbox.class, "levelupthirdslot"));
+                }
             }
         }
 

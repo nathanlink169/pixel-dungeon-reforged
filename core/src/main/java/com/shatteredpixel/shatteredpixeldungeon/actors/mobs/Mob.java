@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -116,7 +119,7 @@ public abstract class Mob extends Char {
 	public AiState PASSIVE		= new Passive();
 	public AiState state = SLEEPING;
 	
-	public Class<? extends CharSprite> spriteClass;
+	public abstract Class<? extends CharSprite> GetSpriteClass();
 	
 	protected int target = -1;
 	
@@ -213,7 +216,7 @@ public abstract class Mob extends Char {
 	}
 	
 	public CharSprite sprite() {
-		return Reflection.newInstance(spriteClass);
+		return Reflection.newInstance(GetSpriteClass());
 	}
 	
 	@Override
@@ -324,69 +327,7 @@ public abstract class Mob extends Char {
 		}
 
 		if ( newEnemy ) {
-
-			HashSet<Char> enemies = new HashSet<>();
-
-			//if we are amoked...
-			if ( buff(Amok.class) != null) {
-				//try to find an enemy mob to attack first.
-				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ENEMY && mob != this
-							&& fieldOfView[mob.pos] && mob.invisible <= 0) {
-						enemies.add(mob);
-					}
-				
-				if (enemies.isEmpty()) {
-					//try to find ally mobs to attack second.
-					for (Mob mob : Dungeon.level.mobs)
-						if (mob.alignment == Alignment.ALLY && mob != this
-								&& fieldOfView[mob.pos] && mob.invisible <= 0) {
-							enemies.add(mob);
-						}
-					
-					if (enemies.isEmpty()) {
-						//try to find the hero third
-						if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
-							enemies.add(Dungeon.hero);
-						}
-					}
-				}
-				
-			//if we are an ally...
-			} else if ( alignment == Alignment.ALLY ) {
-				//look for hostile mobs to attack
-				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ENEMY && fieldOfView[mob.pos]
-							&& mob.invisible <= 0 && !mob.isInvulnerable(getClass()))
-						//do not target passive mobs
-						//intelligent allies also don't target mobs which are wandering or asleep
-						if (mob.state != mob.PASSIVE &&
-								(!intelligentAlly || (mob.state != mob.SLEEPING && mob.state != mob.WANDERING))) {
-							enemies.add(mob);
-						}
-				
-			//if we are an enemy...
-			} else if (alignment == Alignment.ENEMY) {
-				//look for ally mobs to attack
-				for (Mob mob : Dungeon.level.mobs)
-					if (mob.alignment == Alignment.ALLY && fieldOfView[mob.pos] && mob.invisible <= 0)
-						enemies.add(mob);
-
-				//and look for the hero
-				if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
-					enemies.add(Dungeon.hero);
-				}
-				
-			}
-
-			//do not target anything that's charming us
-			Charm charm = buff( Charm.class );
-			if (charm != null){
-				Char source = (Char)Actor.findById( charm.object );
-				if (source != null && enemies.contains(source) && enemies.size() > 1){
-					enemies.remove(source);
-				}
-			}
+			HashSet<Char> enemies = getPotentialAttackTargets();
 
 			//neutral characters in particular do not choose enemies.
 			if (enemies.isEmpty()){
@@ -433,6 +374,72 @@ public abstract class Mob extends Char {
 
 		} else
 			return enemy;
+	}
+
+	protected HashSet<Char> getPotentialAttackTargets() {
+		HashSet<Char> enemies = new HashSet<>();
+
+		//if we are amoked...
+		if ( buff(Amok.class) != null) {
+			//try to find an enemy mob to attack first.
+			for (Mob mob : Dungeon.level.mobs)
+				if (mob.alignment == Alignment.ENEMY && mob != this
+						&& fieldOfView[mob.pos] && mob.invisible <= 0) {
+					enemies.add(mob);
+				}
+
+			if (enemies.isEmpty()) {
+				//try to find ally mobs to attack second.
+				for (Mob mob : Dungeon.level.mobs)
+					if (mob.alignment == Alignment.ALLY && mob != this
+							&& fieldOfView[mob.pos] && mob.invisible <= 0) {
+						enemies.add(mob);
+					}
+
+				if (enemies.isEmpty()) {
+					//try to find the hero third
+					if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
+						enemies.add(Dungeon.hero);
+					}
+				}
+			}
+
+			//if we are an ally...
+		} else if ( alignment == Alignment.ALLY ) {
+			//look for hostile mobs to attack
+			for (Mob mob : Dungeon.level.mobs)
+				if (mob.alignment == Alignment.ENEMY && fieldOfView[mob.pos]
+						&& mob.invisible <= 0 && !mob.isInvulnerable(getClass()))
+					//do not target passive mobs
+					//intelligent allies also don't target mobs which are wandering or asleep
+					if (mob.state != mob.PASSIVE &&
+							(!intelligentAlly || (mob.state != mob.SLEEPING && mob.state != mob.WANDERING))) {
+						enemies.add(mob);
+					}
+
+			//if we are an enemy...
+		} else if (alignment == Alignment.ENEMY) {
+			//look for ally mobs to attack
+			for (Mob mob : Dungeon.level.mobs)
+				if (mob.alignment == Alignment.ALLY && fieldOfView[mob.pos] && mob.invisible <= 0)
+					enemies.add(mob);
+
+			//and look for the hero
+			if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
+				enemies.add(Dungeon.hero);
+			}
+
+		}
+
+		//do not target anything that's charming us
+		Charm charm = buff( Charm.class );
+		if (charm != null){
+			Char source = (Char)Actor.findById( charm.object );
+			if (source != null && enemies.contains(source) && enemies.size() > 1){
+				enemies.remove(source);
+			}
+		}
+		return enemies;
 	}
 	
 	@Override
@@ -795,7 +802,7 @@ public abstract class Mob extends Char {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 
 		if (!isInvulnerable(src.getClass())) {
 			if (state == SLEEPING) {
@@ -817,7 +824,7 @@ public abstract class Mob extends Char {
 			}
 		}
 		
-		super.damage( dmg, src );
+		super.damage( dmg, src, damageType );
 	}
 	
 	
@@ -1030,13 +1037,27 @@ public abstract class Mob extends Char {
 		}
 		target = cell;
 	}
-	
-	public String description() {
-		return Messages.get(this, "desc");
+
+	// TODO: Remove force no monster_unknown please
+	@Override
+	public String name(boolean forceNoMonsterUnknown) {
+		String name = super.name(forceNoMonsterUnknown);
+		if (!forceNoMonsterUnknown && Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			name = Messages.get(this, "name_unknown");
+		}
+		return name;
+	}
+
+	public String description(boolean forceNoMonsterUnknown) {
+		String desc = Messages.get(this, "desc");
+		if (!forceNoMonsterUnknown && Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
+			desc = Messages.get(this, "desc_unknown");
+		}
+		return desc;
 	}
 
 	public String info(){
-		String desc = description();
+		String desc = description(false);
 
 		for (Buff b : buffs(ChampionEnemy.class)){
 			desc += "\n\n_" + Messages.titleCase(b.name()) + "_\n" + b.desc();
@@ -1051,7 +1072,7 @@ public abstract class Mob extends Char {
 	
 	public void yell( String str ) {
 		GLog.newLine();
-		GLog.n( "%s: \"%s\" ", Messages.titleCase(name()), str );
+		GLog.n( "%s: \"%s\" ", Messages.titleCase(name(false)), str );
 	}
 
 	//some mobs have an associated landmark entry, which is added when the hero sees them

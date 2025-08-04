@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -222,6 +225,8 @@ public class Assets {
 		public static final String SHEEP    = "sounds/sheep.mp3";
 		public static final String MINE    = "sounds/mine.mp3";
 
+		public static final String BALLISTA_RELOAD = "sounds/ballista_reload.mp3";
+
 		public static final String[] all = new String[]{
 				CLICK, BADGE, GOLD,
 
@@ -233,7 +238,9 @@ public class Assets {
 				DESCEND, EAT, READ, LULLABY, DRINK, SHATTER, ZAP, LIGHTNING, LEVELUP, DEATH,
 				CHALLENGE, CURSED, TRAP, EVOKE, TOMB, ALERT, MELD, BOSS, BLAST, PLANT, RAY, BEACON,
 				TELEPORT, CHARMS, MASTERY, PUFF, ROCKS, BURNING, FALLING, GHOST, SECRET, BONES,
-				BEE, DEGRADE, MIMIC, DEBUFF, CHARGEUP, GAS, CHAINS, SCAN, SHEEP, MINE
+				BEE, DEGRADE, MIMIC, DEBUFF, CHARGEUP, GAS, CHAINS, SCAN, SHEEP, MINE,
+
+				BALLISTA_RELOAD
 		};
 	}
 
@@ -284,18 +291,22 @@ public class Assets {
 		public static final String SWARM    = "sprites/swarm.png";
 		public static final String SKELETON = "sprites/skeleton.png";
 		public static final String SHAMAN   = "sprites/shaman.png";
+		public static final String UNHOLY_PRIEST = "sprites/unholy_priest.png";
 		public static final String THIEF    = "sprites/thief.png";
 		public static final String TENGU    = "sprites/tengu.png";
 		public static final String SHEEP    = "sprites/sheep.png";
 		public static final String KEEPER   = "sprites/shopkeeper.png";
 		public static final String BAT      = "sprites/bat.png";
+		public static final String BALLISTA = "sprites/ballista.png";
 		public static final String ELEMENTAL= "sprites/elemental.png";
 		public static final String MONK     = "sprites/monk.png";
 		public static final String WARLOCK  = "sprites/warlock.png";
 		public static final String GOLEM    = "sprites/golem.png";
 		public static final String STATUE   = "sprites/statue.png";
 		public static final String SUCCUBUS = "sprites/succubus.png";
+		public static final String DEMON_GOO = "sprites/demongoo.png";
 		public static final String SCORPIO  = "sprites/scorpio.png";
+		public static final String SPITTER	= "sprites/spitter.png";
 		public static final String FISTS    = "sprites/yog_fists.png";
 		public static final String YOG      = "sprites/yog.png";
 		public static final String LARVA    = "sprites/larva.png";
@@ -315,6 +326,7 @@ public class Assets {
 		public static final String SLIME    = "sprites/slime.png";
 		public static final String SNAKE    = "sprites/snake.png";
 		public static final String NECRO    = "sprites/necromancer.png";
+		public static final String FIEND	= "sprites/fiend.png";
 		public static final String GHOUL    = "sprites/ghoul.png";
 		public static final String RIPPER   = "sprites/ripper.png";
 		public static final String SPAWNER  = "sprites/spawner.png";
@@ -334,5 +346,9 @@ public class Assets {
 		public static final String FUNGAL_SPINNER   = "sprites/fungal_spinner.png";
 		public static final String FUNGAL_SENTRY    = "sprites/fungal_sentry.png";
 		public static final String FUNGAL_CORE      = "sprites/fungal_core.png";
+		public static final String WYRM				= "sprites/wyrm.png";
+		public static final String KOBOLD			= "sprites/kobold.png";
+
+		public static final String MONSTER_UNKNOWN	= "sprites/monster_unknown.png";
 	}
 }

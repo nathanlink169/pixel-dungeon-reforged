@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -62,6 +65,31 @@ public class AboutScene extends PixelScene {
 		Component content = list.content();
 		content.clear();
 
+		//*** Pixel Dungeon Reforged Credits ***
+		CreditsBlock pdr = new CreditsBlock(true, Window.PDR_COLOR,
+				"Pixel Dungeon Reforged",
+				Icons.NATHAN.get(),
+				"Developed by _Nathan Pringle_\nBased on Shattered Pixel Dungeon's open source",
+				"Github",
+				"https://github.com/nathanlink169");
+		if (landscape()){
+			pdr.setRect((w - fullWidth)/2f - 6, 10, colWidth, 0);
+		} else {
+			pdr.setRect((w - fullWidth)/2f, 6, colWidth, 0);
+		}
+		content.add(pdr);
+
+		CreditsBlock pdr2 = new CreditsBlock(true, Window.PDR_COLOR,
+				null, null,
+				"This is mostly the work of the Shattered Pixel Dungeon team. I am just a game developer who had some ideas on new features and balancing. The code was built upon _Evan Debenham's_ work, the art has been entirely taken from the art provided by _Aleksandar Komitov,_ and any new art has been merely tweaked (or is not on the same quality level). The SFX by _Celesti_ and Music by _Kristjan Haaristo_ has gone completely unchanged. Please support the development of _Shattered Pixel Dungeon!_",
+				null, null);
+		if (landscape()){
+			pdr2.setRect(pdr.left(), pdr.bottom() + 5, colWidth, 0);
+		} else {
+			pdr2.setRect(pdr.left(), pdr.bottom() + 5, colWidth, 0);
+		}
+		content.add(pdr2);
+
 		//*** Shattered Pixel Dungeon Credits ***
 
 		CreditsBlock shpx = new CreditsBlock(true, Window.SHPX_COLOR,
@@ -71,11 +99,13 @@ public class AboutScene extends PixelScene {
 				"ShatteredPixel.com",
 				"https://ShatteredPixel.com");
 		if (landscape()){
-			shpx.setRect((w - fullWidth)/2f - 6, 10, 120, 0);
+			shpx.setRect(pdr2.left(), pdr2.bottom() + 8, colWidth, 0);
 		} else {
-			shpx.setRect((w - fullWidth)/2f, 6, 120, 0);
+			shpx.setRect(pdr2.left(), pdr2.bottom() + 8, colWidth, 0);
 		}
 		content.add(shpx);
+
+		addLine(shpx.top() - 4, content);
 
 		CreditsBlock alex = new CreditsBlock(false, Window.SHPX_COLOR,
 				"Splash Art & Design:",
@@ -205,7 +235,7 @@ public class AboutScene extends PixelScene {
 				Window.TITLE_COLOR,
 				null,
 				null,
-				"Shattered Pixel Dungeon uses the following sound samples from _freesound.org_:\n\n" +
+				"Pixel Dungeon Reforged uses the following sound samples from _freesound.org_:\n\n" +
 
 				"Creative Commons Attribution License:\n" +
 				"_SFX ATTACK SWORD 001.wav_ by _JoelAudio_\n" +

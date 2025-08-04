@@ -37,9 +37,10 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.SewerPainter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.RatKingRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss.GooBossRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss.SewerBossEntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss.SewerBossExitRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss.UsurperRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.CrossRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.Game;
@@ -96,11 +97,10 @@ public class SewerBossUsurperLevel extends SewerLevel {
             s.setSizeCat(0, 0);
             initRooms.add(s);
         }
-
-        GooBossRoom gooRoom = GooBossRoom.randomGooRoom();
-        initRooms.add(gooRoom);
-        ((FigureEightBuilder)builder).setLandmarkRoom(gooRoom);
-        initRooms.add(new RatKingRoom());
+        UsurperRoom c = new UsurperRoom();
+        initRooms.add(c);
+        ((FigureEightBuilder)builder).setLandmarkRoom(c);
+        initRooms.add(new RatKingRoom()); // TODO: Rat King Room Barrier
         return initRooms;
     }
 
@@ -153,27 +153,6 @@ public class SewerBossUsurperLevel extends SewerLevel {
         }
         Random.popGenerator();
     }
-
-    @Override
-    public int randomRespawnCell( Char ch ) {
-        ArrayList<Integer> candidates = new ArrayList<>();
-        for (Point p : roomEntrance.getPoints()){
-            int cell = pointToCell(p);
-            if (passable[cell]
-                    && roomEntrance.inside(p)
-                    && Actor.findChar(cell) == null
-                    && (!Char.hasProp(ch, Char.Property.LARGE) || openSpace[cell])){
-                candidates.add(cell);
-            }
-        }
-
-        if (candidates.isEmpty()){
-            return -1;
-        } else {
-            return Random.element(candidates);
-        }
-    }
-
 
     public void seal() {
         if (!locked) {

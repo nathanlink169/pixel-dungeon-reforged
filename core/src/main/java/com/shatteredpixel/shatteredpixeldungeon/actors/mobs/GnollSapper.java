@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,13 +24,17 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSapperSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
@@ -38,8 +45,6 @@ public class GnollSapper extends Mob {
 	{
 		//always acts after guards, makes it easier to kite them into attacks
 		actPriority = Actor.MOB_PRIO-1;
-
-		spriteClass = GnollSapperSprite.class;
 
 		HP = HT = 45;
 		defenseSkill = 15;
@@ -52,6 +57,11 @@ public class GnollSapper extends Mob {
 		HUNTING = new Hunting();
 		WANDERING = new Wandering();
 		state = SLEEPING;
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return GnollSapperSprite.class;
 	}
 
 	public int spawnPos;
@@ -106,8 +116,8 @@ public class GnollSapper extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src) {
-		super.damage(dmg, src);
+	public void damage(int dmg, Object src, int damageType) {
+		super.damage(dmg, src, damageType);
 		abilityCooldown -= dmg/10f;
 	}
 

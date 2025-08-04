@@ -1,5 +1,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -11,39 +12,40 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpitterSprite;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
 public class Spitter extends Mob {
     {
-        spriteClass = SpitterSprite.class;
-
         HP = HT = 4;
         defenseSkill = 2;
 
         EXP = 2;
         maxLvl = 7;
 
+        baseSpeed = 0.5f;
+
         loot = Generator.Category.POTION;
         lootChance = 0.1f;
     }
-    private int actionCooldown = 2;
+    @Override
+    public Class<? extends CharSprite> GetSpriteClass() {
+        return SpitterSprite.class;
+    }
 
     @Override
-    protected boolean act() {
-        if (--actionCooldown == 0) {
-            actionCooldown = 2;
-            return super.act();
-        }
-        spend(TICK);
-        return true;
+    public float attackDelay() {
+        return super.attackDelay() * 2.0f;
     }
 
     @Override
     public int damageRoll(boolean isMaxDamage) {
         if (isMaxDamage) return 4;
-        return Random.NormalIntRange( 1, 4 );
+        return Random.NormalIntRange( 2, 4 );
     }
 
     @Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,7 +45,7 @@ public class BadgesGrid extends Component {
 		super();
 		badgeButtons = new ArrayList<>();
 
-		for (Badges.Badge badge : Badges.filterReplacedBadges( global )) {
+		for (Badges.Badge badge : Badges.GetVisibleBadges( global )) {
 
 			if (badge.type == Badges.BadgeType.HIDDEN) {
 				continue;
@@ -57,12 +60,10 @@ public class BadgesGrid extends Component {
 
 			ArrayList<Badges.Badge> lockedBadges = new ArrayList<>();
 			for (Badges.Badge badge : Badges.Badge.values()) {
-				if (badge.type != Badges.BadgeType.HIDDEN && !Badges.isUnlocked(badge)) {
+				if (badge.type != Badges.BadgeType.HIDDEN && !Badges.isUnlocked(badge) && Badges.CanShowBadge(badge)) {
 					lockedBadges.add(badge);
 				}
 			}
-			Badges.filterBadgesWithoutPrerequisites(lockedBadges);
-
 			for (Badges.Badge badge : lockedBadges) {
 				BadgeButton button = new BadgeButton( badge, false );
 				add(button);

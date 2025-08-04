@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -31,6 +35,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalWispSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -42,9 +49,7 @@ import java.util.ArrayList;
 public class DemonSpawner extends Mob {
 
 	{
-		spriteClass = SpawnerSprite.class;
-
-		HP = HT = 120;
+		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 160 : 120;
 		defenseSkill = 0;
 
 		EXP = 15;
@@ -59,6 +64,11 @@ public class DemonSpawner extends Mob {
 		properties.add(Property.MINIBOSS);
 		properties.add(Property.DEMONIC);
 		properties.add(Property.STATIC);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return SpawnerSprite.class;
 	}
 
 	@Override
@@ -93,52 +103,74 @@ public class DemonSpawner extends Mob {
 
 		spawnCooldown--;
 		if (spawnCooldown <= 0){
+			SpawnDemon();
+			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
+				SpawnDemon();
+			}
 
 			//we don't want spawners to store multiple ripper demons
 			if (spawnCooldown < -20){
 				spawnCooldown = -20;
 			}
-
-			ArrayList<Integer> candidates = new ArrayList<>();
-			for (int n : PathFinder.NEIGHBOURS8) {
-				if (Dungeon.level.passable[pos+n] && Actor.findChar( pos+n ) == null) {
-					candidates.add( pos+n );
-				}
+			spawnCooldown += timeBetweenSpawns();
+			if (Dungeon.depth > 21){
+				//60/53.33/46.67/40 turns to spawn on floor 21/22/23/24
+				spawnCooldown -= Math.min(20, (Dungeon.depth-21)*6.67);
 			}
-
-			if (!candidates.isEmpty()) {
-				RipperDemon spawn = new RipperDemon();
-
-				spawn.pos = Random.element( candidates );
-				spawn.state = spawn.HUNTING;
-
-				GameScene.add( spawn, 1 );
-				Dungeon.level.occupyCell(spawn);
-
-				if (sprite.visible) {
-					Actor.add(new Pushing(spawn, pos, spawn.pos));
-				}
-
-				spawnCooldown += 60;
-				if (Dungeon.depth > 21){
-					//60/53.33/46.67/40 turns to spawn on floor 21/22/23/24
-					spawnCooldown -= Math.min(20, (Dungeon.depth-21)*6.67);
-				}
+			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
+				// Not quite double, but we spawn double the demons
+				spawnCooldown *= 1.75f;
 			}
 		}
 		alerted = false;
 		return super.act();
 	}
 
+	private int timeBetweenSpawns() {
+		if (RipperDemon.getRandomizerEnabled(RipperDemon.RandomTraits.RAPID_DEPLOYMENT)) {
+			return 30;
+		}
+		if (RipperDemon.getRandomizerEnabled(RipperDemon.RandomTraits.LAZY_SPAWNERS)) {
+			return 100;
+		}
+		return 60;
+	}
+
+	private void SpawnDemon() {
+		ArrayList<Integer> candidates = new ArrayList<>();
+		for (int n : PathFinder.NEIGHBOURS8) {
+			if (Dungeon.level.passable[pos+n] && Actor.findChar( pos+n ) == null) {
+				candidates.add( pos+n );
+			}
+		}
+
+		if (!candidates.isEmpty()) {
+			RipperDemon spawn = new RipperDemon();
+
+			spawn.pos = Random.element(candidates);
+			spawn.state = spawn.HUNTING;
+
+			GameScene.add(spawn, 1);
+			Dungeon.level.occupyCell(spawn);
+
+			if (sprite.visible) {
+				Actor.add(new Pushing(spawn, pos, spawn.pos));
+			}
+		}
+	}
+
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if (dmg >= 20){
 			//takes 20/21/22/23/24/25/26/27/28/29/30 dmg
 			// at   20/22/25/29/34/40/47/55/64/74/85 incoming dmg
 			dmg = 19 + (int)(Math.sqrt(8*(dmg - 19) + 1) - 1)/2;
 		}
 		spawnCooldown -= dmg;
-		super.damage(dmg, src);
+		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
+			spawnCooldown -= dmg;
+		}
+		super.damage(dmg, src, damageType);
 	}
 
 	@Override

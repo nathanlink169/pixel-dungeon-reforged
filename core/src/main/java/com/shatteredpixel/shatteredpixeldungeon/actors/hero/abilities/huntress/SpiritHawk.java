@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -41,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -143,8 +147,6 @@ public class SpiritHawk extends ArmorAbility {
 	public static class HawkAlly extends DirectableAlly {
 
 		{
-			spriteClass = HawkSprite.class;
-
 			HP = HT = 10;
 			defenseSkill = 60;
 
@@ -160,6 +162,10 @@ public class SpiritHawk extends ArmorAbility {
 
 			immunities.addAll(new BlobImmunity().immunities());
 			immunities.add(AllyBuff.class);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return HawkSprite.class;
 		}
 
 		@Override
@@ -264,7 +270,7 @@ public class SpiritHawk extends ArmorAbility {
 		}
 
 		@Override
-		public String description() {
+		public String description(boolean forceNoMonsterUnknown) {
 			String message = Messages.get(this, "desc", (int)timeRemaining);
 			if (Actor.chars().contains(this)){
 				message += "\n\n" + Messages.get(this, "desc_remaining", (int)timeRemaining);

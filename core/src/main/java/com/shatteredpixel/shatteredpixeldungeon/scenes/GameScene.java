@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -27,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Chrome;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
+import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.Rankings;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -117,6 +121,7 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoMob;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoPlant;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoTrap;
+import com.shatteredpixel.shatteredpixeldungeon.windows.WndJournal;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndKeyBindings;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndMessage;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
@@ -206,6 +211,15 @@ public class GameScene extends PixelScene {
 
 	{
 		inGameScene = true;
+	}
+
+	public boolean getJournalOpen() {
+		for (Gizmo g : members) {
+			if (g instanceof WndJournal) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	@Override
@@ -582,6 +596,8 @@ public class GameScene extends PixelScene {
 			} else {
 				DimensionalSundial.sundialWarned = false;
 			}
+
+			Randomizer.showRandomizerWindowIfRequired();
 
 			InterlevelScene.mode = InterlevelScene.Mode.NONE;
 
@@ -1570,7 +1586,7 @@ public class GameScene extends PixelScene {
 		ArrayList<String> names = new ArrayList<>();
 		for (Object obj : objects){
 			if (obj instanceof Hero)        names.add(((Hero) obj).className().toUpperCase(Locale.ENGLISH));
-			else if (obj instanceof Mob)    names.add(Messages.titleCase( ((Mob)obj).name() ));
+			else if (obj instanceof Mob)    names.add(Messages.titleCase( ((Mob)obj).name(false) ));
 			else if (obj instanceof Heap)   names.add(Messages.titleCase( ((Heap)obj).title() ));
 			else if (obj instanceof Plant)  names.add(Messages.titleCase( ((Plant) obj).name() ));
 			else if (obj instanceof Trap)   names.add(Messages.titleCase( ((Trap) obj).name() ));

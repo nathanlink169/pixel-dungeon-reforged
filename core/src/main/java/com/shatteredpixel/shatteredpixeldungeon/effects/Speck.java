@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -70,6 +73,7 @@ public class Speck extends Image {
 	public static final int STORM       = 117;
 	public static final int INFERNO     = 118;
 	public static final int BLIZZARD    = 119;
+	public static final int MIASMA		= 120;
 	
 	private static final int SIZE = 7;
 	
@@ -137,6 +141,7 @@ public class Speck extends Image {
 		case SMOKE:
 		case BLIZZARD:
 		case INFERNO:
+		case MIASMA:
 			frame( film.get( STEAM ) );
 			break;
 		case CALM:
@@ -326,6 +331,13 @@ public class Speck extends Image {
 			angularSpeed = -30;
 			angle = Random.Float( 360 );
 			lifespan = Random.Float( 1f, 3f );
+			break;
+
+		case MIASMA:
+			hardlight( 0x440044 );
+			angularSpeed = -30;
+			angle = Random.Float(360);
+			lifespan = Random.Float(1f, 3f);
 			break;
 
 		case STENCH:

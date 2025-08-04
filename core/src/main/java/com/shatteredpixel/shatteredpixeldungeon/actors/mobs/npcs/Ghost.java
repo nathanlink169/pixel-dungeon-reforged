@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -32,18 +35,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollTrickster;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GreatCrab;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.MailArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ParchmentScrap;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
@@ -58,8 +58,6 @@ import com.watabou.utils.Random;
 public class Ghost extends NPC {
 
 	{
-		spriteClass = GhostSprite.class;
-		
 		flying = true;
 
 		WANDERING = new Wandering();
@@ -67,6 +65,10 @@ public class Ghost extends NPC {
 
 		//not actually large of course, but this makes the ghost stick to the exit room
 		properties.add(Property.LARGE);
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+		return GhostSprite.class;
 	}
 
 	protected class Wandering extends Mob.Wandering{
@@ -112,7 +114,7 @@ public class Ghost extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src ) {
+	public void damage( int dmg, Object src, int damageType ) {
 		//do nothing
 	}
 
@@ -137,7 +139,7 @@ public class Ghost extends NPC {
 		}
 		
 		if (Quest.given) {
-			if (Quest.weapon != null) {
+			if (Quest.artifact1 != null) {
 				if (Quest.processed) {
 					Game.runOnRenderThread(new Callback() {
 						@Override
@@ -155,10 +157,10 @@ public class Ghost extends NPC {
 									GameScene.show(new WndQuest(Ghost.this, Messages.get(Ghost.this, "rat_2")));
 									break;
 								case 2:
-									GameScene.show(new WndQuest(Ghost.this, Messages.get(Ghost.this, "gnoll_2")));
+									GameScene.show(new WndQuest(Ghost.this, Messages.get(Ghost.this, "crab_2")));
 									break;
 								case 3:
-									GameScene.show(new WndQuest(Ghost.this, Messages.get(Ghost.this, "crab_2")));
+									GameScene.show(new WndQuest(Ghost.this, Messages.get(Ghost.this, "gnoll_2")));
 									break;
 							}
 						}
@@ -173,13 +175,13 @@ public class Ghost extends NPC {
 			switch (Quest.type){
 				case 1: default:
 					questBoss = new FetidRat();
-					txt_quest = Messages.get(this, "rat_1", Messages.titleCase(Dungeon.hero.name())); break;
+					txt_quest = Messages.get(this, "rat_1", Messages.titleCase(Dungeon.hero.name(false))); break;
 				case 2:
-					questBoss = new GnollTrickster();
-					txt_quest = Messages.get(this, "gnoll_1", Messages.titleCase(Dungeon.hero.name())); break;
-				case 3:
 					questBoss = new GreatCrab();
-					txt_quest = Messages.get(this, "crab_1", Messages.titleCase(Dungeon.hero.name())); break;
+					txt_quest = Messages.get(this, "crab_1", Messages.titleCase(Dungeon.hero.name(false))); break;
+				case 3:
+					questBoss = new GnollTrickster();
+					txt_quest = Messages.get(this, "gnoll_1", Messages.titleCase(Dungeon.hero.name(false))); break;
 			}
 
 			questBoss.pos = Dungeon.level.randomRespawnCell( this );
@@ -224,18 +226,14 @@ public class Ghost extends NPC {
 		
 		private static int depth;
 		
-		public static Weapon weapon;
-		public static Armor armor;
-		public static Weapon.Enchantment enchant;
-		public static Armor.Glyph glyph;
+		public static Item artifact1;
+		public static Item artifact2;
 		
 		public static void reset() {
 			spawned = false;
-			
-			weapon = null;
-			armor = null;
-			enchant = null;
-			glyph = null;
+
+			artifact1 = null;
+			artifact2 = null;
 		}
 		
 		private static final String NODE		= "sadGhost";
@@ -245,10 +243,8 @@ public class Ghost extends NPC {
 		private static final String GIVEN		= "given";
 		private static final String PROCESSED	= "processed";
 		private static final String DEPTH		= "depth";
-		private static final String WEAPON		= "weapon";
-		private static final String ARMOR		= "armor";
-		private static final String ENCHANT		= "enchant";
-		private static final String GLYPH		= "glyph";
+		private static final String ARTIFACT1	= "artifact1";
+		private static final String ARTIFACT2	= "artifact2";
 		
 		public static void storeInBundle( Bundle bundle ) {
 			
@@ -264,13 +260,8 @@ public class Ghost extends NPC {
 				node.put( DEPTH, depth );
 				node.put( PROCESSED, processed );
 				
-				node.put( WEAPON, weapon );
-				node.put( ARMOR, armor );
-
-				if (enchant != null) {
-					node.put(ENCHANT, enchant);
-					node.put(GLYPH, glyph);
-				}
+				node.put( ARTIFACT1, artifact1 );
+				node.put( ARTIFACT2, artifact2 );
 			}
 			
 			bundle.put( NODE, node );
@@ -288,13 +279,8 @@ public class Ghost extends NPC {
 
 				depth	= node.getInt( DEPTH );
 				
-				weapon	= (Weapon)node.get( WEAPON );
-				armor	= (Armor)node.get( ARMOR );
-
-				if (node.contains(ENCHANT)) {
-					enchant = (Weapon.Enchantment) node.get(ENCHANT);
-					glyph   = (Armor.Glyph) node.get(GLYPH);
-				}
+				artifact1	= (Item) node.get( ARTIFACT1 );
+				artifact2	= (Item) node.get( ARTIFACT2 );
 			} else {
 				reset();
 			}
@@ -311,56 +297,37 @@ public class Ghost extends NPC {
 				
 				spawned = true;
 				//dungeon depth determines type of quest.
-				//depth2=fetid rat, 3=gnoll trickster, 4=great crab
+				//depth2=fetid rat, 3=great crab, 4=gnoll trickster
 				type = Dungeon.depth-1;
 				
 				given = false;
 				processed = false;
 				depth = Dungeon.depth;
 
-				//50%:tier2, 30%:tier3, 15%:tier4, 5%:tier5
-				switch (Random.chances(new float[]{0, 0, 10, 6, 3, 1})){
-					default:
-					case 2: armor = new LeatherArmor(); break;
-					case 3: armor = new MailArmor();    break;
-					case 4: armor = new ScaleArmor();   break;
-					case 5: armor = new PlateArmor();   break;
+				int tries = 0;
+				do {
+					artifact1 = Generator.random(Generator.Category.ARTIFACT);
+				} while (artifact1 instanceof DriedRose && ++tries < 100);
+				if (artifact1 instanceof DriedRose) {
+					artifact1 = Generator.random(Generator.Category.RING);
 				}
-				//50%:tier2, 30%:tier3, 15%:tier4, 5%:tier5
-				int wepTier = Random.chances(new float[]{0, 0, 10, 6, 3, 1});
-				weapon = (Weapon) Generator.random(Generator.wepTiers[wepTier - 1]);
-
-				//clear weapon's starting properties
-				weapon.level(0);
-				weapon.enchant(null);
-				weapon.cursed = false;
-
-				//50%:+0, 30%:+1, 15%:+2, 5%:+3
-				float itemLevelRoll = Random.Float();
-				int itemLevel;
-				if (itemLevelRoll < 0.5f){
-					itemLevel = 0;
-				} else if (itemLevelRoll < 0.8f){
-					itemLevel = 1;
-				} else if (itemLevelRoll < 0.95f){
-					itemLevel = 2;
-				} else {
-					itemLevel = 3;
-				}
-				weapon.upgrade(itemLevel);
-				armor.upgrade(itemLevel);
-
-				// 20% base chance to be enchanted, stored separately so status isn't revealed early
-				//we generate first so that the outcome doesn't affect the number of RNG rolls
-				enchant = Weapon.Enchantment.random();
-				glyph = Armor.Glyph.random();
-
-				float enchantRoll = Random.Float();
-				if (enchantRoll > 0.2f * ParchmentScrap.enchantChanceMultiplier()){
-					enchant = null;
-					glyph = null;
+				tries = 0;
+				do {
+					artifact2 = Generator.random(Generator.Category.ARTIFACT);
+				} while (artifact2 instanceof DriedRose && ++tries < 100);
+				if (artifact2 instanceof DriedRose) {
+					artifact2 = Generator.random(Generator.Category.RING);
 				}
 
+				if (artifact1 instanceof Artifact) {
+					Generator.removeArtifact(((Artifact) artifact1).getClass());
+				}
+				if (artifact2 instanceof Artifact) {
+					Generator.removeArtifact(((Artifact) artifact2).getClass());
+				}
+
+				artifact1.cursed = false;
+				artifact2.cursed = false;
 			}
 		}
 		
@@ -392,8 +359,8 @@ public class Ghost extends NPC {
 		}
 		
 		public static void complete() {
-			weapon = null;
-			armor = null;
+			artifact1 = null;
+			artifact2 = null;
 			
 			Notes.remove( Notes.Landmark.GHOST );
 		}
@@ -403,7 +370,7 @@ public class Ghost extends NPC {
 		}
 		
 		public static boolean completed(){
-			return processed() && weapon == null && armor == null;
+			return processed() && artifact1 == null && artifact2 == null;
 		}
 	}
 }

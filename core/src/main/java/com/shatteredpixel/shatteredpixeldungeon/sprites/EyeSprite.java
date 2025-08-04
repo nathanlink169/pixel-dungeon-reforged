@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -38,31 +41,33 @@ public class EyeSprite extends MobSprite {
 
 	private Animation charging;
 	private Emitter chargeParticles;
-	
-	public EyeSprite() {
-		super();
-		
+
+	@Override
+	public void setup() {
+		super.setup();
+		zap = attack.clone();
+	}
+
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.EYE );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 16, 18 );
-		
+
 		idle = new Animation( 8, true );
 		idle.frames( frames, 0, 1, 2 );
 
 		charging = new Animation( 12, true);
 		charging.frames( frames, 3, 4 );
-		
+
 		run = new Animation( 12, true );
 		run.frames( frames, 5, 6 );
-		
+
 		attack = new Animation( 8, false );
 		attack.frames( frames, 4, 3 );
-		zap = attack.clone();
-		
+
 		die = new Animation( 8, false );
 		die.frames( frames, 7, 8, 9 );
-		
-		play( idle );
 	}
 
 	@Override

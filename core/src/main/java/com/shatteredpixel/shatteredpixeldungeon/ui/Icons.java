@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -42,6 +45,7 @@ public enum Icons {
 	CHANGES,
 	PREFS,
 	SHPX,
+	PDR,
 	JOURNAL,
 
 	//grey icons, mainly used for buttons, spacing for 16x16
@@ -58,6 +62,7 @@ public enum Icons {
 	CHALLENGE_GREY,
 	SCROLL_GREY,
 	SEED,
+	DIFFICULTY,
 	LEFTARROW,
 	RIGHTARROW,
 	CALENDAR,
@@ -86,6 +91,7 @@ public enum Icons {
 	CATALOG,
 	ALCHEMY,
 	GRASS,
+	RANDOMIZER,
 
 	STAIRS,
 	STAIRS_CHASM,
@@ -132,7 +138,8 @@ public enum Icons {
 	KRISTJAN,
 	CUBE_CODE,
 	PURIGRO,
-	ARCNOR;
+	ARCNOR,
+	NATHAN;
 
 	public Image get() {
 		return get( this );
@@ -165,6 +172,9 @@ public enum Icons {
 				break;
 			case SHPX:
 				icon.frame( icon.texture.uvRectBySize( 119, 0, 16, 16 ) );
+				break;
+			case PDR:
+				icon.frame( icon.texture.uvRectBySize( 153, 0, 16, 16 ) );
 				break;
 			case JOURNAL:
 				icon.frame( icon.texture.uvRectBySize( 136, 0, 17, 15 ) );
@@ -264,7 +274,9 @@ public enum Icons {
 			case PASTE:
 				icon.frame( icon.texture.uvRectBySize( 192, 32, 13, 13 ) );
 				break;
-
+			case DIFFICULTY:
+				icon.frame( icon.texture.uvRectBySize(208, 32, 14, 14));
+				break;
 			case BACKPACK_LRG:
 				icon.frame( icon.texture.uvRectBySize( 0, 48, 16, 16 ) );
 				break;
@@ -288,6 +300,9 @@ public enum Icons {
 				break;
 			case GRASS:
 				icon.frame( icon.texture.uvRectBySize( 112, 48, 16, 16 ) );
+				break;
+			case RANDOMIZER:
+				icon.frame( icon.texture.uvRectBySize( 128, 48, 16, 16 ) );
 				break;
 
 			case STAIRS:
@@ -425,7 +440,10 @@ public enum Icons {
 				icon.frame( icon.texture.uvRectBySize( 160, 96, 27, 30 ) );
 				icon.scale.set(PixelScene.align(0.49f));
 				break;
-
+			case NATHAN:
+				icon.frame( icon.texture.uvRectBySize( 187, 96, 32, 32 ) );
+				icon.scale.set(PixelScene.align(0.49f));
+				break;
 		}
 		return icon;
 	}
@@ -463,7 +481,7 @@ public enum Icons {
 			case CLERIC:
 				return new ItemSprite(ItemSpriteSheet.ARTIFACT_TOME);
 			case ARTIFICER:
-				return new ItemSprite(ItemSpriteSheet.ARTIFACT_GUN);
+				return new ItemSprite(ItemSpriteSheet.GUN);
 			default:
 				return null;
 		}

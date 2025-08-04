@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -45,19 +48,18 @@ public class GooSprite extends MobSprite {
 	private Emitter spray;
 	private ArrayList<Emitter> pumpUpEmitters = new ArrayList<>();
 
-	public GooSprite() {
-		super();
-		
+	@Override
+	protected void setupFrames() {
 		texture( Assets.Sprites.GOO );
-		
+
 		TextureFilm frames = new TextureFilm( texture, 20, 14 );
-		
+
 		idle = new Animation( 10, true );
 		idle.frames( frames, 2, 1, 0, 0, 1 );
-		
+
 		run = new Animation( 15, true );
 		run.frames( frames, 3, 2, 1, 2 );
-		
+
 		pump = new Animation( 20, true );
 		pump.frames( frames, 4, 3, 2, 1, 0 );
 
@@ -66,11 +68,9 @@ public class GooSprite extends MobSprite {
 
 		attack = new Animation( 10, false );
 		attack.frames( frames, 8, 9, 10 );
-		
+
 		die = new Animation( 10, false );
 		die.frames( frames, 5, 6, 7 );
-		
-		play(idle);
 
 		spray = centerEmitter();
 		if (spray != null) {
@@ -78,6 +78,13 @@ public class GooSprite extends MobSprite {
 			spray.pour(GooParticle.FACTORY, 0.04f);
 			spray.on = false;
 		}
+	}
+
+	@Override
+	protected void setupFramesMonsterUnknown() {
+		super.setupFramesMonsterUnknown();
+		pump = run.clone();
+		pumpAttack = attack.clone();
 	}
 
 	@Override
@@ -111,18 +118,22 @@ public class GooSprite extends MobSprite {
 	}
 
 	public void clearEmitters(){
-		for (Emitter e : pumpUpEmitters){
-			e.on = false;
+		if (pumpUpEmitters != null) {
+			for (Emitter e : pumpUpEmitters) {
+				e.on = false;
+			}
+			pumpUpEmitters.clear();
 		}
-		pumpUpEmitters.clear();
 	}
 
 	public void triggerEmitters(){
-		for (Emitter e : pumpUpEmitters){
-			e.burst(ElmoParticle.FACTORY, 10);
+		if (pumpUpEmitters != null) {
+			for (Emitter e : pumpUpEmitters) {
+				e.burst(ElmoParticle.FACTORY, 10);
+			}
+			Sample.INSTANCE.play(Assets.Sounds.BURNING);
+			pumpUpEmitters.clear();
 		}
-		Sample.INSTANCE.play( Assets.Sounds.BURNING );
-		pumpUpEmitters.clear();
 	}
 
 	public void pumpAttack() { play(pumpAttack); }
@@ -141,7 +152,9 @@ public class GooSprite extends MobSprite {
 	}
 
 	public void spray(boolean on){
-		spray.on = on;
+		if (spray != null) {
+			spray.on = on;
+		}
 	}
 
 	@Override
@@ -202,7 +215,9 @@ public class GooSprite extends MobSprite {
 			idle();
 			ch.onAttackComplete();
 		} else if (anim == die) {
-			spray.killAndErase();
+			if (spray != null) {
+				spray.killAndErase();
+			}
 		}
 	}
 }

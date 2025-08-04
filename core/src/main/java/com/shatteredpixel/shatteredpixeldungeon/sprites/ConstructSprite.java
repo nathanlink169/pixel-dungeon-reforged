@@ -7,9 +7,9 @@ import com.watabou.glwrap.Blending;
 import com.watabou.noosa.TextureFilm;
 
 public class ConstructSprite extends MobSprite {
-    public ConstructSprite() {
-        super();
 
+    @Override
+    protected void setupFrames() {
         texture( Assets.Sprites.CONSTRUCT );
 
         TextureFilm frames = new TextureFilm( texture, 16, 16 );
@@ -17,7 +17,7 @@ public class ConstructSprite extends MobSprite {
         idle = new Animation( 1, true );
         idle.frames( frames, 0, 1 );
 
-        run = new Animation( 10, true );
+        run = new Animation( 2, true );
         run.frames( frames, 0, 1 );
 
         attack = new Animation( 10, false );
@@ -25,8 +25,6 @@ public class ConstructSprite extends MobSprite {
 
         die = new Animation( 8, false );
         die.frames( frames, 0, 4, 5, 6, 7 );
-
-        play( idle );
     }
 
     @Override

@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -54,6 +57,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfPsi
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
+import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossGooLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.AlchemyScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
@@ -181,7 +185,7 @@ public class DriedRose extends Artifact {
 					hero.sprite.operate(hero.pos);
 
 					if (!firstSummon) {
-						ghost.yell( Messages.get(GhostHero.class, "hello", Messages.titleCase(Dungeon.hero.name())) );
+						ghost.yell( Messages.get(GhostHero.class, "hello", Messages.titleCase(Dungeon.hero.name(false))) );
 						Sample.INSTANCE.play( Assets.Sounds.GHOST );
 						firstSummon = true;
 						
@@ -550,14 +554,16 @@ public class DriedRose extends Artifact {
 	public static class GhostHero extends DirectableAlly {
 
 		{
-			spriteClass = GhostSprite.class;
-
 			flying = true;
 			
 			state = HUNTING;
 			
 			properties.add(Property.UNDEAD);
 			properties.add(Property.INORGANIC);
+		}
+		@Override
+		public Class<? extends CharSprite> GetSpriteClass() {
+			return GhostSprite.class;
 		}
 		
 		private DriedRose rose = null;
@@ -667,7 +673,7 @@ public class DriedRose extends Artifact {
 					damage = rose.weapon.proc(this, enemy, damage);
 					if (!enemy.isAlive() && enemy == Dungeon.hero) {
 						Dungeon.fail(this);
-						GLog.n(Messages.capitalize(Messages.get(Char.class, "kill", name())));
+						GLog.n(Messages.capitalize(Messages.get(Char.class, "kill", name(false))));
 					}
 				}
 			}
@@ -684,8 +690,8 @@ public class DriedRose extends Artifact {
 		}
 		
 		@Override
-		public void damage(int dmg, Object src) {
-			super.damage( dmg, src );
+		public void damage(int dmg, Object src, int damageType) {
+			super.damage( dmg, src, damageType );
 			
 			//for the rose status indicator
 			Item.updateQuickslot();
@@ -813,7 +819,11 @@ public class DriedRose extends Artifact {
 			
 			switch(depth){
 				case 0:
-					yell( Messages.get( this, "seen_goo_" + Random.IntRange(1, 3) ));
+					if (Dungeon.level instanceof SewerBossGooLevel) {
+						yell(Messages.get(this, "seen_goo_" + Random.IntRange(1, 3)));
+					} else {
+						yell(Messages.get(this, "seen_usurper_" + Random.IntRange(1, 3)));
+					}
 					break;
 				case 1:
 					yell( Messages.get( this, "seen_tengu_" + Random.IntRange(1, 3) ));

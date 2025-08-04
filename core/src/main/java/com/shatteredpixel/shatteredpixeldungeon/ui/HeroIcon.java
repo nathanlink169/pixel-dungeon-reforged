@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -72,7 +75,10 @@ public class HeroIcon extends Image {
 	public static final int ASCENDED_FORM   = 31;
 	public static final int TRINITY         = 32;
 	public static final int POWER_OF_MANY   = 33;
-	public static final int RATMOGRIFY      = 34;
+	public static final int QUICKDRAW		= 34;
+	public static final int TRUESIGHT		= 35;
+	public static final int REFLECTION		= 36;
+	public static final int RATMOGRIFY      = 37;
 
 	//cleric spells
 	public static final int GUIDING_LIGHT   = 40;

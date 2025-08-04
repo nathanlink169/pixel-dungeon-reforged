@@ -5,6 +5,9 @@
  * Shattered Pixel Dungeon
  * Copyright (C) 2014-2025 Evan Debenham
  *
+ * Pixel Dungeon Reforged
+ * Copyright (C) 2024-2025 Nathan Pringle
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
@@ -21,26 +24,33 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.MetalShard;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM201Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class DM201 extends DM200 {
 
 	{
-		spriteClass = DM201Sprite.class;
-
 		HP = HT = 120;
 
 		properties.add(Property.IMMOVABLE);
 
 		HUNTING = new Hunting();
+	}
+	@Override
+	public Class<? extends CharSprite> GetSpriteClass() {
+
+		return DM201Sprite.class;
 	}
 
 	@Override
@@ -52,12 +62,12 @@ public class DM201 extends DM200 {
 	private boolean threatened = false;
 
 	@Override
-	public void damage(int dmg, Object src) {
+	public void damage(int dmg, Object src, int damageType) {
 		if ((src instanceof Char && !Dungeon.level.adjacent(pos, ((Char)src).pos))
 				|| enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)){
 			threatened = true;
 		}
-		super.damage(dmg, src);
+		super.damage(dmg, src, damageType);
 	}
 
 	public void onZapComplete(){
