@@ -102,38 +102,6 @@ public class Rat extends Mob {
 		if (bundle.contains(RAT_ALLY)) alignment = Alignment.ALLY;
 	}
 
-	public static void spawnAround(int pos) {
-		int[] neighbours = GetRandomNeighbours();
-
-		for (int n : neighbours) {
-			int cell = pos + n;
-			if (Dungeon.level.passable[cell] && Actor.findChar(cell) == null) {
-				Rat r = new Rat();
-				r.pos = cell;
-				r.state = r.HUNTING;
-				GameScene.add( r );
-				Dungeon.level.occupyCell(r);
-				return;
-			}
-		}
-
-		// if we get here, no place around works. Spawn it randomly
-		Rat r = new Rat();
-		r.pos = -1;
-		int tries = 30;
-		do {
-			r.pos = Dungeon.level.randomRespawnCell(r);
-			if (r.pos != -1) {
-				r.state = r.HUNTING;
-				GameScene.add( r );
-				Dungeon.level.occupyCell(r);
-				return;
-			}
-
-			tries--;
-		} while (tries > 0);
-	}
-
 	@Override
 	public int attackProc(Char enemy, int damage) {
 		if (getRandomizerEnabled(RandomTraits.TOXIC_FANGS)) {
@@ -148,22 +116,6 @@ public class Rat extends Mob {
 			}
 		}
 		return super.attackProc(enemy, damage);
-	}
-
-	private static int[] GetRandomNeighbours() {
-		int[] neighbours = PathFinder.NEIGHBOURS8;
-		int index;
-		for (int i = neighbours.length - 1; i > 0; i--)
-		{
-			index = Random.Int(i + 1);
-			if (index != i)
-			{
-				neighbours[index] ^= neighbours[i];
-				neighbours[i] ^= neighbours[index];
-				neighbours[index] ^= neighbours[i];
-			}
-		}
-		return neighbours;
 	}
 
 	public enum RandomTraits {

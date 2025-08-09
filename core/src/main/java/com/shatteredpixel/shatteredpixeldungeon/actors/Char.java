@@ -1209,6 +1209,9 @@ public abstract class Char extends Actor {
 	}
 
 	public synchronized boolean isCharmedBy( Char ch ) {
+		if (ch == null) {
+			return false;
+		}
 		int chID = ch.id();
 		for (Buff b : buffs) {
 			if (b instanceof Charm && ((Charm)b).object == chID) {

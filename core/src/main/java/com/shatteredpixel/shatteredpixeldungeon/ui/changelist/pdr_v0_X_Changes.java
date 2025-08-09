@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.KoboldSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SkeletonSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpitterSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.UnholyPriestSprite;
@@ -47,12 +48,14 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.watabou.noosa.Image;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_Changes(changeInfos);
 	}
 
@@ -97,6 +100,34 @@ public class pdr_v0_X_Changes {
 
 		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.ARMOR_LEATHER), "Armour Rework",
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
+	}
+
+	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.1.1", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.GUN), "Gun Buff",
+				"The damage of the gun was a little underwhelming. Its damage suggested it was meant to be used multiple times, when in reality this is meant to be a powerful one-time use per fight item. In future, I want to add a more unique mechanic, either AoE or pierce (hitting multiple enemies in a straight line), but until I work out the numbers, I'm making the numbers more consistent. Taking a little off the top, but adding a _lot_ to the bottom!\n\n" +
+						"**-** The gun now indicates if it's loaded in the quickbar.\n" +
+						"**-** Base damage: 1-12 -> 4-8\n" +
+						"**-** +1 damage: 2-16 -> 6-13\n" +
+						"**-** +2 damage: 3-20 -> 8-18\n" +
+						"**-** +3 damage: 4-24 -> 10-23\n" +
+						"**-** +4 damage: 5-28 -> 12-28\n" +
+						"**-** +5 damage: 6-32 -> 14-33"));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.SCROLL_JERA), "Scroll of EHWAZ Replacement",
+				"The scroll of EHWAZ looked just like an Arial M. Unfortunately there was no way to make it look closer to the actual rune in the space the sprite provides, so we have replaced it. Goodbye EHWAZ, hello JERA!"));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.RATION), "Hunger Buff",
+				"Hunger was a little too punishing. This should help prevent a mad scramble for food.\n\n" +
+						"**-** Time to go hungry: 300 -> 450\n" +
+						"**-** Time to start starving: 150 -> 200"));
+
+		changes.addButton( new ChangeButton(new Image(new RatSprite()), "New Boss Minion Fix",
+				"The new sewers boss's minions would be able to proc Ring of Wealth. This has been fixed.\n\nTheir damage has been reduced from 4-12 to 4-10, as their damage was just a touch too high."));
 	}
 
 	public static void add_v0_1_Changes(ArrayList<ChangeInfo> changeInfos ) {
@@ -154,7 +185,7 @@ public class pdr_v0_X_Changes {
 		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.WAND_DISPLACEMENT), "Wand of Displacement",
 				"Have you ever thought \"I'd like to be over there, but that guy is instead!\" Well aren't you lucky, we've got the wand for you!"));
 
-		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.SCROLL_EHWAZ), "Two new scrolls!",
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.SCROLL_JERA), "Two new scrolls!",
 				"One making their way over from Chancel Pixel Dungeon, and the other being an obvious inversion:\n\n" +
 						"Scroll of Decay: Kills life, nourishes the dead.\n" +
 						"Scroll of Growth: Re-kills the dead, nourishes life.\n\n" +

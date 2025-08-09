@@ -142,6 +142,7 @@ public class Gun extends Weapon {
 
     public void SetIsLoaded(boolean value) {
         isLoaded = value;
+        updateQuickslot();
     }
 
     @Override
@@ -195,7 +196,7 @@ public class Gun extends Weapon {
 
     @Override
     public int min(int lvl) {
-        int dmg = 1 + Dungeon.hero.lvl/5
+        int dmg = 4 + (2*Dungeon.hero.lvl/5)
                 + (RingOfSharpshooting.levelDamageBonus(Dungeon.hero) / 2)
                 + (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0);
         return Math.max(0, dmg);
@@ -203,10 +204,9 @@ public class Gun extends Weapon {
 
     @Override
     public int max(int lvl) {
-        int dmg = 6 + (int)(Dungeon.hero.lvl/2.5f)
-                + /*2**/RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
+        int dmg = 8 + (int)((Dungeon.hero.lvl/5.0f)*5)
+                + RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
                 + (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
-        dmg *= 2;
         return Math.max(0, dmg);
     }
 
@@ -395,6 +395,7 @@ public class Gun extends Weapon {
 
                 fire(curUser, actualTarget, true);
                 isLoaded = false;
+                updateQuickslot();
             }
         }
         @Override
@@ -402,4 +403,10 @@ public class Gun extends Weapon {
             return Messages.get(SpiritBow.class, "prompt");
         }
     };
+
+    @Override
+    public String status() {
+        if (isLoaded) return "1/1";
+        return "0/1";
+    }
 }

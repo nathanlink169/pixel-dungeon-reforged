@@ -71,7 +71,7 @@ public class RatUsurper extends Mob {
     @Override
     public int damageRoll(boolean isMaxDamage) {
         if (isMaxDamage) return 4;
-        return Random.NormalIntRange( 4, 12 );
+        return Random.NormalIntRange( 4, 10 );
     }
 
     @Override
@@ -87,7 +87,7 @@ public class RatUsurper extends Mob {
                 }
             }
             for (Mob m : Dungeon.level.mobs) {
-                if (m instanceof Rat) {
+                if (m instanceof RURat) {
                     m.beckon(Dungeon.hero.pos);
                 }
             }
@@ -123,25 +123,25 @@ public class RatUsurper extends Mob {
                 if (curbracket != oldBracket) {
                     teleportRat();
                 }
-                Rat.spawnAround(pos);
+                RURat.spawnAround(pos);
                 if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
-                    Rat.spawnAround(pos);
+                    RURat.spawnAround(pos);
                 }
             }
-            Rat.spawnAround(pos);
+            RURat.spawnAround(pos);
             if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
-                Rat.spawnAround(pos);
+                RURat.spawnAround(pos);
             }
 
             for (Mob m : Dungeon.level.mobs) {
-                if (m instanceof Rat) {
+                if (m instanceof RURat) {
                     m.beckon(pos);
                 }
             }
         }
         else if (!isAlive()) {
             for (Mob m : Dungeon.level.mobs) {
-                if (m instanceof Rat) {
+                if (m instanceof RURat) {
                     Dread d = Buff.affect( m, Dread.class );
                     d.object = Dungeon.hero.id();
                     d.permanent = true;
@@ -161,11 +161,11 @@ public class RatUsurper extends Mob {
     }
 
     private void teleportRat() {
-        Rat toTeleport = null;
-        ArrayList<Rat> rats = new ArrayList<Rat>();
+        RURat toTeleport = null;
+        ArrayList<RURat> rats = new ArrayList<RURat>();
         for (Mob m : Dungeon.level.mobs) {
-            if (m instanceof Rat) {
-                rats.add((Rat) m);
+            if (m instanceof RURat) {
+                rats.add((RURat) m);
             }
         }
 
@@ -285,5 +285,62 @@ public class RatUsurper extends Mob {
         super.restoreFromBundle( bundle );
         if (state != SLEEPING) BossHealthBar.assignBoss(this);
         if ((HP*2 <= HT)) BossHealthBar.bleed(true);
+    }
+
+
+    public static class RURat extends Rat {
+        {
+            properties.add(Property.BOSS_MINION);
+            state = HUNTING;
+            maxLvl = -2;
+        }
+
+        public static void spawnAround(int pos) {
+            int[] neighbours = GetRandomNeighbours();
+
+            for (int n : neighbours) {
+                int cell = pos + n;
+                if (Dungeon.level.passable[cell] && Actor.findChar(cell) == null) {
+                    RURat r = new RURat();
+                    r.pos = cell;
+                    r.state = r.HUNTING;
+                    GameScene.add( r );
+                    Dungeon.level.occupyCell(r);
+                    return;
+                }
+            }
+
+            // if we get here, no place around works. Spawn it randomly
+            RURat r = new RURat();
+            r.pos = -1;
+            int tries = 30;
+            do {
+                r.pos = Dungeon.level.randomRespawnCell(r);
+                if (r.pos != -1) {
+                    r.state = r.HUNTING;
+                    GameScene.add( r );
+                    Dungeon.level.occupyCell(r);
+                    return;
+                }
+
+                tries--;
+            } while (tries > 0);
+        }
+
+        private static int[] GetRandomNeighbours() {
+            int[] neighbours = PathFinder.NEIGHBOURS8;
+            int index;
+            for (int i = neighbours.length - 1; i > 0; i--)
+            {
+                index = Random.Int(i + 1);
+                if (index != i)
+                {
+                    neighbours[index] ^= neighbours[i];
+                    neighbours[i] ^= neighbours[index];
+                    neighbours[index] ^= neighbours[i];
+                }
+            }
+            return neighbours;
+        }
     }
 }

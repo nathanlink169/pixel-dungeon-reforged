@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 public class ItemStatusHandler<T extends Item> {
 
@@ -149,6 +150,12 @@ public class ItemStatusHandler<T extends Item> {
 
 			if (bundle.contains( itemName + PFX_KNOWN ) && bundle.getBoolean( itemName + PFX_KNOWN )) {
 				known.add( item );
+			}
+		}
+
+		for (Map.Entry<Class<? extends T>, String> entry : itemLabels.entrySet()) {
+			if ("EHWAZ".equals(entry.getValue())) {
+				entry.setValue("JERA");
 			}
 		}
 	}
