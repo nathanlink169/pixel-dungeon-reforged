@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.ui.changelist;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -128,6 +129,11 @@ public class pdr_v0_X_Changes {
 
 		changes.addButton( new ChangeButton(new Image(new RatSprite()), "New Boss Minion Fix",
 				"The new sewers boss's minions would be able to proc Ring of Wealth. This has been fixed.\n\nTheir damage has been reduced from 4-12 to 4-10, as their damage was just a touch too high."));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n\n" +
+						"**-**Quick Callibration was not reducing eating time.\n" +
+						"**-**Duelist would crash when using certain weapon abilities."));
 	}
 
 	public static void add_v0_1_Changes(ArrayList<ChangeInfo> changeInfos ) {
