@@ -55,50 +55,12 @@ public class MimicSprite extends MobSprite {
 		return 0;
 	}
 
-	// 0 = not set up
-	// 1 = normal
-	// 2 = monster unknown
-	private int spriteState = 0;
-
-	@Override
-	// base setup call
-	public void setup() {
-		int oldSpriteState = spriteState;
-		if (forcedNormalSprite) {
-			setupFrames();
-		} else {
-			boolean inGame = false;
-			Scene s = ShatteredPixelDungeon.scene();
-			if (s instanceof PixelScene) {
-				if (s instanceof GameScene) {
-					inGame = !((GameScene) s).getJournalOpen();
-				} else {
-					inGame = ((PixelScene) s).getIsInGameScene();
-				}
-			}
-			if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN) && inGame) {
-				if (ch == null) {
-					setupFrames();
-				} else {
-					setupFramesMonsterUnknown();
-				}
-			} else {
-				setupFrames();
-			}
-		}
-
-		if (oldSpriteState != spriteState) {
-			play(idle);
-		}
+	protected int texOffsetMU() {
+		return 0;
 	}
 
 	@Override
 	protected void setupFrames() {
-		if (spriteState == 1) {
-			return;
-		}
-
-		spriteState = 1;
 		int c = texOffset();
 
 		texture( Assets.Sprites.MIMIC );
@@ -126,33 +88,28 @@ public class MimicSprite extends MobSprite {
 
 	@Override
 	protected void setupFramesMonsterUnknown() {
-		if (spriteState == 2) {
-			return;
-		}
-
-		spriteState = 2;
 		super.setupFramesMonsterUnknown();
-		advancedHiding = idle;
-		hiding = idle;
-	}
 
-	@Override
-	public void play(Animation anim) {
-		setup();
-		super.play(anim);
+		TextureFilm frames = new TextureFilm( texture, 16, 16 );
+
+		int c = texOffsetMU();
+
+		advancedHiding = new Animation( 1, true );
+		advancedHiding.frames( frames, 16+c);
+
+		hiding = new Animation( 1, true );
+		hiding.frames( frames, 17+c, 17+c, 17+c, 17+c, 17+c, 18+c);
 	}
 
 	@Override
 	public void linkVisuals(Char ch) {
 		super.linkVisuals(ch);
 		if (ch.alignment == Char.Alignment.NEUTRAL) {
-			setup();
 			hideMimic(ch);
 		}
 	}
 
 	public void hideMimic(Char ch){
-		setup();
 		if (ch instanceof Mimic && ((Mimic) ch).stealthy()){
 			play(advancedHiding);
 		} else {
@@ -174,6 +131,8 @@ public class MimicSprite extends MobSprite {
 		protected int texOffset() {
 			return 16;
 		}
+		@Override
+		protected int texOffsetMU() { return 3; }
 	}
 
 	public static class Crystal extends MimicSprite{
@@ -181,6 +140,8 @@ public class MimicSprite extends MobSprite {
 		protected int texOffset() {
 			return 32;
 		}
+		@Override
+		protected int texOffsetMU() { return 6; }
 	}
 
 	public static class Ebony extends MimicSprite{
@@ -188,6 +149,8 @@ public class MimicSprite extends MobSprite {
 		protected int texOffset() {
 			return 48;
 		}
+		@Override
+		protected int texOffsetMU() { return 9; }
 
 		@Override
 		public void hideMimic(Char ch) {

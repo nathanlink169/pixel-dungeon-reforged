@@ -27,7 +27,6 @@ package com.shatteredpixel.shatteredpixeldungeon.items.stones;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Identification;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -223,13 +222,6 @@ public class StoneOfIntuition extends InventoryStone {
 			
 			resize(WIDTH, 100);
 			
-		}
-
-		@Override
-		public void onBackPressed() {
-			super.onBackPressed();
-
-			new StoneOfIntuition().collect();
 		}
 
 	}

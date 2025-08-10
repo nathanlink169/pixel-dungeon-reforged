@@ -133,7 +133,9 @@ public class pdr_v0_X_Changes {
 		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
 				"Fixed the following bugs:\n\n" +
 						"**-**Quick Callibration was not reducing eating time.\n" +
-						"**-**Duelist would crash when using certain weapon abilities."));
+						"**-**Duelist would crash when using certain weapon abilities.\n" +
+						"**-**Mimic melee attacks would softlock the game.\n" +
+						"**-**It was possible to duplicate stones of intuition."));
 	}
 
 	public static void add_v0_1_Changes(ArrayList<ChangeInfo> changeInfos ) {

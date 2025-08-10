@@ -79,7 +79,7 @@ public class MobSprite extends CharSprite {
 	protected void setupFramesMonsterUnknown() {
 		texture( Assets.Sprites.MONSTER_UNKNOWN );
 
-		TextureFilm frames = new TextureFilm( texture, 12, 15 );
+		TextureFilm frames = new TextureFilm( texture, 16, 16 );
 
 		idle = new Animation( 1, true );
 		idle.frames( frames, 0, 0, 0, 1, 0, 0, 1, 1 );
