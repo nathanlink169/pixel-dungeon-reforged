@@ -58,8 +58,8 @@ import java.util.Locale;
 
 public class WndSettings extends WndTabbed {
 
-	private static final int WIDTH_P	    = 146;
-	private static final int WIDTH_L	    = 268;
+	private static final int WIDTH_P	    = 122;
+	private static final int WIDTH_L	    = 223;
 
 	private static final int SLIDER_HEIGHT	= 21;
 	private static final int BTN_HEIGHT	    = 16;
@@ -68,9 +68,7 @@ public class WndSettings extends WndTabbed {
 	private DisplayTab  display;
 	private UITab       ui;
 	private InputTab    input;
-	// private DataTab     data;
 	private AudioTab    audio;
-	private LangsTab    langs;
 
 	public static int last_index = 0;
 
@@ -86,7 +84,7 @@ public class WndSettings extends WndTabbed {
 		height = display.height();
 		add( display );
 
-		add( new IconTab(Icons.get(Icons.DISPLAY)){
+		add( new IconTab(Icons.get(Icons.DISPLAY)) {
 			@Override
 			protected void select(boolean value) {
 				super.select(value);
@@ -131,20 +129,6 @@ public class WndSettings extends WndTabbed {
 			});
 		}
 
-//		data = new DataTab();
-//		data.setSize(width, 0);
-//		height = Math.max(height, data.height());
-//		add( data );
-//
-//		add( new IconTab(Icons.get(Icons.DATA)){
-//			@Override
-//			protected void select(boolean value) {
-//				super.select(value);
-//				data.visible = data.active = value;
-//				if (value) last_index = 3;
-//			}
-//		});
-
 		audio = new AudioTab();
 		audio.setSize(width, 0);
 		height = Math.max(height, audio.height());
@@ -158,36 +142,6 @@ public class WndSettings extends WndTabbed {
 				if (value) last_index = 4;
 			}
 		});
-
-		langs = new LangsTab();
-		langs.setSize(width, 0);
-		height = Math.max(height, langs.height());
-		add( langs );
-
-
-		IconTab langsTab = new IconTab(Icons.get(Icons.LANGS)){
-			@Override
-			protected void select(boolean value) {
-				super.select(value);
-				langs.visible = langs.active = value;
-				if (value) last_index = 5;
-			}
-
-			@Override
-			protected void createChildren() {
-				super.createChildren();
-				switch(Messages.lang().status()){
-					case X_UNFINISH:
-						icon.hardlight(1.5f, 0, 0);
-						break;
-					case __UNREVIEW:
-						icon.hardlight(1.5f, 0.75f, 0f);
-						break;
-				}
-			}
-
-		};
-		add( langsTab );
 
 		resize(width, (int)Math.ceil(height));
 

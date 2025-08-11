@@ -47,25 +47,7 @@ public class ScrollOfRage extends Scroll {
 
 	@Override
 	public void doRead() {
-
-		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-			int rand = Random.NormalIntRange(1, 20);
-			int chance;
-			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-				chance = 2;
-			} else {
-				chance = 5;
-			}
-			if (rand > chance) { // Failed Roll
-				detach(curUser.belongings.backpack);
-			}
-			else {
-				GLog.p( Messages.get(Potion.class, "saved") );
-			}
-		}
-		else {
-			detach(curUser.belongings.backpack);
-		}
+		consumeScroll();
 		for (Mob mob : Dungeon.level.mobs.toArray( new Mob[0] )) {
 			mob.beckon( curUser.pos );
 			if (mob.alignment != Char.Alignment.ALLY && Dungeon.level.heroFOV[mob.pos]) {

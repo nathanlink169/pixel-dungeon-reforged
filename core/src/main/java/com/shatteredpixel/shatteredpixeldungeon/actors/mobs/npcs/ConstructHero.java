@@ -202,6 +202,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
     public void die(Object cause) {
         sayDefeated();
         Dungeon.hero.NotifyConstructDeath();
+        ActionIndicator.clearAction(this);
         super.die(cause);
     }
 

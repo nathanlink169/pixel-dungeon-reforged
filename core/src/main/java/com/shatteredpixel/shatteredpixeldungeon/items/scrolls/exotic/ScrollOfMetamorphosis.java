@@ -65,24 +65,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 	public void doRead() {
 		if (!isKnown()) {
 			identify();
-			if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-				int rand = Random.NormalIntRange(1, 20);
-				int chance;
-				if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-					chance = 2;
-				} else {
-					chance = 5;
-				}
-				if (rand > chance) { // Failed Roll
-					curItem = detach(curUser.belongings.backpack);
-				}
-				else {
-					GLog.p( Messages.get(Potion.class, "saved") );
-				}
-			}
-			else {
-				curItem = detach(curUser.belongings.backpack);
-			}
+			consumeScroll();
 			identifiedByUse = true;
 		} else {
 			identifiedByUse = false;
@@ -220,25 +203,7 @@ public class ScrollOfMetamorphosis extends ExoticScroll {
 			super();
 
 			if (!identifiedByUse && curItem instanceof ScrollOfMetamorphosis) {
-				if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-					int rand = Random.NormalIntRange(1, 20);
-					int chance;
-					if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-						chance = 2;
-					} else {
-						chance = 5;
-					}
-					if (rand > chance) { // Failed Roll
-						curItem.detach(curUser.belongings.backpack);
-					}
-					else {
-						GLog.p( Messages.get(Potion.class, "saved") );
-					}
-				}
-				else {
-					curItem.detach(curUser.belongings.backpack);
-				}
-				curItem.detach(curUser.belongings.backpack);
+				((ScrollOfMetamorphosis)curItem).consumeScroll();
 			}
 			identifiedByUse = false;
 

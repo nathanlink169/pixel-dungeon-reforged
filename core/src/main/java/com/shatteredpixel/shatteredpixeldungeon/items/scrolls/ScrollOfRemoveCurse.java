@@ -46,7 +46,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
 
 public class ScrollOfRemoveCurse extends InventoryScroll {
 
@@ -75,24 +74,7 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 				Degrade.detach(curUser, Degrade.class);
 			}
 
-			if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-				int rand = Random.NormalIntRange(1, 20);
-				int chance;
-				if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-					chance = 2;
-				} else {
-					chance = 5;
-				}
-				if (rand > chance) { // Failed Roll
-					detach(curUser.belongings.backpack);
-				}
-				else {
-					GLog.p( Messages.get(Potion.class, "saved") );
-				}
-			}
-			else {
-				detach(curUser.belongings.backpack);
-			}
+			consumeScroll();
 			GLog.p(Messages.get(this, "spirit"));
 			spirit.cleanse();
 		} else {

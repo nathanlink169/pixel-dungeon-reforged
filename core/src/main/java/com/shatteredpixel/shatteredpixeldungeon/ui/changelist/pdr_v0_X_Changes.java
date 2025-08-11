@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.ui.changelist;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -65,6 +66,13 @@ public class pdr_v0_X_Changes {
 		ChangeInfo changes = new ChangeInfo("What's next?", true, "");
 		changes.hardlight(0xCCCCCC);
 		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Next Update",
+				"I think the majority of gamebreaking bugs have been addressed at this point (he says, before another 60 are reported.) Now I want to do some reworks and major tweaks of balancing.\n" +
+						"\n" +
+						"The first major balance is the Artificer's gun. It is a bit underwhelming, so it will be getting a much more powerful ability that can effect multiple enemies, with positioning being important. This means that it's not just \"shoot as soon as you see an enemy.\" As such, the penalty for being up close will also be removed for the gun specifically.\n\n" +
+						"\n" +
+						"The other two major balances needed are the Wyrm fight being easily beaten with the Sniper (and being weak to ranged attacks in general,) and the Artificers activated abilities being very overpowered."));
 
 		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Overview",
 				"The next minor update will be addressing balancing feedback. I'm sure some things are overtuned or undertuned, especially with the Artificer and the new boss. The minor update will be bug fixes and balancing those two in particular.\n" +
@@ -130,12 +138,28 @@ public class pdr_v0_X_Changes {
 		changes.addButton( new ChangeButton(new Image(new RatSprite()), "New Boss Minion Fix",
 				"The new sewers boss's minions would be able to proc Ring of Wealth. This has been fixed.\n\nTheir damage has been reduced from 4-12 to 4-10, as their damage was just a touch too high."));
 
+		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.GREATAXE), "Accuracy Reversion",
+				"The previous accuracy buff has been reverted. It had way too big of an impact on the balance of the game. I may tweak it again later, but for now I want to let other changes settle."));
+
+		changes.addButton(new ChangeButton(new Image(new FiendSprite()), "Fiend Death Damage Nerf",
+				"The death damage of the fiend was a little too high, considering its main feature is the miasma effect. This is going from 24-36 down to 14-20."));
+
+		changes.addButton(new ChangeButton(new Image(new GhostSprite()), "Sad Ghost reward reversion",
+				"Two artifacts was a little too good. It's being reverted to a weapon and an armor, however each is guaranteed to be useful in the early-game or mid-game."));
+
 		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
 				"Fixed the following bugs:\n\n" +
 						"**-**Quick Callibration was not reducing eating time.\n" +
 						"**-**Duelist would crash when using certain weapon abilities.\n" +
 						"**-**Mimic melee attacks would softlock the game.\n" +
-						"**-**It was possible to duplicate stones of intuition."));
+						"**-**It was possible to duplicate stones of intuition.\n" +
+						"**-**Fixed dark gold not generating enough during new blacksmith quest.\n" +
+						"**-**Ringbox would delete rings when closing the game.\n" +
+						"**-**Gun would not reload if done through the gun menu (not the quickbar.)\n" +
+						"**-**Miasma would not indicate turns remaining.\n" +
+						"**-**Constructor would spawn in weird in places and the icon would not disappear properly.\n" +
+						"**-**Volatile salvage would not proc properly.\n" +
+						"**-**Quickdraw would take too much time to activate."));
 	}
 
 	public static void add_v0_1_Changes(ArrayList<ChangeInfo> changeInfos ) {

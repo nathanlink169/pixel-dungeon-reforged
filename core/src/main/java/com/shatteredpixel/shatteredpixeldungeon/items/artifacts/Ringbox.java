@@ -11,6 +11,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEnergy;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -60,9 +61,25 @@ public class Ringbox extends Artifact {
         }
     }
 
+    private static final String RING1 = "ring1";
+    private static final String RING2 = "ring2";
+    private static final String RING3 = "ring3";
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+
+        if (slot1Ring != null) bundle.put( RING1, slot1Ring );
+        if (slot2Ring != null) bundle.put( RING2, slot2Ring );
+        if (slot3Ring != null) bundle.put( RING3, slot3Ring );
+    }
+
     @Override
     public void restoreFromBundle(Bundle bundle) {
         super.restoreFromBundle(bundle);
+
+        if (bundle.contains(RING1)) slot1Ring = (Ring)bundle.get( RING1 );
+        if (bundle.contains(RING2)) slot2Ring = (Ring)bundle.get( RING2 );
+        if (bundle.contains(RING3)) slot3Ring = (Ring)bundle.get( RING3 );
     }
 
     @Override

@@ -51,25 +51,7 @@ public class ScrollOfPsionicBlast extends ExoticScroll {
 	
 	@Override
 	public void doRead() {
-
-		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-			int rand = Random.NormalIntRange(1, 20);
-			int chance;
-			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-				chance = 2;
-			} else {
-				chance = 5;
-			}
-			if (rand > chance) { // Failed Roll
-				detach(curUser.belongings.backpack);
-			}
-			else {
-				GLog.p( Messages.get(Potion.class, "saved") );
-			}
-		}
-		else {
-			detach(curUser.belongings.backpack);
-		}
+		consumeScroll();
 		GameScene.flash( 0x80FFFFFF );
 		
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );

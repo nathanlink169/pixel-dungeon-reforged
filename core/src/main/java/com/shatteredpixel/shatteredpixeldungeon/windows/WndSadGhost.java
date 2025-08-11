@@ -85,46 +85,40 @@ public class WndSadGhost extends Window {
 		message.setPos(0, titlebar.bottom() + GAP);
 		add( message );
 
-		SadGhostButton artifact1Btn = new SadGhostButton(){
+		ItemButton btnWeapon = new ItemButton(){
 			@Override
 			protected void onClick() {
-				GameScene.show(new RewardWindow(item(), otherItem()));
+				GameScene.show(new RewardWindow(item()));
 			}
 		};
-		artifact1Btn.item( Ghost.Quest.artifact1 );
-		artifact1Btn.otherItem (Ghost.Quest.artifact2);
-		artifact1Btn.setRect( (WIDTH - BTN_GAP) / 2 - BTN_SIZE, message.top() + message.height() + BTN_GAP, BTN_SIZE, BTN_SIZE );
-		add( artifact1Btn );
+		btnWeapon.item( Ghost.Quest.weapon );
+		btnWeapon.setRect( (WIDTH - BTN_GAP) / 2 - BTN_SIZE, message.top() + message.height() + BTN_GAP, BTN_SIZE, BTN_SIZE );
+		add( btnWeapon );
 
-		SadGhostButton artifact2Btn = new SadGhostButton(){
+		ItemButton btnArmor = new ItemButton(){
 			@Override
 			protected void onClick() {
-				GameScene.show(new RewardWindow(item(), otherItem()));
+				GameScene.show(new RewardWindow(item()));
 			}
 		};
-		artifact2Btn.item( Ghost.Quest.artifact2 );
-		artifact2Btn.otherItem (Ghost.Quest.artifact1);
-		artifact2Btn.setRect( artifact1Btn.right() + BTN_GAP, artifact1Btn.top(), BTN_SIZE, BTN_SIZE );
-		add(artifact2Btn);
+		btnArmor.item( Ghost.Quest.armor );
+		btnArmor.setRect( btnWeapon.right() + BTN_GAP, btnWeapon.top(), BTN_SIZE, BTN_SIZE );
+		add(btnArmor);
 
-		resize(WIDTH, (int) artifact2Btn.bottom() + BTN_GAP);
-	}
-
-	public class SadGhostButton extends ItemButton {
-		private Item otherItem = null;
-		public Item otherItem() {
-			return otherItem;
-		}
-		public void otherItem( Item otherItem ) {
-			this.otherItem = otherItem;
-		}
+		resize(WIDTH, (int) btnArmor.bottom() + BTN_GAP);
 	}
 	
-	private void selectReward( Item reward, Item otherItem ) {
+	private void selectReward( Item reward ) {
 		
 		hide();
 		
 		if (reward == null) return;
+		
+		if (reward instanceof Weapon && Ghost.Quest.enchant != null){
+			((Weapon) reward).enchant(Ghost.Quest.enchant);
+		} else if (reward instanceof Armor && Ghost.Quest.glyph != null){
+			((Armor) reward).inscribe(Ghost.Quest.glyph);
+		}
 		
 		reward.identify(false);
 		if (reward.doPickUp( Dungeon.hero )) {
@@ -133,10 +127,6 @@ public class WndSadGhost extends Window {
 			Dungeon.level.drop( reward, ghost.pos ).sprite.drop();
 		}
 
-		if (otherItem instanceof Artifact) {
-			Generator.readdArtifact(((Artifact)otherItem).getClass());
-		}
-		
 		ghost.yell( Messages.get(this, "farewell") );
 		ghost.die( null );
 		
@@ -145,7 +135,7 @@ public class WndSadGhost extends Window {
 
 	private class RewardWindow extends WndInfoItem {
 
-		public RewardWindow( Item item, Item otherItem ) {
+		public RewardWindow( Item item ) {
 			super(item);
 
 			RedButton btnConfirm = new RedButton(Messages.get(WndSadGhost.class, "confirm")){
@@ -153,7 +143,7 @@ public class WndSadGhost extends Window {
 				protected void onClick() {
 					RewardWindow.this.hide();
 
-					WndSadGhost.this.selectReward( item, otherItem );
+					WndSadGhost.this.selectReward( item );
 				}
 			};
 			btnConfirm.setRect(0, height+2, width/2-1, 16);

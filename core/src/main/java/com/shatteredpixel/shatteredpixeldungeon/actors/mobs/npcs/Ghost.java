@@ -35,9 +35,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollTrickster;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GreatCrab;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.MailArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ParchmentScrap;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
@@ -139,7 +143,7 @@ public class Ghost extends NPC {
 		}
 		
 		if (Quest.given) {
-			if (Quest.artifact1 != null) {
+			if (Quest.weapon != null) {
 				if (Quest.processed) {
 					Game.runOnRenderThread(new Callback() {
 						@Override
@@ -226,14 +230,18 @@ public class Ghost extends NPC {
 		
 		private static int depth;
 		
-		public static Item artifact1;
-		public static Item artifact2;
+		public static Weapon weapon;
+		public static Armor armor;
+		public static Weapon.Enchantment enchant;
+		public static Armor.Glyph glyph;
 		
 		public static void reset() {
 			spawned = false;
 
-			artifact1 = null;
-			artifact2 = null;
+			weapon = null;
+			armor = null;
+			enchant = null;
+			glyph = null;
 		}
 		
 		private static final String NODE		= "sadGhost";
@@ -243,8 +251,10 @@ public class Ghost extends NPC {
 		private static final String GIVEN		= "given";
 		private static final String PROCESSED	= "processed";
 		private static final String DEPTH		= "depth";
-		private static final String ARTIFACT1	= "artifact1";
-		private static final String ARTIFACT2	= "artifact2";
+		private static final String WEAPON		= "weapon";
+		private static final String ARMOR		= "armor";
+		private static final String ENCHANT		= "enchant";
+		private static final String GLYPH		= "glyph";
 		
 		public static void storeInBundle( Bundle bundle ) {
 			
@@ -260,8 +270,13 @@ public class Ghost extends NPC {
 				node.put( DEPTH, depth );
 				node.put( PROCESSED, processed );
 				
-				node.put( ARTIFACT1, artifact1 );
-				node.put( ARTIFACT2, artifact2 );
+				node.put( WEAPON, weapon );
+				node.put( ARMOR, armor );
+
+				if (enchant != null) {
+					node.put(ENCHANT, enchant);
+					node.put(GLYPH, glyph);
+				}
 			}
 			
 			bundle.put( NODE, node );
@@ -279,8 +294,13 @@ public class Ghost extends NPC {
 
 				depth	= node.getInt( DEPTH );
 				
-				artifact1	= (Item) node.get( ARTIFACT1 );
-				artifact2	= (Item) node.get( ARTIFACT2 );
+				weapon	= (Weapon)node.get( WEAPON );
+				armor	= (Armor)node.get( ARMOR );
+
+				if (node.contains(ENCHANT)) {
+					enchant = (Weapon.Enchantment) node.get(ENCHANT);
+					glyph   = (Armor.Glyph) node.get(GLYPH);
+				}
 			} else {
 				reset();
 			}
@@ -304,30 +324,47 @@ public class Ghost extends NPC {
 				processed = false;
 				depth = Dungeon.depth;
 
-				int tries = 0;
-				do {
-					artifact1 = Generator.random(Generator.Category.ARTIFACT);
-				} while (artifact1 instanceof DriedRose && ++tries < 100);
-				if (artifact1 instanceof DriedRose) {
-					artifact1 = Generator.random(Generator.Category.RING);
+				//50%:tier2, 35%:tier3, 15%:tier4
+				switch (Random.chances(new float[]{0, 0, 10, 7, 3, 0})){
+					default:
+					case 2: armor = new LeatherArmor(); break;
+					case 3: armor = new MailArmor();    break;
+					case 4: armor = new ScaleArmor();   break;
+					case 5: armor = new PlateArmor();   break;
 				}
-				tries = 0;
-				do {
-					artifact2 = Generator.random(Generator.Category.ARTIFACT);
-				} while (artifact2 instanceof DriedRose && ++tries < 100);
-				if (artifact2 instanceof DriedRose) {
-					artifact2 = Generator.random(Generator.Category.RING);
+				//75%:tier2, 25%:tier3
+				int wepTier = Random.chances(new float[]{0, 0, 3, 1, 0, 0});
+				weapon = (Weapon) Generator.random(Generator.wepTiers[wepTier - 1]);
+
+				//clear weapon's starting properties
+				weapon.level(0);
+				weapon.enchant(null);
+				weapon.cursed = false;
+
+				//55%:+1, 40%:+2, 5%:+3
+				float itemLevelRoll = Random.Float();
+				int itemLevel;
+				if (itemLevelRoll < 0.55f){
+					itemLevel = 1;
+				} else if (itemLevelRoll < 0.95f){
+					itemLevel = 2;
+				} else {
+					itemLevel = 3;
+				}
+				weapon.upgrade(itemLevel);
+				armor.upgrade(itemLevel);
+
+				// 30% base chance to be enchanted, stored separately so status isn't revealed early
+				//we generate first so that the outcome doesn't affect the number of RNG rolls
+				enchant = Weapon.Enchantment.random();
+				glyph = Armor.Glyph.random();
+
+				float enchantRoll = Random.Float();
+				if (enchantRoll > 0.3f * ParchmentScrap.enchantChanceMultiplier()){
+					enchant = null;
+					glyph = null;
 				}
 
-				if (artifact1 instanceof Artifact) {
-					Generator.removeArtifact(((Artifact) artifact1).getClass());
-				}
-				if (artifact2 instanceof Artifact) {
-					Generator.removeArtifact(((Artifact) artifact2).getClass());
-				}
-
-				artifact1.cursed = false;
-				artifact2.cursed = false;
 			}
 		}
 		
@@ -359,8 +396,8 @@ public class Ghost extends NPC {
 		}
 		
 		public static void complete() {
-			artifact1 = null;
-			artifact2 = null;
+			weapon = null;
+			armor = null;
 			
 			Notes.remove( Notes.Landmark.GHOST );
 		}
@@ -370,7 +407,7 @@ public class Ghost extends NPC {
 		}
 		
 		public static boolean completed(){
-			return processed() && artifact1 == null && artifact2 == null;
+			return processed() && weapon == null && armor == null;
 		}
 	}
 }

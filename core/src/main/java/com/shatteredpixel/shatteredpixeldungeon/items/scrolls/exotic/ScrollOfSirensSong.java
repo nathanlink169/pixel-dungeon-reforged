@@ -57,24 +57,7 @@ public class ScrollOfSirensSong extends ExoticScroll {
 	public void doRead() {
 		if (!isKnown()) {
 			identify();
-			if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-				int rand = Random.NormalIntRange(1, 20);
-				int chance;
-				if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-					chance = 2;
-				} else {
-					chance = 5;
-				}
-				if (rand > chance) { // Failed Roll
-					curItem = detach(curUser.belongings.backpack);
-				}
-				else {
-					GLog.p( Messages.get(Potion.class, "saved") );
-				}
-			}
-			else {
-				curItem = detach(curUser.belongings.backpack);
-			}
+			consumeScroll();
 			identifiedByUse = true;
 		} else {
 			identifiedByUse = false;
@@ -129,24 +112,7 @@ public class ScrollOfSirensSong extends ExoticScroll {
 				}
 
 				if (!identifiedByUse) {
-					if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-						int rand = Random.NormalIntRange(1, 20);
-						int chance;
-						if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-							chance = 2;
-						} else {
-							chance = 5;
-						}
-						if (rand > chance) { // Failed Roll
-							curItem.detach(curUser.belongings.backpack);
-						}
-						else {
-							GLog.p( Messages.get(Potion.class, "saved") );
-						}
-					}
-					else {
-						curItem.detach(curUser.belongings.backpack);
-					}
+					consumeScroll();
 				}
 				identifiedByUse = false;
 

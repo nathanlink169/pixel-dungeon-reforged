@@ -9,7 +9,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Healing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -40,7 +42,7 @@ public class ScrollKillAll extends Scroll {
         ArrayList<Mob> targets = new ArrayList<>();
 
         for (Mob mob : Dungeon.level.mobs.toArray( new Mob[0] )) {
-            if (mob.alignment == Char.Alignment.ENEMY) {
+            if (mob.alignment == Char.Alignment.ENEMY || mob instanceof Mimic) {
                 targets.add(mob);
             }
         }

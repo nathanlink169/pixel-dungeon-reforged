@@ -135,6 +135,7 @@ public class Gun extends Weapon {
             GameScene.selectCell( shooter );
         }
         if (action.equals(AC_RELOAD)) {
+            SetIsLoaded(true);
             hero.sprite.operate( hero.pos );
             hero.spendAndNext( TIME_TO_RELOAD );
         }
@@ -253,7 +254,7 @@ public class Gun extends Weapon {
         return false;
     }
 
-    public boolean fire(final Hero user, final int cell, final boolean playSFX) {
+    public boolean fire(final Hero user, final int cell, final boolean playSFX, final boolean spendTime) {
         boolean hitSomething = false;
 
         if (user.hasTalent(ARCSHIELDING)) {
@@ -371,8 +372,10 @@ public class Gun extends Weapon {
         }
         CellEmitter.center(cell).burst(SmokeParticle.FACTORY, 5);
 
-        user.sprite.operate( user.pos );
-        user.spendAndNext( 1.0f );
+        if (spendTime) {
+            user.sprite.operate(user.pos);
+            user.spendAndNext(1.0f);
+        }
 
         return hitSomething;
     }
@@ -393,7 +396,7 @@ public class Gun extends Weapon {
             if (target != null) {
                 int actualTarget = new Ballistica( curUser.pos, target, Ballistica.PROJECTILE ).collisionPos;
 
-                fire(curUser, actualTarget, true);
+                fire(curUser, actualTarget, true, true);
                 isLoaded = false;
                 updateQuickslot();
             }

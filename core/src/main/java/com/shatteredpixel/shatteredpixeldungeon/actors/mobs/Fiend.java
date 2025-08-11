@@ -101,7 +101,7 @@ public class Fiend extends Mob {
 
 			Char ch = findChar( pos + neighbours[i] );
 			if (ch != null && ch.isAlive()) {
-				int damage = Math.round(Random.NormalIntRange(24, 36));
+				int damage = Math.round(Random.NormalIntRange(14, 20));
 
 				damage = Math.round( damage * AscensionChallenge.statModifier(this));
 

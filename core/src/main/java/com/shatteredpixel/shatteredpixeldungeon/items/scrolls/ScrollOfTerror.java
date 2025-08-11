@@ -47,25 +47,7 @@ public class ScrollOfTerror extends Scroll {
 
 	@Override
 	public void doRead() {
-
-		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-			int rand = Random.NormalIntRange(1, 20);
-			int chance;
-			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-				chance = 2;
-			} else {
-				chance = 5;
-			}
-			if (rand > chance) { // Failed Roll
-				detach(curUser.belongings.backpack);
-			}
-			else {
-				GLog.p( Messages.get(Potion.class, "saved") );
-			}
-		}
-		else {
-			detach(curUser.belongings.backpack);
-		}
+		consumeScroll();
 		new Flare( 5, 32 ).color( 0xFF0000, true ).show( curUser.sprite, 2f );
 		Sample.INSTANCE.play( Assets.Sounds.READ );
 		

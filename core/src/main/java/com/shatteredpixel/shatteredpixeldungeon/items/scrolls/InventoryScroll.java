@@ -49,24 +49,7 @@ public abstract class InventoryScroll extends Scroll {
 		
 		if (!isKnown()) {
 			identify();
-			if (curUser.hasTalent(Talent.VOLATILE_SALVAGE) && !(this instanceof ScrollOfUpgrade)) {
-				int rand = Random.NormalIntRange(1, 20);
-				int chance;
-				if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-					chance = 2;
-				} else {
-					chance = 5;
-				}
-				if (rand > chance) { // Failed Roll
-					curItem = detach(curUser.belongings.backpack);
-				}
-				else {
-					GLog.p( Messages.get(Potion.class, "saved") );
-				}
-			}
-			else {
-				curItem = detach(curUser.belongings.backpack);
-			}
+			consumeScroll();
 			identifiedByUse = true;
 		} else {
 			identifiedByUse = false;
@@ -140,24 +123,7 @@ public abstract class InventoryScroll extends Scroll {
 				//SoU opens a separate window that can be cancelled
 				//so we don't do a lot of logic here
 				if (!identifiedByUse && !(curItem instanceof ScrollOfUpgrade)) {
-					if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-						int rand = Random.NormalIntRange(1, 20);
-						int chance;
-						if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-							chance = 2;
-						} else {
-							chance = 5;
-						}
-						if (rand > chance) { // Failed Roll
-							curItem = detach(curUser.belongings.backpack);
-						}
-						else {
-							GLog.p( Messages.get(Potion.class, "saved") );
-						}
-					}
-					else {
-						curItem = detach(curUser.belongings.backpack);
-					}
+					consumeScroll();
 				}
 				((InventoryScroll)curItem).onItemSelected( item );
 

@@ -451,13 +451,9 @@ public class SPDSettings extends GameSettings {
 		put( KEY_LANG, lang.code());
 	}
 	
+	// Just English as the stuff I'm adding is not translated. I don't want a frustrating half-translated experience.
 	public static Languages language() {
-		String code = getString(KEY_LANG, null);
-		if (code == null){
-			return Languages.matchLocale(Locale.getDefault());
-		} else {
-			return Languages.matchCode(code);
-		}
+		return Languages.ENGLISH;
 	}
 
 	//Window management (desktop only atm)

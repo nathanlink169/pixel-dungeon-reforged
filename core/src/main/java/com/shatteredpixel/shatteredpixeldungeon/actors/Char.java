@@ -659,8 +659,6 @@ public abstract class Char extends Actor {
 		float acuStat = attacker.attackSkill( defender );
 		float defStat = defender.defenseSkill( attacker );
 
-		acuStat *= 1.5f; // All attacks are 50% more accurate in reforged.
-
 		if (defender instanceof Hero && ((Hero) defender).damageInterrupt){
 			((Hero) defender).interrupt();
 		}

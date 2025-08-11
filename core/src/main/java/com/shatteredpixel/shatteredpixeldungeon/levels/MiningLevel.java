@@ -148,10 +148,6 @@ public class MiningLevel extends CavesLevel {
 					if (map[i] == Terrain.EMPTY_DECO && Random.Int(4) > 0) {
 						map[i] = Terrain.EMPTY;
 					}
-					// Same for the walls
-					if (map[i] == Terrain.WALL_DECO && Random.Int(4)> 0) {
-						map[i] = Terrain.WALL;
-					}
 				}
 			}
 

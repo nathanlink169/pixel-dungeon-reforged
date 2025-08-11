@@ -57,7 +57,7 @@ import java.util.ArrayList;
 public class Quickdraw extends ArmorAbility {
 
 	{
-		baseChargeUse = 25f;
+		baseChargeUse = 50f;
 	}
 
 	@Override
@@ -135,7 +135,7 @@ public class Quickdraw extends ArmorAbility {
 		}
 
 		hero.sprite.turnTo( hero.pos, thisTarget.pos );
-		if (gun.fire(hero, thisTarget.pos, playSFX)) {
+		if (gun.fire(hero, thisTarget.pos, playSFX, playSFX)) {
 			int chanceToKnockback = hero.pointsInTalent(Talent.POWERFUL_SHOT) * 2;
 			if (chanceToKnockback > 0) {
 				if (Random.Int(10) < chanceToKnockback) {

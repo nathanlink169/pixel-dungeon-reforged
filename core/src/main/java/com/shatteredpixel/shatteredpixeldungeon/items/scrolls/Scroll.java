@@ -38,6 +38,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfAntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
@@ -376,6 +377,27 @@ public abstract class Scroll extends Item {
 			} else {
 				return Reflection.newInstance(stones.get(s.getClass())).quantity(2);
 			}
+		}
+	}
+
+	protected void consumeScroll() {
+		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
+			int rand = Random.Int(1, 20);
+			int chance;
+			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
+				chance = 2;
+			} else {
+				chance = 5;
+			}
+			if (rand > chance) { // Failed Roll
+				detach(curUser.belongings.backpack);
+			}
+			else {
+				GLog.p( Messages.get(Potion.class, "saved") );
+			}
+		}
+		else {
+			detach(curUser.belongings.backpack);
 		}
 	}
 }

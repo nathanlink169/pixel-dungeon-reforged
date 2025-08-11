@@ -42,25 +42,7 @@ public class ScrollOfAntiMagic extends ExoticScroll {
 	
 	@Override
 	public void doRead() {
-
-		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-			int rand = Random.NormalIntRange(1, 20);
-			int chance;
-			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-				chance = 2;
-			} else {
-				chance = 5;
-			}
-			if (rand > chance) { // Failed Roll
-				detach(curUser.belongings.backpack);
-			}
-			else {
-				GLog.p( Messages.get(Potion.class, "saved") );
-			}
-		}
-		else {
-			detach(curUser.belongings.backpack);
-		}
+		consumeScroll();
 		Buff.affect( curUser, MagicImmune.class, MagicImmune.DURATION );
 		new Flare( 5, 32 ).color( 0x00FF00, true ).show( curUser.sprite, 2f );
 

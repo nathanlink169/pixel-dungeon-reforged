@@ -46,25 +46,7 @@ public class ScrollOfLullaby extends Scroll {
 
 	@Override
 	public void doRead() {
-
-		if (curUser.hasTalent(Talent.VOLATILE_SALVAGE)) {
-			int rand = Random.NormalIntRange(1, 20);
-			int chance;
-			if (curUser.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
-				chance = 2;
-			} else {
-				chance = 5;
-			}
-			if (rand > chance) { // Failed Roll
-				detach(curUser.belongings.backpack);
-			}
-			else {
-				GLog.p( Messages.get(Potion.class, "saved") );
-			}
-		}
-		else {
-			detach(curUser.belongings.backpack);
-		}
+		consumeScroll();
 		curUser.sprite.centerEmitter().start( Speck.factory( Speck.NOTE ), 0.3f, 5 );
 		Sample.INSTANCE.play( Assets.Sounds.LULLABY );
 

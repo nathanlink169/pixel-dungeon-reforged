@@ -290,7 +290,7 @@ public class Potion extends Item {
 	protected void drink( Hero hero ) {
 
 		if (hero.hasTalent(Talent.VOLATILE_SALVAGE) && !(this instanceof PotionOfStrength)) {
-			int rand = Random.NormalIntRange(1, 20);
+			int rand = Random.Int(1, 20);
 			int chance;
 			if (hero.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
 				chance = 2;
