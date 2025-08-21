@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -58,15 +59,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class Blacksmith extends NPC {
-	
-	{
-		properties.add(Property.IMMOVABLE);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return BlacksmithSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.blacksmith; }
 
 	@Override
 	public Notes.Landmark landmark() {

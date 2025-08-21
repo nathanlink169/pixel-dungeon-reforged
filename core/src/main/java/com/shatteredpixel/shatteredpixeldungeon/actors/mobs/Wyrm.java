@@ -1,6 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -39,23 +40,17 @@ import java.util.List;
 
 public class Wyrm extends Mob
 {
-    {
-        HP = HT = 150;
-        EXP = 20;
+    private static final int MAX_DASH_DISTANCE = 18;
 
+    {
         SLEEPING = new Wyrm.Sleeping();
         state = SLEEPING;
-        viewDistance = 12;
 
-        properties.add(Property.BOSS);
-        properties.add(Property.FIERY);
-        properties.add(Property.IMMOVABLE); //moves itself via ability, otherwise is static
+        immunities.add(Burning.class);
     }
 
     @Override
-    public Class<? extends CharSprite> GetSpriteClass() {
-        return WyrmSprite.class;
-    }
+    public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.wyrm; }
 
     private int[] dashPositions = null;
 
@@ -80,27 +75,6 @@ public class Wyrm extends Mob
         } else {
             return super.add(buff);
         }
-    }
-
-    @Override
-    public float attackDelay() {
-        return super.attackDelay() * 2.0f;
-    }
-
-    @Override
-    public int damageRoll(boolean isMaxDamage) {
-        if (isMaxDamage) return 8;
-        return Random.NormalIntRange( 2, 8 );
-    }
-
-    @Override
-    public int attackSkill( Char target ) {
-        return 30;
-    }
-
-    @Override
-    public int drRoll() {
-        return super.drRoll() + Random.NormalIntRange(0, 6);
     }
 
     @Override
@@ -176,12 +150,6 @@ public class Wyrm extends Mob
 
                         enemy = Dungeon.hero;
                         BossHealthBar.assignBoss(Wyrm.this);
-
-                        for (Mob m : Dungeon.level.mobs){
-                            if (m instanceof Kobold){
-                                m.aggro(Dungeon.hero);
-                            }
-                        }
                     }
 
                     Sample.INSTANCE.play(Assets.Sounds.MINE, 1f, Random.Float(0.85f, 1.15f));
@@ -235,7 +203,7 @@ public class Wyrm extends Mob
 
     @Override
     public void damage(int dmg, Object src, int damageType) {
-        int hpBracket = HT / 3;
+        int hpBracket = GetMaxHP() / 3;
 
         int curbracket = HP / hpBracket;
         if (curbracket == 3) curbracket--; //full HP isn't its own bracket
@@ -254,24 +222,28 @@ public class Wyrm extends Mob
             }
 
             BossHealthBar.bleed(newBracket <= 0);
-            carveRockAndDash();
+
+
+            int dashIndex;
+            do {
+                dashIndex = Random.Int(4);
+            } while (dashPositions[dashIndex] == -1);
+
+            int dashPos = dashPositions[dashIndex];
+            dashPositions[dashIndex] = -1;
+            carveRockAndDash(dashPos);
+        }
+
+        Dungeon.level.updateFieldOfView( this, fieldOfView );
+        if (!fieldOfView[Dungeon.hero.pos] && dmg >= 1) {
+            carveRockAndDash(Dungeon.hero.pos);
         }
     }
 
-    private void carveRockAndDash() {
-        int dashIndex;
-        do {
-            dashIndex = Random.Int(4);
-        } while (dashPositions[dashIndex] == -1);
-
-        int dashPos = dashPositions[dashIndex];
-        dashPositions[dashIndex] = -1;
-
-        // if position is more than 12 tiles away, cap it
+    private void carveRockAndDash(int dashPos) {
         Ballistica path = new Ballistica(pos, dashPos, Ballistica.STOP_TARGET);
-
-        if (path.dist > 15){
-            dashPos = path.path.get(15);
+        if (path.dist > MAX_DASH_DISTANCE){
+            dashPos = path.path.get(MAX_DASH_DISTANCE);
         }
 
         // Find a spot without a character or trap
@@ -306,7 +278,7 @@ public class Wyrm extends Mob
                 Dungeon.level.map[i] = Terrain.GRASS;
             }
             CellEmitter.get( i - Dungeon.level.width() ).start(Speck.factory(Speck.ROCK), 0.07f, 10);
-            GameScene.add(Blob.seed(i, 5, Fire.class));
+            GameScene.add(Blob.seed(i, 4, Fire.class));
         }
         for (int i : exteriorCells){
             if (!Dungeon.level.solid[i]

@@ -157,8 +157,8 @@ public class Pasty extends Food {
 				break;
 			case HALLOWEEN:
 				//heals for 5% max hp, min of 3
-				int toHeal = Math.max(3, hero.HT/20);
-				hero.HP = Math.min(hero.HP + toHeal, hero.HT);
+				int toHeal = Math.max(3, hero.GetMaxHP()/20);
+				hero.HP = Math.min(hero.HP + toHeal, hero.GetMaxHP());
 				hero.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(toHeal), FloatingText.HEALING );
 				break;
 			case WINTER_HOLIDAYS:
@@ -167,7 +167,7 @@ public class Pasty extends Food {
 				break;
 			case NEW_YEARS:
 				//shields for 10% of max hp, min of 5
-				int toShield = Math.max(5, hero.HT/10);
+				int toShield = Math.max(5, hero.GetMaxHP()/10);
 				Buff.affect(hero, Barrier.class).setShield(toShield);
 				hero.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(toShield), FloatingText.SHIELDING );
 				break;

@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -56,25 +57,20 @@ public class Mimic extends Mob {
 	private int level;
 	
 	{
-		properties.add(Property.DEMONIC);
-
-		EXP = 0;
-		
 		//mimics are neutral when hidden
 		alignment = Alignment.NEUTRAL;
 		state = PASSIVE;
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return MimicSprite.class;
-	}
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.mimic; }
 	
 	public ArrayList<Item> items;
 
 	private boolean stealthy = false;
 	
 	private static final String LEVEL	= "level";
+	private static final String ENEMY_SEEN	= "enemySeen";
 	private static final String ITEMS	= "items";
 	private static final String STEALTHY= "stealthy";
 	
@@ -84,6 +80,7 @@ public class Mimic extends Mob {
 		if (items != null) bundle.put( ITEMS, items );
 		bundle.put( LEVEL, level );
 		bundle.put( STEALTHY, stealthy );
+		bundle.put( ENEMY_SEEN, enemySeen );
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -93,7 +90,7 @@ public class Mimic extends Mob {
 			items = new ArrayList<>((Collection<Item>) ((Collection<?>) bundle.getCollection(ITEMS)));
 		}
 		level = bundle.getInt( LEVEL );
-		adjustStats(level);
+		enemySeen = bundle.getBoolean( ENEMY_SEEN );
 		stealthy = bundle.getBoolean(STEALTHY);
 		super.restoreFromBundle(bundle);
 		if (state != PASSIVE && alignment == Alignment.NEUTRAL){
@@ -232,7 +229,7 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return 2 + 2*level;
 		if (alignment == Alignment.NEUTRAL){
 			return Random.NormalIntRange( 2 + 2*level, 2 + 2*level);
@@ -264,14 +261,17 @@ public class Mimic extends Mob {
 
 	public void setLevel( int level ){
 		this.level = level;
-		adjustStats(level);
-	}
-	
-	public void adjustStats( int level ) {
-		HP = HT = (1 + level) * 6;
-		defenseSkill = 2 + level/2;
-		
 		enemySeen = true;
+	}
+
+	@Override
+	public int GetMaxHP() {
+		return (1 + level) * 6;
+	}
+
+	@Override
+	public int defenseSkill( Char enemy ) {
+		return 2 + level / 2;
 	}
 	
 	@Override

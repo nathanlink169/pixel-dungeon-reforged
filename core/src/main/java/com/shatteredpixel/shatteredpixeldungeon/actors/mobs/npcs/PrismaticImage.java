@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -45,8 +45,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PrismaticSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -54,9 +52,6 @@ import com.watabou.utils.Random;
 public class PrismaticImage extends NPC {
 	
 	{
-		HP = HT = 10;
-		defenseSkill = 1;
-		
 		alignment = Alignment.ALLY;
 		intelligentAlly = true;
 		state = HUNTING;
@@ -67,10 +62,7 @@ public class PrismaticImage extends NPC {
 		actPriority = MOB_PRIO + 1;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return PrismaticSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.prismaticimage; }
 	
 	private Hero hero;
 	private int heroID;
@@ -155,11 +147,15 @@ public class PrismaticImage extends NPC {
 		this.hero = hero;
 		heroID = this.hero.id();
 		this.HP = HP;
-		HT = PrismaticGuard.maxHP( hero );
+	}
+
+	@Override
+	public int GetMaxHP() {
+		return PrismaticGuard.maxHP(Dungeon.hero);
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (hero != null) {
 			if (isMaxDamage) return 4 + hero.lvl/2;
 			return Random.NormalIntRange( 2 + hero.lvl/4, 4 + hero.lvl/2 );

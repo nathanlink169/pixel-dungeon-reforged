@@ -24,11 +24,10 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
@@ -37,17 +36,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.BallistaSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DemonGooSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SlimeSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -56,57 +49,21 @@ import java.util.ArrayList;
 public class DemonGoo extends Mob {
 	private int demonGooGeneration = 0;
 
-	private static final String DEMONGOOGENERATION = "demonGooGeneration";
-	{
-		HP = HT = 150;
-		EXP = 10;
-		defenseSkill = 25;
-		viewDistance = Light.DISTANCE - 1;
-		baseSpeed = 2f;
-
-		loot = Generator.Category.POTION;
-		lootChance = 1f;
-
-		properties.add(Property.DEMONIC);
-		properties.add(Property.ACIDIC);
-	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return DemonGooSprite.class;
-	}
-
 	private static final float SPLIT_DELAY = 1f;
+	private static final String DEMONGOOGENERATION = "demonGooGeneration";
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.demongoo; }
+
 
 	@Override
 	protected boolean act() {
 		boolean result = super.act();
 
-		if (Dungeon.level.water[pos] && HP < HT) {
+		if (Dungeon.level.water[pos] && HP < GetMaxHP()) {
 			sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
 			HP++;
-		} else if(Dungeon.level.water[pos] && HP == HT && HT < 200){
-			sprite.emitter().burst( Speck.factory( Speck.HEALING ), 1 );
-			HT=HT+5;
-			HP=HT;
 		}
 		return result;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 45;
-		return Random.NormalIntRange( 20, 45 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 35;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
 	}
 
 	@Override
@@ -155,7 +112,6 @@ public class DemonGoo extends Mob {
 
 		return damage;
 	}
-
 
 	private DemonGoo split() {
 		DemonGoo clone = new DemonGoo();

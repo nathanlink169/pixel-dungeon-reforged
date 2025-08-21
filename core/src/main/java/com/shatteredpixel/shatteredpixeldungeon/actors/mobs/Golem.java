@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -39,7 +39,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GolemSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -48,26 +47,12 @@ import com.watabou.utils.Random;
 public class Golem extends Mob {
 	
 	{
-		HP = HT = 120;
-		defenseSkill = 15;
-		
-		EXP = 12;
-		maxLvl = 22;
-
-		loot = Random.oneOf(Generator.Category.WEAPON, Generator.Category.ARMOR);
-		lootChance = 0.2f; //initially, see lootChance()
-
-		properties.add(Property.INORGANIC);
-		properties.add(Property.LARGE);
-
 		WANDERING = new Wandering();
 		HUNTING = new Hunting();
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return GolemSprite.class;
-	}
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.golem; }
 
 	@Override
 	protected void onAdd(){
@@ -76,19 +61,8 @@ public class Golem extends Mob {
 		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.BATTLE_WORN)) {
 			// 50%-100% health
 			float multiplier = Random.Float(0.5f, 1.0f);
-			HP = (int) (HT * multiplier);
+			HP = (int) (GetMaxHP() * multiplier);
 		}
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 30;
-		return Random.NormalIntRange( 25, 30 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 28;
 	}
 
 	@Override
@@ -98,17 +72,20 @@ public class Golem extends Mob {
 		}
 		return super.attackDelay();
 	}
-	
+
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(getRandomizerEnabled(RandomTraits.IMMUNITY) ? 6 : 0, 12);
+	protected int getMinDR() {
+		if (getRandomizerEnabled(RandomTraits.IMMUNITY)) {
+			return 6;
+		}
+		return super.getMinDR();
 	}
 
 	@Override
-	public float lootChance() {
+	public float GetLootChance(int slot) {
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/5, 1/15, 1/45, 1/135, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.GOLEM_EQUIP.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/3f, Dungeon.LimitedDrops.GOLEM_EQUIP.count);
 	}
 
 	@Override
@@ -117,8 +94,21 @@ public class Golem extends Mob {
 		super.rollToDropLoot();
 	}
 
-	public Item createLoot() {
+	public Item createLoot(int slot) {
 		Dungeon.LimitedDrops.GOLEM_EQUIP.count++;
+		Object loot = null;
+
+		switch(slot) {
+			case 0:
+				loot = GetConstants().getLoot().getLoot1();
+				break;
+			case 1:
+				loot = GetConstants().getLoot().getLoot2();
+				break;
+			case 2:
+				loot = GetConstants().getLoot().getLoot3();
+				break;
+		}
 		//uses probability tables for demon halls
 		if (loot == Generator.Category.WEAPON){
 			return Generator.randomWeapon(5, true);
@@ -224,9 +214,9 @@ public class Golem extends Mob {
 	protected void spendConstant( float time ){
 		int oldTime = (int)this.getTime(); // cut it off
 		super.spendConstant(time);
-		if (HP > 0 && HP < HT && getRandomizerEnabled(RandomTraits.RAPID_REGENERATION) && this.getTime() > oldTime) { // we go up one turn
+		if (HP > 0 && HP < GetMaxHP() && getRandomizerEnabled(RandomTraits.RAPID_REGENERATION) && (int)this.getTime() > oldTime) { // we go up one turn
 			int oldHP = HP;
-			HP = Math.min(HT, HP + 2);
+			HP = Math.min(GetMaxHP(), HP + 2);
 			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(HP - oldHP), FloatingText.HEALING);
 		}
 	}

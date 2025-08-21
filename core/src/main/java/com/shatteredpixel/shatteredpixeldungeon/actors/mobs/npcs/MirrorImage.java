@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -53,9 +54,6 @@ import com.watabou.utils.Random;
 public class MirrorImage extends NPC {
 	
 	{
-		HP = HT = 1;
-		defenseSkill = 1;
-		
 		alignment = Alignment.ALLY;
 		state = HUNTING;
 		
@@ -63,10 +61,7 @@ public class MirrorImage extends NPC {
 		actPriority = MOB_PRIO + 1;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return MirrorSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.mirrorimage; }
 	
 	private Hero hero;
 	private int heroID;
@@ -113,13 +108,13 @@ public class MirrorImage extends NPC {
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		int damage;
 		if (hero.belongings.weapon() != null){
 			if (isMaxDamage) return hero.belongings.weapon().max();
 			damage = hero.belongings.weapon().damageRoll(this, isMaxDamage);
 		} else {
-			damage = hero.damageRoll(isMaxDamage); //handles ring of force
+			damage = hero.damageRoll(type, isMaxDamage); //handles ring of force
 		}
 		return (damage+1)/2; //half hero damage, rounded up
 	}

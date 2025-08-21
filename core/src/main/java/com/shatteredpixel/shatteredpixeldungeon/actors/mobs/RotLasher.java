@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -34,40 +34,23 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RotLasherSprite;
 import com.watabou.utils.Random;
 
 public class RotLasher extends Mob {
 
 	{
-		HP = HT = 80;
-		defenseSkill = 0;
-
-		EXP = 1;
-
-		loot = Generator.Category.SEED;
-		lootChance = 0.75f;
-
 		state = WANDERING = new Waiting();
-		viewDistance = 1;
-
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.MINIBOSS);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return RotLasherSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rotlasher; }
 
 	@Override
 	protected boolean act() {
-		if (HP < HT && (enemy == null || !Dungeon.level.adjacent(pos, enemy.pos))) {
-			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.min(5, HT - HP)), FloatingText.HEALING);
-			HP = Math.min(HT, HP + 5);
+		if (HP < GetMaxHP() && (enemy == null || !Dungeon.level.adjacent(pos, enemy.pos))) {
+			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.min(5, GetMaxHP() - HP)), FloatingText.HEALING);
+			HP = Math.min(GetMaxHP(), HP + 5);
 		}
 		return super.act();
 	}
@@ -110,22 +93,6 @@ public class RotLasher extends Mob {
 	@Override
 	protected boolean getFurther(int target) {
 		return false;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 20;
-		return Random.NormalIntRange(10, 20);
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 25;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 8);
 	}
 	
 	{

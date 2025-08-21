@@ -24,29 +24,15 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 
 public class Acidic extends Scorpio {
-
-	{
-		properties.add(Property.ACIDIC);
-
-		loot = PotionOfExperience.class;
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return AcidicSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.acidic; }
 
 	@Override
 	public int attackProc(Char enemy, int damage) {
@@ -60,10 +46,5 @@ public class Acidic extends Scorpio {
 			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
 		}
 		return super.defenseProc( enemy, damage );
-	}
-
-	@Override
-	public Item createLoot() {
-		return new PotionOfExperience();
 	}
 }

@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -220,7 +221,7 @@ public class AscensionChallenge extends Buff {
 	public static int AscensionCorruptResist(Mob m){
 		//default to just using their EXP value if no ascent challenge is happening
 		if (Dungeon.hero.buff(AscensionChallenge.class) == null){
-			return m.EXP;
+			return m.GetXP();
 		}
 
 		if (m instanceof Ratmogrify.TransmogRat){
@@ -228,21 +229,21 @@ public class AscensionChallenge extends Buff {
 		}
 
 		if (m.buff(AscensionBuffBlocker.class) != null){
-			return m.EXP;
+			return m.GetXP();
 		}
 
 		if (m instanceof RipperDemon){
 			return 10; //reduced due to their numbers
 		} else if (m instanceof Ghoul){
-			return 7; //half of 13, rounded up
+			return (int) Math.ceil(Constants.mobs.eye.getXP() * 0.5f); //half of 13, rounded up
 		} else {
 			for (Class<?extends Mob> cls : modifiers.keySet()){
 				if (cls.isAssignableFrom(m.getClass())){
-					return Math.max(13, m.EXP); //same exp as an eye
+					return Math.max(Constants.mobs.eye.getXP(), m.GetXP()); //same exp as an eye
 				}
 			}
 		}
-		return m.EXP;
+		return m.GetXP();
 	}
 
 	{
@@ -260,7 +261,7 @@ public class AscensionChallenge extends Buff {
 			justAscended = true;
 			if (Dungeon.bossLevel()){
 				Dungeon.hero.buff(Hunger.class).satisfy(Hunger.STARVING);
-				Buff.affect(Dungeon.hero, Healing.class).setHeal(Dungeon.hero.HT, 0, 20);
+				Buff.affect(Dungeon.hero, Healing.class).setHeal(Dungeon.hero.GetMaxHP(), 0, 20);
 			} else {
 				stacks += 2f;
 

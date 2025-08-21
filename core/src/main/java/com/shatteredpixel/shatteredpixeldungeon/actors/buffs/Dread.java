@@ -66,7 +66,7 @@ public class Dread extends Buff {
 		if (!Dungeon.level.heroFOV[target.pos]
 				&& Dungeon.level.distance(target.pos, Dungeon.hero.pos) >= 6) {
 			if (target instanceof Mob){
-				((Mob) target).EXP /= 2;
+				((Mob) target).xpHalved = true;
 			}
 			permanent = false;
 			detach();

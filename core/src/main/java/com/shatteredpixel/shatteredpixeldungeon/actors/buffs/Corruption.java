@@ -40,8 +40,8 @@ public class Corruption extends AllyBuff {
 
 	//corrupted enemies are usually fully healed and cleansed of most debuffs
 	public static void corruptionHeal(Char target){
-		target.HP = target.HT;
-		target.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(target.HT), FloatingText.HEALING);
+		target.HP = target.GetMaxHP();
+		target.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(target.GetMaxHP()), FloatingText.HEALING);
 		for (Buff buff : target.buffs()) {
 			if (buff.type == Buff.buffType.NEGATIVE
 					&& !(buff instanceof SoulMark)) {
@@ -52,7 +52,7 @@ public class Corruption extends AllyBuff {
 	
 	@Override
 	public boolean act() {
-		buildToDamage += target.HT/100f;
+		buildToDamage += target.GetMaxHP()/100f;
 
 		int damage = (int)buildToDamage;
 		buildToDamage -= damage;

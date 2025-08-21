@@ -88,6 +88,9 @@ public class ScrollOfTransmutation extends InventoryScroll {
 			return item != this || item.quantity() > 1 || identifiedByUse;
 
 		//all non-unique artifacts (no holy tome or cloak of shadows, basically)
+		} else if (item instanceof Trinket && Dungeon.isChallenged(Challenges.TRINKET_MADNESS)) {
+			return false;
+
 		} else if (item instanceof Artifact) {
 			return !item.unique;
 

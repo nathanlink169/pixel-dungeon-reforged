@@ -56,10 +56,10 @@ public class Healing extends Buff {
 		if (target.buff(Miasma.class) != null) {
 			healAmount /= 2;
 		}
-		if (target.HP < target.HT) {
-			target.HP = Math.min(target.HT, target.HP + healAmount);
+		if (target.HP < target.GetMaxHP()) {
+			target.HP = Math.min(target.GetMaxHP(), target.HP + healAmount);
 
-			if (target.HP == target.HT && target instanceof Hero) {
+			if (target.HP == target.GetMaxHP() && target instanceof Hero) {
 				((Hero) target).resting = false;
 			}
 		}

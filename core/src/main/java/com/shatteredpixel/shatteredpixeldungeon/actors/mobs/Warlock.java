@@ -26,7 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -42,7 +42,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfAggression;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WarlockSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -55,17 +54,6 @@ public class Warlock extends Mob implements Callback {
 	private static final float TIME_TO_ZAP	= 1f;
 	
 	{
-		HP = HT = 70;
-		defenseSkill = 18;
-		
-		EXP = 11;
-		maxLvl = 21;
-		
-		loot = Generator.Category.POTION;
-		lootChance = 0.5f;
-
-		properties.add(Property.UNDEAD);
-
 		WANDERING = new Wandering();
 	}
 
@@ -85,27 +73,8 @@ public class Warlock extends Mob implements Callback {
 	}
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.warlock; }
 
-		return WarlockSprite.class;
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 18;
-		return Random.NormalIntRange( 12, 18 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 25;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 8);
-	}
-	
 	@Override
 	protected boolean canAttack( Char enemy ) {
 		if (getRandomizerEnabled(RandomTraits.SHORT_RANGE)) {
@@ -158,7 +127,7 @@ public class Warlock extends Mob implements Callback {
 				Sample.INSTANCE.play( Assets.Sounds.DEGRADE );
 			}
 			
-			int dmg = Random.NormalIntRange( 12, 18 );
+			int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
 			dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
 
 			//logic for DK taking 1/2 damage from aggression stoned minions
@@ -224,7 +193,7 @@ public class Warlock extends Mob implements Callback {
 	}
 
 	@Override
-	public Item createLoot(){
+	public Item createLoot(int itemSlot){
 
 		// 1/6 chance for healing, scaling to 0 over 8 drops
 		if (Random.Int(3) == 0 && Random.Int(8) > Dungeon.LimitedDrops.WARLOCK_HP.count ){

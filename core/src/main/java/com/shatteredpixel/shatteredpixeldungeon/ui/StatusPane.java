@@ -248,7 +248,7 @@ public class StatusPane extends Component {
 		
 		int health = Dungeon.hero.HP;
 		int shield = Dungeon.hero.shielding();
-		int max = Dungeon.hero.HT;
+		int max = Dungeon.hero.GetMaxHP();
 
 		if (!Dungeon.hero.isAlive()) {
 			avatar.tint(0x000000, 0.5f);

@@ -24,13 +24,12 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
@@ -38,10 +37,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ScorpioSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
@@ -51,30 +46,26 @@ import com.watabou.utils.Reflection;
 public class Scorpio extends Mob {
 	
 	{
-		HP = HT = getRandomizerEnabled(RandomTraits.BRITTLE_SHELLS) ? 40 : 120;
-		defenseSkill = 24;
-		viewDistance = Light.DISTANCE - 1;
-
-		if (getRandomizerEnabled(RandomTraits.LIGHTNING_FAST)) {
-			baseSpeed = 2.0f;
-		} else if (getRandomizerEnabled(RandomTraits.SLUGGISH_CRAWL)) {
-			baseSpeed = 0.25f;
-		}
-		
-		EXP = 14;
-		maxLvl = 27;
-		
-		loot = Generator.Category.POTION;
-		lootChance = 0.5f;
-
-		properties.add(Property.DEMONIC);
-
 		WANDERING = new Wandering();
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return ScorpioSprite.class;
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.scorpio; }
+
+	@Override
+	public int GetMaxHP() {
+		return super.GetMaxHP() / (getRandomizerEnabled(RandomTraits.BRITTLE_SHELLS) ? 3 : 1);
+	}
+
+	@Override
+	public float speed() {
+		float speed = super.speed();
+		if (getRandomizerEnabled(RandomTraits.LIGHTNING_FAST)) {
+			speed *= 2.0f;
+		} else if (getRandomizerEnabled(RandomTraits.SLUGGISH_CRAWL)) {
+			speed *= 0.25f;
+		}
+		return speed;
 	}
 
 	private int lastEnemyPosition = -1;
@@ -98,22 +89,6 @@ public class Scorpio extends Mob {
 			lastEnemyPosition = enemy.pos;
 		}
 		return super.act();
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 40;
-		return Random.NormalIntRange( 30, 40 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 36;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 16);
 	}
 	
 	@Override
@@ -190,7 +165,7 @@ public class Scorpio extends Mob {
 	}
 
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		if (getRandomizerEnabled(RandomTraits.ACIDIC_CARRIERS) && Random.Int(10) == 0) {
 			return new PotionOfExperience();
 		}

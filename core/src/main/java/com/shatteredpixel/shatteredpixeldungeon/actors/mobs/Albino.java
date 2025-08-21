@@ -24,32 +24,21 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AlbinoSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.Random;
 
 public class Albino extends Rat {
-
-	{
-		HP = HT = getRandomizerEnabled(RandomTraits.FRAIL_VERMIN) ? 6 : 15;
-		EXP = 2;
-		
-		loot = MysteryMeat.class;
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return AlbinoSprite.class;
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.albino; }
+
+	@Override
+	public int GetMaxHP() {
+		return (int) ((getRandomizerEnabled(RandomTraits.FRAIL_VERMIN) ? 0.4f : 1.0f) * super.GetMaxHP());
 	}
 	
 	@Override

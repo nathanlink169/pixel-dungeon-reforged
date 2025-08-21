@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -225,14 +226,8 @@ public class SentryRoom extends SpecialRoom {
 	}
 
 	public static class Sentry extends NPC {
-
-		{
-			properties.add(Property.IMMOVABLE);
-		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return SentrySprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.sentry; }
 
 		private float initialChargeDelay;
 		private float curChargeDelay;
@@ -294,7 +289,7 @@ public class SentryRoom extends SpecialRoom {
 
 		public void onZapComplete(){
 			if (hit(this, Dungeon.hero, true)) {
-				Dungeon.hero.damage(Random.NormalIntRange(2 + Dungeon.depth / 2, 4 + Dungeon.depth), new Eye.DeathGaze());
+				Dungeon.hero.damage(damageRoll(AttackType.RANGED_MAGICAL, false), new Eye.DeathGaze());
 				if (!Dungeon.hero.isAlive()) {
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail(this);
@@ -303,6 +298,16 @@ public class SentryRoom extends SpecialRoom {
 			} else {
 				Dungeon.hero.sprite.showStatus( CharSprite.NEUTRAL,  Dungeon.hero.defenseVerb() );
 			}
+		}
+
+		@Override
+		public int minDamage(AttackType type) {
+			return 2 + Dungeon.depth / 2;
+		}
+
+		@Override
+		public int maxDamage(AttackType type) {
+			return 4 + Dungeon.depth;
 		}
 
 		@Override

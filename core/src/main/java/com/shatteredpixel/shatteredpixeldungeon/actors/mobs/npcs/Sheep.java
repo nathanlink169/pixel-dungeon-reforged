@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -44,9 +45,7 @@ public class Sheep extends NPC {
 	private static final String[] LINE_KEYS = {"Baa!", "Baa?", "Baa.", "Baa..."};
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return SheepSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.sheep; }
 
 	private float lifespan;
 

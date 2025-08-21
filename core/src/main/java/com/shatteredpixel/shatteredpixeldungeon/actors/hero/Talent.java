@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.RecallInscription;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -595,14 +596,20 @@ public enum Talent {
 			}
 		}
 
-		//if we happen to have spirit form applied with a ring of might
-		if (talent == SPIRIT_FORM){
-			Dungeon.hero.updateHT(false);
-		}
-
 		if (talent == PATTERN_RECOGNITION) {
 			for (Potion p : hero.belongings.getAllItems(Potion.class)) {
 				p.identify(false);
+			}
+		}
+
+		if (talent == CONSTRUCT_HARDENING) {
+			for (Mob m : Dungeon.level.mobs) {
+				if (m instanceof ConstructHero) {
+					ConstructHero ch = (ConstructHero)m;
+					int hpDiff = ch.GetMaxHP() - ch.GetMaxHPGivenTalentLevel(Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_HARDENING) - 1);
+					ch.HP += hpDiff;
+					break;
+				}
 			}
 		}
 	}
@@ -613,9 +620,9 @@ public enum Talent {
 	public static void onFoodEaten( Hero hero, float foodVal, Item foodSource ){
 		if (hero.hasTalent(HEARTY_MEAL)){
 			//3/5 HP healed, when hero is below 30% health
-			if (hero.HP/(float)hero.HT <= 0.3f) {
+			if (hero.HP/(float)hero.GetMaxHP() <= 0.3f) {
 				int healing = 1 + 2 * hero.pointsInTalent(HEARTY_MEAL);
-				hero.HP = Math.min(hero.HP + healing, hero.HT);
+				hero.HP = Math.min(hero.HP + healing, hero.GetMaxHP());
 				hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(healing), FloatingText.HEALING);
 
 			}
@@ -764,7 +771,7 @@ public enum Talent {
 	public static void onPotionUsed( Hero hero, int cell, float factor ){
 		if (hero.hasTalent(LIQUID_WILLPOWER)){
 			// 6.5/10% of max HP
-			int shieldToGive = Math.round( factor * hero.HT * (0.030f + 0.035f*hero.pointsInTalent(LIQUID_WILLPOWER)));
+			int shieldToGive = Math.round( factor * hero.GetMaxHP() * (0.030f + 0.035f*hero.pointsInTalent(LIQUID_WILLPOWER)));
 				hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shieldToGive), FloatingText.SHIELDING);
 				Buff.affect(hero, Barrier.class).setShield(shieldToGive);
 			}
@@ -845,7 +852,7 @@ public enum Talent {
 		if (hero.hasTalent(ARCSHIELDING)) {
 			float threshold = 0.25f;
 			if (hero.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
-			if (hero.HP/(float)hero.HT <= threshold) {
+			if (hero.HP/(float)hero.GetMaxHP() <= threshold) {
 				int shielding = 3;
 				if (hero.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
 				Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);

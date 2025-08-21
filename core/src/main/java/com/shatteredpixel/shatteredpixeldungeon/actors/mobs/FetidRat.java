@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -44,31 +45,12 @@ import com.watabou.utils.Random;
 public class FetidRat extends Rat {
 
 	{
-		HP = HT = 20;
-		defenseSkill = 5;
-
-		EXP = 4;
-
 		WANDERING = new Wandering();
 		state = WANDERING;
-
-		properties.add(Property.MINIBOSS);
-		properties.add(Property.DEMONIC);
-	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return FetidRatSprite.class;
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		return 12;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 2);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.fetidrat; }
 
 	@Override
 	public int attackProc( Char enemy, int damage ) {

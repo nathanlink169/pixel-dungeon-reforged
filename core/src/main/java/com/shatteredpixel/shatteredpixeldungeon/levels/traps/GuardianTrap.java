@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.traps;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Statue;
@@ -79,15 +80,12 @@ public class GuardianTrap extends Trap {
 	public static class Guardian extends Statue {
 
 		{
-			EXP = 0;
 			state = WANDERING;
 
 			levelGenStatue = false;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return GuardianSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.guardian; }
 
 		@Override
 		public void createWeapon( boolean useDecks ) {

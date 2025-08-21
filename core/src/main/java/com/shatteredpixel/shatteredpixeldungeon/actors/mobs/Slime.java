@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -44,21 +45,8 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Slime extends Mob {
-	
-	{
-		HP = HT = 20;
-		defenseSkill = 5;
-		
-		EXP = 4;
-		maxLvl = 9;
-		
-		lootChance = 0.2f; //by default, see lootChance()
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return SlimeSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.slime; }
 
 	private boolean stealthy = false;
 
@@ -84,17 +72,6 @@ public class Slime extends Mob {
 		if (previousFirstAdded) {
 			stealthy = getRandomizerEnabled(RandomTraits.CHAMELEON_OOZE);
 		}
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 5;
-		return Random.NormalIntRange( 2, 5 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 12;
 	}
 
 	@Override
@@ -133,14 +110,14 @@ public class Slime extends Mob {
 	}
 
 	@Override
-	public float lootChance(){
+	public float GetLootChance(int slot){
 		//each drop makes future drops 1/4 as likely
 		// so loot chance looks like: 1/5, 1/20, 1/80, 1/320, etc.
-		return super.lootChance() * (float)Math.pow(1/4f, Dungeon.LimitedDrops.SLIME_WEP.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/4f, Dungeon.LimitedDrops.SLIME_WEP.count);
 	}
 	
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Dungeon.LimitedDrops.SLIME_WEP.count++;
 		Generator.Category c = Generator.Category.WEP_T2;
 		MeleeWeapon w = (MeleeWeapon)Generator.randomUsingDefaults(Generator.Category.WEP_T2);
@@ -197,7 +174,7 @@ public class Slime extends Mob {
 			return;
 		}
 
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (Dungeon.hero.lvl > GetMaxLevel() + 2) return;
 
 		super.rollToDropLoot();
 

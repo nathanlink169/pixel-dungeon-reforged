@@ -24,33 +24,19 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrabSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 public class Crab extends Mob {
-
-	{
-		HP = HT = 15;
-		defenseSkill = 5;
-		baseSpeed = getRandomizerEnabled(RandomTraits.LIGHTNING_LEGS) ? 3.5f : 2f;
-		
-		EXP = 4;
-		maxLvl = 9;
-		
-		loot = MysteryMeat.class;
-		lootChance = 0.167f;
-	}
-
 	private boolean movedLastTurn = false;
 
 	private static final String MOVED_LAST_TURN = "moved_last_turn";
@@ -68,32 +54,30 @@ public class Crab extends Mob {
 	}
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return CrabSprite.class;
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 7;
-		return Random.NormalIntRange( 1, 7 );
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.crab; }
 
 	@Override
 	public void rollToDropLoot() {
 		super.rollToDropLoot();
 
-		if (getRandomizerEnabled(RandomTraits.HERMIT_TREASURES) && Dungeon.hero.lvl <= maxLvl + 2 && Random.Float() > 0.5f){
+		if (getRandomizerEnabled(RandomTraits.HERMIT_TREASURES) && Dungeon.hero.lvl <= GetMaxLevel() + 2 && Random.Float() > 0.5f){
 			Dungeon.level.drop(Generator.randomArmor(), pos).sprite.drop();
 		}
+	}
+
+	@Override
+	public float speed() {
+		return super.speed() * (getRandomizerEnabled(RandomTraits.LIGHTNING_LEGS) ? 1.75f : 1f);
 	}
 	
 	@Override
 	public int attackSkill( Char target ) {
+		int skill = super.attackSkill(target);
 		if (getRandomizerEnabled(RandomTraits.CLUMSY_CLAWS)) {
-			return 8;
+			skill *= 2;
+			skill /= 3;
 		}
-		return 12;
+		return skill;
 	}
 	
 	@Override
@@ -101,7 +85,7 @@ public class Crab extends Mob {
 		if (getRandomizerEnabled(RandomTraits.MOLTING_SEASON)) {
 			return 0;
 		}
-		return super.drRoll() + Random.NormalIntRange(0, 4);
+		return super.drRoll();
 	}
 
 	@Override

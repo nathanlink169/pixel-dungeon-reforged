@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -80,36 +81,12 @@ import com.watabou.utils.Rect;
 import java.util.ArrayList;
 
 public class DM300 extends Mob {
-
-	{
-		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 400 : 300;
-		EXP = 30;
-		defenseSkill = 15;
-
-		properties.add(Property.BOSS);
-		properties.add(Property.INORGANIC);
-		properties.add(Property.LARGE);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return DM300Sprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm300; }
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 15, 25 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 4f/3f : 1.0f));
 	}
 
 	public int pylonsActivated = 0;
@@ -344,10 +321,10 @@ public class DM300 extends Mob {
 				}
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 				sprite.emitter().start(SparkParticle.STATIC, 0.05f, 20);
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(30 + (HT - HP)/10), FloatingText.SHIELDING);
+				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(30 + (GetMaxHP() - HP)/10), FloatingText.SHIELDING);
 			}
 
-			Buff.affect(this, Barrier.class).setShield( 30 + (HT - HP)/10);
+			Buff.affect(this, Barrier.class).setShield( 30 + (GetMaxHP() - HP)/10);
 
 		}
 	}
@@ -496,9 +473,9 @@ public class DM300 extends Mob {
 
 		int threshold;
 		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-			threshold = HT / 4 * (3 - pylonsActivated);
+			threshold = GetMaxHP() / 4 * (3 - pylonsActivated);
 		} else {
-			threshold = HT / 3 * (2 - pylonsActivated);
+			threshold = GetMaxHP() / 3 * (2 - pylonsActivated);
 		}
 
 		if (HP <= threshold && threshold > 0){

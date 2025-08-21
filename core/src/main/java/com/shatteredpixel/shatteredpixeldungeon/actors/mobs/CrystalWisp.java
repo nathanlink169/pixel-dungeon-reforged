@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
@@ -35,46 +35,30 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalWispSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+import com.watabou.utils.Reflection;
 
-public class CrystalWisp extends Mob{
-
-	{
-		spriteClass = CrystalWispSprite.class;
-
-		HP = HT = 30;
-		defenseSkill = 16;
-
-		EXP = 7;
-		maxLvl = -2;
-
-		flying = true;
-
-		properties.add(Property.INORGANIC);
-	}
+public class CrystalWisp extends Mob {
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		if (spriteClass == null) {
-			switch (Random.Int(3)){
-				case 0: default:
-					spriteClass = CrystalWispSprite.Blue.class;
-					break;
-				case 1:
-					spriteClass = CrystalWispSprite.Green.class;
-					break;
-				case 2:
-					spriteClass = CrystalWispSprite.Red.class;
-					break;
-			}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.crystalwisp; }
+
+	@Override
+	public Class<? extends CharSprite> GetSpriteName() {
+		if (m_SpriteVariant == -1) {
+			m_SpriteVariant = Random.Int(3);
 		}
 
-		return spriteClass;
+		switch (m_SpriteVariant){
+			case 0: default:
+				return CrystalWispSprite.Blue.class;
+			case 1:
+				return CrystalWispSprite.Green.class;
+			case 2:
+				return CrystalWispSprite.Red.class;
+		}
 	}
-
-	private Class<? extends CharSprite> spriteClass = null;
 
 	@Override
 	public boolean[] modifyPassable(boolean[] passable) {
@@ -83,23 +67,6 @@ public class CrystalWisp extends Mob{
 		}
 		return passable;
 	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 10;
-		return Random.NormalIntRange( 5, 10 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 18;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
-	}
-
 	@Override
 	protected boolean canAttack( Char enemy ) {
 		return super.canAttack(enemy)
@@ -141,7 +108,7 @@ public class CrystalWisp extends Mob{
 		Char enemy = this.enemy;
 		if (hit( this, enemy, true )) {
 
-			int dmg = Random.NormalIntRange( 5, 10 );
+			int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
 			enemy.damage( dmg, new LightBeam() );
 
 			if (!enemy.isAlive() && enemy == Dungeon.hero) {
@@ -157,19 +124,5 @@ public class CrystalWisp extends Mob{
 	public void onZapComplete() {
 		zap();
 		next();
-	}
-
-	public static final String SPRITE = "sprite";
-
-	@Override
-	public void storeInBundle(Bundle bundle) {
-		super.storeInBundle(bundle);
-		bundle.put(SPRITE, spriteClass);
-	}
-
-	@Override
-	public void restoreFromBundle(Bundle bundle) {
-		super.restoreFromBundle(bundle);
-		spriteClass = bundle.getClass(SPRITE);
 	}
 }

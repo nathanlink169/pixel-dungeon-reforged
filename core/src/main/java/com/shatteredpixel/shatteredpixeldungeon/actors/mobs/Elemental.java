@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -72,35 +73,32 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public abstract class Elemental extends Mob {
+	protected boolean summonedALly;
 
-	{
-		HP = HT = getRandomizerEnabled(RandomTraits.EMPOWERED_FORM, this) ? 90 : 60;
-		defenseSkill = 20;
-		
-		EXP = 10;
-		maxLvl = 20;
-		
-		flying = true;
+	@Override
+	public int GetMaxHP() {
+		if (!summonedALly) {
+			return super.GetMaxHP() * (getRandomizerEnabled(RandomTraits.EMPOWERED_FORM, this) ? 90 : 60);
+		} else {
+			return 15 * Math.max(2, (1 + Dungeon.scalingDepth()/5));
+		}
 	}
 
-	protected boolean summonedALly;
-	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (!summonedALly) {
-			if (isMaxDamage) return 25;
-			return Random.NormalIntRange(20, 25);
+			return super.damageRoll(type, isMaxDamage);
 		} else {
 			int regionScale = Math.max(2, (1 + Dungeon.scalingDepth()/5));
 			if (isMaxDamage) return 5 + 5*regionScale;
 			return Random.NormalIntRange(5*regionScale, 5 + 5*regionScale);
 		}
 	}
-	
+
 	@Override
 	public int attackSkill( Char target ) {
 		if (!summonedALly) {
-			return 25;
+			return super.attackSkill(target);
 		} else {
 			int regionScale = Math.max(2, (1 + Dungeon.scalingDepth()/5));
 			return 5 + 5*regionScale;
@@ -109,10 +107,15 @@ public abstract class Elemental extends Mob {
 
 	public void setSummonedALly(){
 		summonedALly = true;
-		//sewers are prison are equivalent, otherwise scales as normal (2/2/3/4/5)
-		int regionScale = Math.max(2, (1 + Dungeon.scalingDepth()/5));
-		defenseSkill = 5*regionScale;
-		HT = 15*regionScale;
+	}
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		if (!summonedALly) {
+			return super.defenseSkill(enemy);
+		} else {
+			return Math.max(2, (1 + Dungeon.scalingDepth()/5)) * 5;
+		}
 	}
 	
 	@Override
@@ -190,7 +193,7 @@ public abstract class Elemental extends Mob {
 			enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
 		}
 
-		rangedCooldown = Random.NormalIntRange( 3, 5 );
+		rangedCooldown = damageRoll(AttackType.RANGED_MAGICAL, false);
 		if (getRandomizerEnabled(RandomTraits.RANGED_MASTERY, this)) {
 			rangedCooldown = 0;
 		}
@@ -204,7 +207,7 @@ public abstract class Elemental extends Mob {
 	@Override
 	public boolean add( Buff buff ) {
 		if (harmfulBuffs.contains( buff.getClass() )) {
-			damage( Random.NormalIntRange( HT/2, HT * 3/5 ), buff );
+			damage( Random.NormalIntRange( GetMaxHP()/2, GetMaxHP() * 3/5 ), buff );
 			return false;
 		} else {
 			return super.add( buff );
@@ -311,18 +314,11 @@ public abstract class Elemental extends Mob {
 	public static class FireElemental extends Elemental {
 		
 		{
-			loot = PotionOfLiquidFlame.class;
-			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 0.75f : 1/8f;
-			
-			properties.add( Property.FIERY );
-			
 			harmfulBuffs.add( com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost.class );
 			harmfulBuffs.add( Chill.class );
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ElementalSprite.Fire.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.fireelemental; }
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
@@ -348,17 +344,8 @@ public abstract class Elemental extends Mob {
 	//used in wandmaker quest, a fire elemental with lower ACC/EVA/DMG, no on-hit fire
 	// and a unique 'fireball' style ranged attack, which can be dodged
 	public static class NewbornFireElemental extends FireElemental {
-		
-		{
-			HP = HT = 60; // not affected by randomizer
-			defenseSkill = 12;
-			
-			properties.add(Property.MINIBOSS);
-		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ElementalSprite.NewbornFire.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.newbornfireelemental; }
 
 		private int targetingPos = -1;
 
@@ -472,7 +459,7 @@ public abstract class Elemental extends Mob {
 			}
 
 			targetingPos = -1;
-			rangedCooldown = Random.NormalIntRange( 3, 5 );
+			rangedCooldown = damageRoll(AttackType.RANGED_MAGICAL, false);
 		}
 
 		@Override
@@ -485,11 +472,11 @@ public abstract class Elemental extends Mob {
 		}
 
 		@Override
-		public int damageRoll(boolean isMaxDamage) {
+		public int damageRoll(AttackType type, boolean isMaxDamage) {
 			if (!summonedALly) {
-				return Random.NormalIntRange(10, 12);
+				return damageRoll(AttackType.MELEE, false);
 			} else {
-				return super.damageRoll(isMaxDamage);
+				return super.damageRoll(type, isMaxDamage);
 			}
 		}
 
@@ -562,26 +549,19 @@ public abstract class Elemental extends Mob {
 
 		{
 			rangedCooldown = Integer.MAX_VALUE;
-
-			properties.remove(Property.MINIBOSS);
 		}
 
+		@Override
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.allynewbornelemental; }
 	}
 	
 	public static class FrostElemental extends Elemental {
 		
 		{
-			loot = PotionOfFrost.class;
-			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 0.75f : 1/8f;
-			
-			properties.add( Property.ICY );
-			
 			harmfulBuffs.add( Burning.class );
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ElementalSprite.Frost.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.frostelemental; }
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
@@ -600,20 +580,21 @@ public abstract class Elemental extends Mob {
 			Freezing.freeze( enemy.pos );
 			if (enemy.sprite.visible) Splash.at( enemy.sprite.center(), sprite.blood(), 5);
 		}
+
+		@Override
+		public float GetLootChance(int slot) {
+			float chance = super.GetLootChance(slot);
+
+			if (getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this))
+				return chance * 6.0f;
+			return chance;
+		}
 	}
 	
 	public static class ShockElemental extends Elemental {
-		
-		{
-			loot = ScrollOfRecharging.class;
-			lootChance = getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this) ? 1.0f : 1/4f;
-			
-			properties.add( Property.ELECTRIC );
-		}
+
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ElementalSprite.Shock.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.shockelemental; }
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
@@ -651,18 +632,21 @@ public abstract class Elemental extends Mob {
 				GameScene.flash(0x80FFFFFF);
 			}
 		}
+
+		@Override
+		public float GetLootChance(int slot) {
+			float chance = super.GetLootChance(slot);
+
+			if (getRandomizerEnabled(RandomTraits.GENEROUS_SPIRIT, this))
+				return chance * 4.0f;
+			return chance;
+		}
 	}
 	
 	public static class ChaosElemental extends Elemental {
-		
-		{
-			loot = ScrollOfTransmutation.class;
-			lootChance = 1f;
-		}
+
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ElementalSprite.Chaos.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.chaoselemental; }
 		
 		@Override
 		protected void meleeProc( Char enemy, int damage ) {
@@ -681,7 +665,7 @@ public abstract class Elemental extends Mob {
 			//skips accuracy check, always hits
 			rangedProc( enemy );
 
-			rangedCooldown = Random.NormalIntRange( 3, 5 );
+			rangedCooldown = damageRoll(AttackType.RANGED_MAGICAL, false);
 		}
 
 		@Override

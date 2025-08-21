@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -31,8 +32,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.BeeSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
@@ -40,21 +39,13 @@ import com.watabou.utils.Random;
 public class Bee extends Mob {
 	
 	{
-		viewDistance = 4;
-
-		EXP = 0;
-		
-		flying = true;
 		state = WANDERING;
 		
 		//only applicable when the bee is charmed with elixir of honeyed healing
 		intelligentAlly = true;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return BeeSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bat; }
 
 	private int level;
 
@@ -91,12 +82,19 @@ public class Bee extends Mob {
 		flying = false;
 		super.die(cause);
 	}
+
+	@Override
+	public int GetMaxHP() {
+		return (2 + level) * 4;
+	}
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		return 9 + level;
+	}
 	
 	public void spawn( int level ) {
 		this.level = level;
-		
-		HT = (2 + level) * 4;
-		defenseSkill = 9 + level;
 	}
 
 	public void setPotInfo(int potPos, Char potHolder){
@@ -117,13 +115,13 @@ public class Bee extends Mob {
 	
 	@Override
 	public int attackSkill( Char target ) {
-		return defenseSkill;
+		return defenseSkill(target);
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return HT/4;
-		return Random.NormalIntRange( HT / 10, HT / 4 );
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
+		if (isMaxDamage) return GetMaxHP()/4;
+		return Random.NormalIntRange( GetMaxHP() / 10, GetMaxHP() / 4 );
 	}
 	
 	@Override

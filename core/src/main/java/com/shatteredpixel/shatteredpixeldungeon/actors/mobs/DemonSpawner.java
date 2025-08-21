@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -47,33 +48,16 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class DemonSpawner extends Mob {
-
 	{
-		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 160 : 120;
-		defenseSkill = 0;
-
-		EXP = 15;
-		maxLvl = 29;
-
 		state = PASSIVE;
-
-		loot = PotionOfHealing.class;
-		lootChance = 1f;
-
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.MINIBOSS);
-		properties.add(Property.DEMONIC);
-		properties.add(Property.STATIC);
-	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return SpawnerSprite.class;
 	}
 
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 12);
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.demonspawner; }
+
+	@Override
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? (4f/3f) : 1.0f));
 	}
 
 	@Override

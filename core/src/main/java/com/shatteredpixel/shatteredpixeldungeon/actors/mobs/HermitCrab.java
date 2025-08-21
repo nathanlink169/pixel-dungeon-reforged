@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
@@ -33,31 +34,15 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.HermitCrabSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 
 public class HermitCrab extends Crab {
-
-	{
-		HP = HT = 25; //+67% HP
-		baseSpeed = getRandomizerEnabled(RandomTraits.HERMIT_INVASION) ? (getRandomizerEnabled(RandomTraits.LIGHTNING_LEGS) ? 3.5f : 2f) : (getRandomizerEnabled(RandomTraits.LIGHTNING_LEGS) ? 1.75f : 1f); //-50% speed
-
-		//3x more likely to drop meat, and drops a guaranteed armor
-		lootChance = 0.5f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return HermitCrabSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.hermitcrab; }
 
 	@Override
 	public void rollToDropLoot() {
 		super.rollToDropLoot();
 
-		if (Dungeon.hero.lvl <= maxLvl + 2){
+		if (Dungeon.hero.lvl <= GetMaxLevel() + 2){
 			Dungeon.level.drop(Generator.randomArmor(), pos).sprite.drop();
 		}
 	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + 2; //2-6 DR total, up from 0-4
-	}
-
 }

@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -38,14 +39,8 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class CausticSlime extends Slime {
-	
-	{
-		properties.add(Property.ACIDIC);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return CausticSlimeSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.causticslime; }
 	
 	@Override
 	public int attackProc( Char enemy, int damage ) {
@@ -55,18 +50,5 @@ public class CausticSlime extends Slime {
 		}
 		
 		return super.attackProc( enemy, damage );
-	}
-	
-	@Override
-	public void rollToDropLoot() {
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
-		
-		super.rollToDropLoot();
-		
-		int ofs;
-		do {
-			ofs = PathFinder.NEIGHBOURS8[Random.Int(8)];
-		} while (Dungeon.level.solid[pos + ofs] && !Dungeon.level.passable[pos + ofs]);
-		Dungeon.level.drop( new GooBlob(), pos + ofs ).sprite.drop( pos );
 	}
 }

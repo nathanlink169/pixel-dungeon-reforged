@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -35,9 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.TormentedSpiritSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
@@ -45,14 +43,11 @@ import com.watabou.utils.Random;
 public class TormentedSpirit extends Wraith {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return TormentedSpiritSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.tormentedspirit; }
 
 	//50% more damage scaling than regular wraiths
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return 2 + Math.round(1.5f*level);
 		return Random.NormalIntRange( 1 + Math.round(1.5f*level)/2, 2 + Math.round(1.5f*level) );
 	}

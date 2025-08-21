@@ -73,14 +73,14 @@ public class StoneOfBlight extends Runestone {
 							Buff.affect(ch, Bless.class, Bless.DURATION);
 							Buff.affect(ch, Adrenaline.class, Adrenaline.DURATION);
 						} else if (!ch.isImmune(getClass())) {
-							int damage = (int)Math.max(0.3f * ch.HP, 0.05f * ch.HT);
+							int damage = (int)Math.max(0.3f * ch.HP, 0.05f * ch.GetMaxHP());
 							if (damage >= ch.HP) {
 								damage = ch.HP - 1;
 							}
 							ch.damage(damage, this);
 						}
 					} else /*if (ch == curUser)*/ {
-						int damage = (int)Math.max(0.15f * ch.HP, 0.025f * ch.HT);
+						int damage = (int)Math.max(0.15f * ch.HP, 0.025f * ch.GetMaxHP());
 						if (damage >= ch.HP) {
 							damage = ch.HP - 1;
 						}

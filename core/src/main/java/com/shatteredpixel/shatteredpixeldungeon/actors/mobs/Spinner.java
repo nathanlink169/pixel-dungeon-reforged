@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -40,50 +40,31 @@ import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Spinner extends Mob {
-
 	{
-		HP = HT = getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN) ? 25 : 50;
-		defenseSkill = 17;
-
-		EXP = 9;
-		maxLvl = 17;
-
-		loot = MysteryMeat.class;
-		lootChance = 0.125f;
-
 		HUNTING = new Hunting();
 		FLEEING = new Fleeing();
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return SpinnerSprite.class;
-	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 20;
-		return Random.NormalIntRange(10, 20);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.spinner; }
 
 	@Override
-	public int attackSkill(Char target) {
-		return 22;
+	public int GetMaxHP() {
+		return super.GetMaxHP() / (getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN) ? 2 : 1);
 	}
 
 	@Override
 	public int drRoll() {
 		if (getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN)) {
-			return super.drRoll();
+			return 0;
 		}
-		return super.drRoll() + Random.NormalIntRange(0, 6);
+		return super.drRoll();
 	}
 
 	private int webCoolDown = 0;

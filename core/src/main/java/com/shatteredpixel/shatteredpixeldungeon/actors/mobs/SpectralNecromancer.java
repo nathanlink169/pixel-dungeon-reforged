@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -44,9 +45,7 @@ import java.util.ArrayList;
 public class SpectralNecromancer extends Necromancer {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return SpectralNecromancerSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.spectralnecromancer; }
 
 	private ArrayList<Integer> wraithIDs = new ArrayList<>();
 
@@ -63,7 +62,7 @@ public class SpectralNecromancer extends Necromancer {
 
 	@Override
 	public void rollToDropLoot() {
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (Dungeon.hero.lvl > GetMaxLevel() + 2) return;
 
 		super.rollToDropLoot();
 
@@ -156,7 +155,6 @@ public class SpectralNecromancer extends Necromancer {
 			spend(TICK);
 			return;
 		}
-		wraith.adjustStats(4);
 		Dungeon.level.occupyCell( wraith );
 		((SpectralNecromancerSprite)sprite).finishSummoning();
 

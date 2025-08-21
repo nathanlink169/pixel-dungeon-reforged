@@ -41,8 +41,9 @@ public class Challenges {
 	public static final int STRONGER_BOSSES 	= 1 << 8;
 	public static final int HORDE				= 1 << 9;
 	public static final int MONSTER_UNKNOWN		= 1 << 10;
+	public static final int TRINKET_MADNESS		= 1 << 11;
 
-	public static final int MAX_VALUE           = 1 << 11;
+	public static final int MAX_VALUE           = 1 << 12;
 
 	public static final String[] NAME_IDS = {
 			"champion_enemies",
@@ -55,11 +56,12 @@ public class Challenges {
 			"darkness",
 			"no_scrolls",
 			"horde",
-			"monster_unknown"
+			"monster_unknown",
+			"trinket_madness"
 	};
 
 	public static final int[] MASKS = {
-			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, HORDE, MONSTER_UNKNOWN
+			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, HORDE, MONSTER_UNKNOWN, TRINKET_MADNESS
 	};
 
 	public static int activeChallenges(){

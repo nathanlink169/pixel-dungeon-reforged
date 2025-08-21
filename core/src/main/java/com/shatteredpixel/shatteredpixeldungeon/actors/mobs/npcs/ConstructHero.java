@@ -1,7 +1,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -9,62 +9,41 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfPsionicBlast;
-import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ConstructSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
-import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
-import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.Visual;
 import com.watabou.noosa.audio.Sample;
-import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
 public class ConstructHero extends DirectableAlly implements ActionIndicator.Action {
-
     {
-        flying = false;
-
         state = HUNTING;
-
-        properties.add(Property.ELECTRIC);
-        properties.add(Property.INORGANIC);
     }
+
     @Override
-    public Class<? extends CharSprite> GetSpriteClass() {
-        return ConstructSprite.class;
-    }
-
-    public ConstructHero(){
-        super();
-        HP = HT;
-    }
+    public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.constructhero; }
 
     public void setupActionIndicator() {
         ActionIndicator.setAction(this);
     }
 
     @Override
-    protected boolean act() {
+    public int GetMaxHP() {
+        return GetMaxHPGivenTalentLevel(Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_HARDENING));
+    }
+
+    public int GetMaxHPGivenTalentLevel(int constructHardeningLevel) {
         float healthMultiplier = 0.15f;
-        switch (Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_HARDENING)) {
+        switch (constructHardeningLevel) {
             case 1:
                 healthMultiplier = 0.25f;
                 break;
@@ -76,14 +55,13 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
                 break;
         }
 
-        int newHT = (int)(Dungeon.hero.HT * healthMultiplier);
-        if (newHT != HT) {
-            int diff = newHT - HT;
-            HT = newHT;
-            HP += diff;
-        }
+        return (int)(Dungeon.hero.GetMaxHP() * healthMultiplier);
+    }
+
+    @Override
+    protected boolean act() {
         flying = Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_MOBILITY) == 3;
-        if (HP < HT) {
+        if (HP < GetMaxHP()) {
             ++HP;
         }
         return super.act();
@@ -118,7 +96,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
     }
 
     @Override
-    public int damageRoll(boolean isMaxDamage) {
+    public int damageRoll(AttackType type, boolean isMaxDamage) {
         int tier = 2 + Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_LETHALITY);
         int min = tier + level();
         int max = 5*(tier+1) + level()*(tier+1);
@@ -127,12 +105,6 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
             return max;
         }
         return Random.NormalIntRange(min, max);
-    }
-
-    @Override
-    public int defenseProc(Char enemy, int damage) {
-        UpdateDefenseStat();
-        return super.defenseProc(enemy, damage);
     }
 
     @Override
@@ -160,11 +132,6 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
 
     @Override
     public int defenseSkill(Char enemy) {
-        UpdateDefenseStat();
-        return super.defenseSkill(enemy);
-    }
-
-    private void UpdateDefenseStat() {
         float defenseMultiplier = 0.15f;
         switch (Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_HARDENING)) {
             case 1:
@@ -177,7 +144,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
                 defenseMultiplier = 0.5f;
                 break;
         }
-        this.defenseSkill = (int)(Dungeon.hero.GetPureDefenseSkill() * defenseMultiplier);
+        return (int)(Dungeon.hero.GetPureDefenseSkill() * defenseMultiplier);
     }
 
     @Override

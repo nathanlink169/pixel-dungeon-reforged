@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -44,26 +45,23 @@ import com.watabou.utils.Random;
 public class Statue extends Mob {
 	
 	{
-		EXP = 0;
 		state = PASSIVE;
-		
-		properties.add(Property.INORGANIC);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return StatueSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.statue; }
 	
 	protected Weapon weapon;
 
 	public boolean levelGenStatue = true;
-	
-	public Statue() {
-		super();
-		
-		HP = HT = 15 + Dungeon.depth * 5;
-		defenseSkill = 4 + Dungeon.depth;
+
+	@Override
+	public int GetMaxHP() {
+		return 15 + Dungeon.depth * 5;
+	}
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		return 4 + Dungeon.depth;
 	}
 
 	public void createWeapon( boolean useDecks ){
@@ -92,7 +90,7 @@ public class Statue extends Mob {
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return weapon.max();
 		return weapon.damageRoll(this, isMaxDamage);
 	}

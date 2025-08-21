@@ -9,6 +9,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -23,11 +25,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Viscosity;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
@@ -72,11 +78,13 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
+import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Callback;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
@@ -254,130 +262,104 @@ public class Gun extends Weapon {
         return false;
     }
 
-    public boolean fire(final Hero user, final int cell, final boolean playSFX, final boolean spendTime) {
-        boolean hitSomething = false;
+    // replace adaptive minefield
+    // return all enemies directly hit by beam for powerful shot quickdraw
+    public ArrayList<Mob> fire(final Hero user, final int cell, final boolean playSFX, final boolean spendTime) {
+        ArrayList<Mob> mobs = new ArrayList<>();
+        ArrayList<Char> alreadyDamagedMobs = new ArrayList<>();
+        ArrayList<Integer> positionsToDamage = new ArrayList<Integer>();
+        final Ballistica beam = new Ballistica( curUser.pos, cell, Ballistica.WONT_STOP);
+        curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( cell )));
 
         if (user.hasTalent(ARCSHIELDING)) {
             float threshold = 0.25f;
             if (user.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
-            if (user.HP/(float)user.HT <= threshold) {
+            if (user.HP/(float)user.GetMaxHP() <= threshold) {
                 int shielding = 3;
                 if (user.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
                 Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);
             }
         }
 
-        boolean handled = false;
-        Char enemy = Actor.findChar( cell );
-        if (enemy == null || enemy == curUser) {
-            Plant p = Dungeon.level.plants.get(cell);
-            if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && p != null) {
-                p.wither();
-                hitSomething = true;
-            }
+        int maxDistance = Math.min(level() * 2 + 12, beam.dist);
 
-            Trap t = Dungeon.level.traps.get(cell);
-            if (curUser.hasTalent(Talent.ADAPTIVE_MINEFIELD) && t != null && t.active) {
-                hitSomething = true;
-                handled = true;
-                if (!t.visible) {
-                    t.reveal();
+        ArrayList<Char> chars = new ArrayList<>();
+        for (int c : beam.subPath(1, maxDistance)) {
+
+            Char ch;
+            if ((ch = Actor.findChar( c )) != null) {
+
+                if (ch instanceof Mob && ((Mob) ch).state == ((Mob) ch).PASSIVE
+                        && !(Dungeon.level.mapped[c] || Dungeon.level.visited[c])){
+                    //avoid harming undiscovered passive chars
+                } else {
+                    chars.add(ch);
                 }
-                t.disarm(); //even disarms traps that normally wouldn't be
-
-                if (curUser.pointsInTalent(Talent.ADAPTIVE_MINEFIELD) == 2 && !Dungeon.isChallenged(Challenges.NO_HERBALISM)) {
-                    // Plant Dewcatcher
-                    if (t instanceof GeyserTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new WandOfRegrowth.Dewcatcher.Seed(), cell );
-                    }
-                    // Plant Blindweed
-                    if (t instanceof FlashingTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new Blindweed.Seed(), cell);
-                    }
-                    // Plant Fadelead
-                    if (t instanceof DisarmingTrap ||
-                            t instanceof DistortionTrap ||
-                            t instanceof GatewayTrap ||
-                            t instanceof SummoningTrap ||
-                            t instanceof TeleportationTrap) { // and warping trap, but teleportation trap covers that
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new Fadeleaf.Seed(), cell);
-                    }
-                    // Plant Firebloom
-                    if (t instanceof BlazingTrap ||
-                            t instanceof BurningTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new Firebloom.Seed(), cell);
-                    }
-                    // Plant Icecap
-                    if (t instanceof ChillingTrap ||
-                            t instanceof FrostTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new Icecap.Seed(), cell);
-                    }
-                    // Plant Sorrowmoss
-                    if (t instanceof CorrosionTrap ||
-                            t instanceof OozeTrap ||
-                            t instanceof PoisonDartTrap || // and TenguDartTrap
-                            t instanceof ToxicGasRoom.ToxicVent ||
-                            t instanceof ToxicTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant (new Sorrowmoss.Seed(), cell);
-                    }
-                    // Plant Stormvine
-                    if (t instanceof ConfusionTrap ||
-                            t instanceof ShockingTrap ||
-                            t instanceof StormTrap) {
-                        Dungeon.level.traps.remove(cell);
-                        GameScene.updateMap(cell);
-                        Dungeon.level.plant( new Stormvine.Seed(), cell);
-                    }
-                }
-
-                Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
-                Bestiary.setSeen(t.getClass());
             }
         }
 
-        if (!handled) {
-            if (Dungeon.level.map[cell] == Terrain.EMPTY ||
-                Dungeon.level.map[cell] == Terrain.EMPTY_DECO ||
-                Dungeon.level.map[cell] == Terrain.OPEN_DOOR ||
-                Dungeon.level.map[cell] == Terrain.LOCKED_DOOR ||
-                Dungeon.level.map[cell] == Terrain.GRASS ||
-                Dungeon.level.map[cell] == Terrain.FURROWED_GRASS) {
-                Level.set(cell, Terrain.EMBERS);
-                GameScene.updateMap();
-            }
-        }
+        for (Char ch : chars) {
+            ch.damage( damageRoll(user, false), this );
 
-        if (!handled && enemy != null) {
-            user.belongings.thrownWeapon = new Bullet();
-            hitSomething = user.shoot(enemy, new Bullet());
-            // user.attack(enemy, DamageType.PIERCING);
-            Invisibility.dispel();
-            user.belongings.thrownWeapon = null;
+            for (int o : PathFinder.NEIGHBOURS8) {
+                int position = ch.pos + o;
+                Char adjacent = Dungeon.level.findMob(position);
+                if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
+                    alreadyDamagedMobs.add(adjacent);
+                    adjacent.damage( damageRoll(user, false) / 2, this);
+                }
+
+                positionsToDamage.add(ch.pos + o);
+            }
+
+            positionsToDamage.add(ch.pos);
+            ch.sprite.flash();
         }
 
         if (playSFX) {
             Sample.INSTANCE.play(Assets.Sounds.BLAST);
         }
-        CellEmitter.center(cell).burst(SmokeParticle.FACTORY, 5);
+
+        positionsToDamage.add(cell);
+        for (int o : PathFinder.NEIGHBOURS8) {
+            int position = cell + o;
+            Char adjacent = Dungeon.level.findMob(position);
+            if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
+                alreadyDamagedMobs.add(adjacent);
+                adjacent.damage( damageRoll(user, false) / 2, this);
+            }
+            positionsToDamage.add(position);
+        }
 
         if (spendTime) {
             user.sprite.operate(user.pos);
             user.spendAndNext(1.0f);
         }
 
-        return hitSomething;
+        for (Integer p : positionsToDamage) {
+            if (Dungeon.level.map[p] == Terrain.EMPTY ||
+                    Dungeon.level.map[p] == Terrain.EMPTY_DECO ||
+                    Dungeon.level.map[p] == Terrain.OPEN_DOOR ||
+                    Dungeon.level.map[p] == Terrain.GRASS ||
+                    Dungeon.level.map[p] == Terrain.FURROWED_GRASS ||
+                    Dungeon.level.flamable[p]) {
+                Dungeon.level.destroy(p);
+                Level.set(p, Terrain.EMBERS);
+                GameScene.updateMap( p );
+
+                Heap heap = Dungeon.level.heaps.get(p);
+                if (heap != null) {
+                    heap.explode();
+                }
+
+                if (Dungeon.level.heroFOV[p]) {
+                    CellEmitter.get(p).burst(SmokeParticle.FACTORY, 8);
+                }
+            }
+        }
+
+        Dungeon.observe();
+        return mobs;
     }
 
     public class Bullet extends MissileWeapon {
@@ -394,9 +376,7 @@ public class Gun extends Weapon {
         @Override
         public void onSelect( Integer target ) {
             if (target != null) {
-                int actualTarget = new Ballistica( curUser.pos, target, Ballistica.PROJECTILE ).collisionPos;
-
-                fire(curUser, actualTarget, true, true);
+                fire(curUser, target, true, true);
                 isLoaded = false;
                 updateQuickslot();
             }

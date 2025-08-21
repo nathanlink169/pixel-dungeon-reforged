@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -118,40 +119,74 @@ public abstract class Mob extends Char {
 	public AiState FLEEING		= new Fleeing();
 	public AiState PASSIVE		= new Passive();
 	public AiState state = SLEEPING;
-	
-	public abstract Class<? extends CharSprite> GetSpriteClass();
+
+	public abstract Constants.mobs.mobsBase GetConstants();
 	
 	protected int target = -1;
-	
-	public int defenseSkill = 0;
-	
-	public int EXP = 1;
-	public int maxLvl = Hero.MAX_LEVEL-1;
+
+	protected int m_SpriteVariant = -1;
 	
 	protected Char enemy;
 	protected int enemyID = -1; //used for save/restore
 	protected boolean enemySeen;
 	protected boolean alerted = false;
+	public boolean xpHalved = false;
 
 	protected static final float TIME_TO_WAKE_UP = 1f;
 
 	protected boolean firstAdded = true;
-	protected void onAdd(){
+	protected void onAdd() {
 		if (firstAdded) {
-			//modify health for ascension challenge if applicable, only on first add
-			float percent = HP / (float) HT;
-			HT = Math.round(HT * AscensionChallenge.statModifier(this));
-			HP = Math.round(HT * percent);
-			firstAdded = false;
+			HP = GetMaxHP();
+
+			Constants.mobs.mobsBase c = GetConstants();
+
+			flying = c.getFlying();
+			if (c.getPropertyAcidic()) addProperty(Property.ACIDIC);
+			if (c.getPropertyBoss()) addProperty(Property.BOSS);
+			if (c.getPropertyBoss_Minion()) addProperty(Property.BOSS_MINION);
+			if (c.getPropertyDemonic()) addProperty(Property.DEMONIC);
+			if (c.getPropertyMiniboss()) addProperty(Property.MINIBOSS);
+			if (c.getPropertyUndead()) addProperty(Property.UNDEAD);
+			if (c.getPropertyInorganic()) addProperty(Property.INORGANIC);
+			if (c.getPropertyFiery()) addProperty(Property.FIERY);
+			if (c.getPropertyIcy()) addProperty(Property.ICY);
+			if (c.getPropertyElectric()) addProperty(Property.ELECTRIC);
+			if (c.getPropertyLarge()) addProperty(Property.LARGE);
+			if (c.getPropertyImmovable()) addProperty(Property.IMMOVABLE);
+			if (c.getPropertyStatic()) addProperty(Property.STATIC);
 		}
+	}
+
+	protected void addProperty(Property p) { properties.add(p); }
+
+	public int GetMaxHP() {
+		return (int) (GetConstants().getHP() * AscensionChallenge.statModifier(this));
+	}
+
+	public int GetXP() {
+		int xp = GetConstants().getXP();
+		if (xpHalved) xp /= 2;
+		return xp;
+	}
+
+	public int GetMaxLevel() {
+		if (m_OverriddenMaxLevel != -1) return m_OverriddenMaxLevel;
+		return GetConstants().getMaxLvl();
+	}
+
+	private int m_OverriddenMaxLevel = -1;
+	public void OverrideMaxLevel(int override) {
+		m_OverriddenMaxLevel = override;
 	}
 
 	private static final String STATE	= "state";
 	private static final String SEEN	= "seen";
 	private static final String TARGET	= "target";
-	private static final String MAX_LVL	= "max_lvl";
-
+	private static final String XP_HALVED = "xp_halved";
 	private static final String ENEMY_ID	= "enemy_id";
+	private static final String OVERRIDDEN_MAX_LEVEL = "overridden_max_level";
+	private static final String SPRITE_VARIANT	= "sprite_variant";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -171,10 +206,20 @@ public abstract class Mob extends Char {
 		}
 		bundle.put( SEEN, enemySeen );
 		bundle.put( TARGET, target );
-		bundle.put( MAX_LVL, maxLvl );
+		if (xpHalved) {
+			bundle.put(XP_HALVED, true);
+		}
 
 		if (enemy != null) {
 			bundle.put(ENEMY_ID, enemy.id() );
+		}
+
+		if (m_OverriddenMaxLevel != -1) {
+			bundle.put(OVERRIDDEN_MAX_LEVEL, m_OverriddenMaxLevel);
+		}
+
+		if (m_SpriteVariant != -1) {
+			bundle.put(SPRITE_VARIANT, m_SpriteVariant);
 		}
 	}
 	
@@ -200,10 +245,20 @@ public abstract class Mob extends Char {
 
 		target = bundle.getInt( TARGET );
 
-		if (bundle.contains(MAX_LVL)) maxLvl = bundle.getInt(MAX_LVL);
-
 		if (bundle.contains(ENEMY_ID)) {
 			enemyID = bundle.getInt(ENEMY_ID);
+		}
+
+		if (bundle.contains(XP_HALVED)) {
+			xpHalved = true;
+		}
+
+		if (bundle.contains(OVERRIDDEN_MAX_LEVEL)) {
+			m_OverriddenMaxLevel = bundle.getInt(OVERRIDDEN_MAX_LEVEL);
+		}
+
+		if (bundle.contains(SPRITE_VARIANT)) {
+			m_SpriteVariant = bundle.getInt(SPRITE_VARIANT);
 		}
 
 		//no need to actually save this, must be false
@@ -214,9 +269,18 @@ public abstract class Mob extends Char {
 	public void restoreEnemy(){
 		if (enemyID != -1 && enemy == null) enemy = (Char)Actor.findById(enemyID);
 	}
-	
+
 	public CharSprite sprite() {
-		return Reflection.newInstance(GetSpriteClass());
+		return Reflection.newInstance(GetSpriteName());
+	}
+
+	public Class<? extends CharSprite> GetSpriteName() {
+		return GetConstants().getSpriteName();
+	}
+
+	@Override
+	public int GetViewDistance() {
+		return GetConstants().getViewDst();
 	}
 	
 	@Override
@@ -260,7 +324,7 @@ public abstract class Mob extends Char {
 		//for updating hero FOV
 		if (buff(PowerOfMany.PowerBuff.class) != null){
 			Dungeon.level.updateFieldOfView( this, fieldOfView );
-			GameScene.updateFog(pos, viewDistance+(int)Math.ceil(speed()));
+			GameScene.updateFog(pos, GetViewDistance()+(int)Math.ceil(speed()));
 		}
 
 		return result;
@@ -654,11 +718,41 @@ public abstract class Mob extends Char {
 	}
 	
 	public float attackDelay() {
-		float delay = 1f;
+		float delay = GetConstants().getAtkDelay();
 		if ( buff(Adrenaline.class) != null) delay /= 1.5f;
 		return delay;
 	}
-	
+
+	@Override
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
+		if (isMaxDamage) return maxDamage(type);
+		return Random.Int(minDamage(type), maxDamage(type));
+	}
+
+	public int minDamage(AttackType type) {
+		switch (type) {
+			case MELEE:
+				return GetConstants().getMeleeDmgMin();
+			case RANGED_PHYSICAL:
+				return GetConstants().getPhysicalRngDmgMin();
+			case RANGED_MAGICAL:
+				return GetConstants().getMagicRngDmgMin();
+		}
+		return 0;
+	}
+
+	public int maxDamage(AttackType type) {
+		switch (type) {
+			case MELEE:
+				return GetConstants().getMeleeDmgMax();
+			case RANGED_PHYSICAL:
+				return GetConstants().getPhysicalRngDmgMax();
+			case RANGED_MAGICAL:
+				return GetConstants().getMagicRngDmgMax();
+		}
+		return 0;
+	}
+
 	protected boolean doAttack( Char enemy ) {
 		
 		if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
@@ -699,10 +793,19 @@ public abstract class Mob extends Char {
 		if ( !surprisedBy(enemy)
 				&& paralysed == 0
 				&& !(alignment == Alignment.ALLY && enemy == Dungeon.hero)) {
-			return this.defenseSkill;
+			return GetDefenseSkillInternal();
 		} else {
 			return 0;
 		}
+	}
+
+	protected int GetDefenseSkillInternal() {
+		return GetConstants().getDefenseSkill();
+	}
+
+	@Override
+	public int attackSkill( Char target ) {
+		return GetConstants().getAtkSkill();
 	}
 	
 	@Override
@@ -753,9 +856,9 @@ public abstract class Mob extends Char {
 			if (restoration > 0) {
 				Buff.affect(Dungeon.hero, Hunger.class).affectHunger(restoration*Dungeon.hero.pointsInTalent(Talent.SOUL_EATER)/3f);
 
-				if (Dungeon.hero.HP < Dungeon.hero.HT) {
+				if (Dungeon.hero.HP < Dungeon.hero.GetMaxHP()) {
 					int heal = (int)Math.ceil(restoration * 0.4f);
-					Dungeon.hero.HP = Math.min(Dungeon.hero.HT, Dungeon.hero.HP + heal);
+					Dungeon.hero.HP = Math.min(Dungeon.hero.GetMaxHP(), Dungeon.hero.HP + heal);
 					Dungeon.hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(heal), FloatingText.HEALING);
 				}
 			}
@@ -765,8 +868,21 @@ public abstract class Mob extends Char {
 	}
 
 	@Override
+	public int drRoll() {
+		return super.drRoll() + Random.Int(getMinDR(), getMaxDR());
+	}
+
+	protected int getMinDR() {
+		return GetConstants().getDmgReductionMin();
+	}
+
+	protected int getMaxDR() {
+		return GetConstants().getDmgReductionMax();
+	}
+
+	@Override
 	public float speed() {
-		return super.speed() * AscensionChallenge.enemySpeedModifier(this);
+		return super.speed() * AscensionChallenge.enemySpeedModifier(this) * GetConstants().getMovementSpd();
 	}
 
 	public final boolean surprisedBy( Char enemy ){
@@ -826,8 +942,7 @@ public abstract class Mob extends Char {
 		
 		super.damage( dmg, src, damageType );
 	}
-	
-	
+
 	@Override
 	public void destroy() {
 		
@@ -851,13 +966,13 @@ public abstract class Mob extends Char {
 
 				AscensionChallenge.processEnemyKill(this);
 				
-				int exp = Dungeon.hero.lvl <= maxLvl ? EXP : 0;
+				int exp = Dungeon.hero.lvl <= GetMaxLevel() ? GetXP() : 0;
 
 				//during ascent, under-levelled enemies grant 10 xp each until level 30
 				// after this enemy kills which reduce the amulet curse still grant 10 effective xp
 				// for the purposes of on-exp effects, see AscensionChallenge.processEnemyKill
 				if (Dungeon.hero.buff(AscensionChallenge.class) != null &&
-						exp == 0 && maxLvl > 0 && EXP > 0 && Dungeon.hero.lvl < Hero.MAX_LEVEL){
+						exp == 0 && GetMaxLevel() > 0 && GetXP() > 0 && Dungeon.hero.lvl < Hero.MAX_LEVEL){
 					exp = Math.round(10 * spawningWeight());
 				}
 
@@ -876,11 +991,7 @@ public abstract class Mob extends Char {
 	@Override
 	public void die( Object cause ) {
 
-		if (cause == Chasm.class){
-			//50% chance to round up, 50% to round down
-			if (EXP % 2 == 1) EXP += Random.Int(2);
-			EXP /= 2;
-		}
+		xpHalved = cause == Chasm.class;
 
 		if (alignment == Alignment.ENEMY){
 			if (buff(Trap.HazardAssistTracker.class) != null){
@@ -927,8 +1038,20 @@ public abstract class Mob extends Char {
 		}
 	}
 
-	public float lootChance(){
-		float lootChance = this.lootChance;
+	public float GetLootChance(int slot){
+		float lootChance = 0.0f;
+
+		switch(slot) {
+			case 0:
+				lootChance = GetConstants().getLoot().getLoot1Chance();
+				break;
+			case 1:
+				lootChance = GetConstants().getLoot().getLoot2Chance();
+				break;
+			case 2:
+				lootChance = GetConstants().getLoot().getLoot3Chance();
+				break;
+		}
 
 		float dropBonus = RingOfWealth.dropChanceMultiplier( Dungeon.hero );
 
@@ -949,14 +1072,17 @@ public abstract class Mob extends Char {
 	}
 	
 	public void rollToDropLoot(){
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (Dungeon.hero.lvl > GetMaxLevel() + 2) return;
 
 		MasterThievesArmband.StolenTracker stolen = buff(MasterThievesArmband.StolenTracker.class);
 		if (stolen == null || !stolen.itemWasStolen()) {
-			if (Random.Float() < lootChance()) {
-				Item loot = createLoot();
-				if (loot != null) {
-					Dungeon.level.drop(loot, pos).sprite.drop();
+			Item loot = null;
+			for (int i = 0; i < 3 && loot == null; ++i) {
+				if (Random.Float() < GetLootChance(i)) {
+					loot = createLoot(i);
+					if (loot != null) {
+						Dungeon.level.drop(loot, pos).sprite.drop();
+					}
 				}
 			}
 		}
@@ -987,12 +1113,23 @@ public abstract class Mob extends Char {
 
 	}
 	
-	protected Object loot = null;
-	protected float lootChance = 0;
-	
 	@SuppressWarnings("unchecked")
-	public Item createLoot() {
+	public Item createLoot(int slot) {
+		Object loot = null;
 		Item item;
+
+		switch(slot) {
+			case 0:
+				loot = GetConstants().getLoot().getLoot1();
+				break;
+			case 1:
+				loot = GetConstants().getLoot().getLoot2();
+				break;
+			case 2:
+				loot = GetConstants().getLoot().getLoot3();
+				break;
+		}
+
 		if (loot instanceof Generator.Category) {
 
 			item = Generator.randomUsingDefaults( (Generator.Category)loot );

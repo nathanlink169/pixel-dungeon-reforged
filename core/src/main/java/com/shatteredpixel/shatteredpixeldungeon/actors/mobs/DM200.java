@@ -27,13 +27,12 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import static com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave.throwChar;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ConfusionGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -45,9 +44,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.DM200Sprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
@@ -55,58 +51,48 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class DM200 extends Mob {
-
 	{
-		HP = HT = 80;
-		defenseSkill = 12;
-
-		EXP = 9;
-		maxLvl = 17;
-
-		loot = Random.oneOf(Generator.Category.WEAPON, Generator.Category.ARMOR);
-		lootChance = 0.2f; //initially, see lootChance()
-
-		baseSpeed = getRandomizerEnabled(RandomTraits.RUSTED_GEARS) ? 0.25f : 1.0f;
-
-		properties.add(Property.INORGANIC);
-
-		if (!getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
-			properties.add(Property.LARGE);
-		}
-
 		HUNTING = new Hunting();
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return DM200Sprite.class;
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm200; }
+
+	@Override
+	protected void addProperty(Property p) {
+		if (p == Property.LARGE && getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
+			return;
+		}
+		super.addProperty(p);
+	}
+	@Override
+	public float speed() {
+		return super.speed() * (getRandomizerEnabled(RandomTraits.RUSTED_GEARS) ? 0.25f : 1.0f);
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 10, 25 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 8);
-	}
-
-	@Override
-	public float lootChance(){
+	public float GetLootChance(int slot){
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/5, 1/15, 1/45, 1/135, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.DM200_EQUIP.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/3f, Dungeon.LimitedDrops.DM200_EQUIP.count);
 	}
 
-	public Item createLoot() {
+	public Item createLoot(int slot) {
 		Dungeon.LimitedDrops.DM200_EQUIP.count++;
+		Object loot = null;
+
+		switch(slot) {
+			case 0:
+				loot = GetConstants().getLoot().getLoot1();
+				break;
+			case 1:
+				loot = GetConstants().getLoot().getLoot2();
+				break;
+			case 2:
+				loot = GetConstants().getLoot().getLoot3();
+				break;
+		}
+
 		//uses probability tables for dwarf city
 		if (loot == Generator.Category.WEAPON){
 			return Generator.randomWeapon(4, true);

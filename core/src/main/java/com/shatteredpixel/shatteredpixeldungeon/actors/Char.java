@@ -176,10 +176,9 @@ public abstract class Char extends Actor {
 	
 	public CharSprite sprite;
 	
-	public int HT;
+	public int GetMaxHP() {return 0;}
 	public int HP;
-	
-	protected float baseSpeed	= 1;
+
 	protected PathFinder.Path path;
 
 	public int paralysed	    = 0;
@@ -194,8 +193,12 @@ public abstract class Char extends Actor {
 		ALLY
 	}
 	public Alignment alignment;
+
+	public enum AttackType { MELEE, RANGED_PHYSICAL, RANGED_MAGICAL	}
 	
-	public int viewDistance	= 8;
+	public int GetViewDistance() {
+		return 8;
+	}
 	
 	public boolean[] fieldOfView = null;
 	
@@ -339,7 +342,6 @@ public abstract class Char extends Actor {
 	
 	protected static final String POS       = "pos";
 	protected static final String TAG_HP    = "HP";
-	protected static final String TAG_HT    = "HT";
 	protected static final String TAG_SHLD  = "SHLD";
 	protected static final String BUFFS	    = "buffs";
 	
@@ -350,7 +352,6 @@ public abstract class Char extends Actor {
 		
 		bundle.put( POS, pos );
 		bundle.put( TAG_HP, HP );
-		bundle.put( TAG_HT, HT );
 		bundle.put( BUFFS, buffs );
 	}
 	
@@ -361,7 +362,6 @@ public abstract class Char extends Actor {
 		
 		pos = bundle.getInt( POS );
 		HP = bundle.getInt( TAG_HP );
-		HT = bundle.getInt( TAG_HT );
 		
 		for (Bundlable b : bundle.getCollection( BUFFS )) {
 			if (b != null) {
@@ -437,7 +437,7 @@ public abstract class Char extends Actor {
 					Buff.affect(Dungeon.hero, Talent.BountyHunterTracker.class, 0.0f);
 				}
 			} else {
-				dmg = damageRoll(isMaxDamage);
+				dmg = damageRoll(AttackType.MELEE, isMaxDamage);
 			}
 
 			dmg = dmg*dmgMulti;
@@ -577,7 +577,7 @@ public abstract class Char extends Actor {
 			if (combinedLethality != null && this instanceof Hero && ((Hero) this).belongings.attackingWeapon() instanceof MeleeWeapon && combinedLethality.weapon != ((Hero) this).belongings.attackingWeapon()){
 				if ( enemy.isAlive() && enemy.alignment != alignment && !Char.hasProp(enemy, Property.BOSS)
 						&& !Char.hasProp(enemy, Property.MINIBOSS) &&
-						(enemy.HP/(float)enemy.HT) <= 0.4f*((Hero)this).pointsInTalent(Talent.COMBINED_LETHALITY)/3f) {
+						(enemy.HP/(float)enemy.GetMaxHP()) <= 0.4f*((Hero)this).pointsInTalent(Talent.COMBINED_LETHALITY)/3f) {
 					enemy.HP = 0;
 					if (enemy.buff(Brute.BruteRage.class) != null){
 						enemy.buff(Brute.BruteRage.class).detach();
@@ -750,7 +750,7 @@ public abstract class Char extends Actor {
 		return dr;
 	}
 	
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		return 1;
 	}
 	
@@ -812,7 +812,7 @@ public abstract class Char extends Actor {
 	}
 	
 	public float speed() {
-		float speed = baseSpeed;
+		float speed = 1.0f;
 		if ( buff( Cripple.class ) != null ) speed /= 2f;
 		if ( buff( Stamina.class ) != null) speed *= 1.5f;
 		if ( buff( Adrenaline.class ) != null) speed *= 2f;
@@ -982,7 +982,7 @@ public abstract class Char extends Actor {
 				&& dmg > 0
 				//either HP is already half or below (ignoring shield)
 				// or the hit will reduce it to half or below
-				&& (HP <= HT/2 || HP + shielding() - dmg <= HT/2)
+				&& (HP <= GetMaxHP()/2 || HP + shielding() - dmg <= GetMaxHP()/2)
 				&& shield != null && !shield.coolingDown()){
 			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(buff(BrokenSeal.WarriorShield.class).maxShield()), FloatingText.SHIELDING);
 			shield.activate();
@@ -1002,7 +1002,7 @@ public abstract class Char extends Actor {
 		if (HP > 0 && buff(Grim.GrimTracker.class) != null){
 
 			float finalChance = buff(Grim.GrimTracker.class).maxChance;
-			finalChance *= (float)Math.pow( ((HT - HP) / (float)HT), 2);
+			finalChance *= (float)Math.pow( ((GetMaxHP() - HP) / (float)GetMaxHP()), 2);
 
 			if (Random.Float() < finalChance) {
 				int extraDmg = Math.round(HP*resist(Grim.class));

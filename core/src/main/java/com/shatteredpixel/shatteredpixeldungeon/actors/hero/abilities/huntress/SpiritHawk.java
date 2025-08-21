@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -147,31 +148,14 @@ public class SpiritHawk extends ArmorAbility {
 	public static class HawkAlly extends DirectableAlly {
 
 		{
-			HP = HT = 10;
-			defenseSkill = 60;
-
-			flying = true;
-			if (Dungeon.hero != null) {
-				viewDistance = (int) GameMath.gate(6, 6 + Dungeon.hero.pointsInTalent(Talent.EAGLE_EYE), 8);
-				baseSpeed = 2f + Dungeon.hero.pointsInTalent(Talent.SWIFT_SPIRIT) / 2f;
-			} else {
-				viewDistance = 6;
-				baseSpeed = 2f;
-			}
 			attacksAutomatically = false;
 
 			immunities.addAll(new BlobImmunity().immunities());
 			immunities.add(AllyBuff.class);
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return HawkSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.hawkally; }
 
-		@Override
-		public int attackSkill(Char target) {
-			return 60;
-		}
 
 		private int dodgesUsed = 0;
 		private float timeRemaining = 100f;
@@ -184,12 +168,6 @@ public class SpiritHawk extends ArmorAbility {
 				return Char.INFINITE_EVASION;
 			}
 			return super.defenseSkill(enemy);
-		}
-
-		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			if (isMaxDamage) return 10;
-			return Random.NormalIntRange(5, 10);
 		}
 
 		@Override
@@ -224,11 +202,9 @@ public class SpiritHawk extends ArmorAbility {
 				Dungeon.hero.interrupt();
 				return true;
 			}
-			viewDistance = 6+Dungeon.hero.pointsInTalent(Talent.EAGLE_EYE);
-			baseSpeed = 2f + Dungeon.hero.pointsInTalent(Talent.SWIFT_SPIRIT)/2f;
 			boolean result = super.act();
 			Dungeon.level.updateFieldOfView( this, fieldOfView );
-			GameScene.updateFog(pos, viewDistance+(int)Math.ceil(speed()));
+			GameScene.updateFog(pos, GetViewDistance()+(int)Math.ceil(speed()));
 			return result;
 		}
 

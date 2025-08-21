@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -41,7 +41,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhoulSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -49,44 +48,13 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class Ghoul extends Mob {
-	
 	{
-		HP = HT = 45;
-		defenseSkill = 20;
-		
-		EXP = 5;
-		maxLvl = 20;
-		
 		SLEEPING = new Sleeping();
 		WANDERING = new Wandering();
 		state = SLEEPING;
-
-		loot = Gold.class;
-		lootChance = 0.2f;
-		
-		properties.add(Property.UNDEAD);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return GhoulSprite.class;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 22;
-		return Random.NormalIntRange( 16, 22 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 24;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 4);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ghoul; }
 
 	@Override
 	public float spawningWeight() {
@@ -349,9 +317,9 @@ public class Ghoul extends Mob {
 					}
 				}
 				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
-					ghoul.HP = ghoul.HT;
+					ghoul.HP = ghoul.GetMaxHP();
 				} else {
-					ghoul.HP = Math.round(ghoul.HT / 10f);
+					ghoul.HP = Math.round(ghoul.GetMaxHP() / 10f);
 				}
 				ghoul.beingLifeLinked = false;
 				Actor.add(ghoul);
@@ -360,9 +328,9 @@ public class Ghoul extends Mob {
 				Dungeon.level.occupyCell( ghoul );
 				ghoul.sprite.idle();
 				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
-					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(ghoul.HT), FloatingText.HEALING);
+					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(ghoul.GetMaxHP()), FloatingText.HEALING);
 				} else {
-					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(ghoul.HT/10f)), FloatingText.HEALING);
+					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(ghoul.GetMaxHP()/10f)), FloatingText.HEALING);
 				}
 				super.detach();
 				return true;

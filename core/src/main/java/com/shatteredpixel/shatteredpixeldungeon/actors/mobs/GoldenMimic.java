@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
@@ -48,9 +49,7 @@ import com.watabou.utils.Random;
 public class GoldenMimic extends Mimic {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return MimicSprite.Golden.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.goldenmimic; }
 
 	@Override
 	public String name(boolean forceNoMonsterUnknown) {

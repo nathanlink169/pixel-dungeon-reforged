@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -37,17 +38,13 @@ import com.watabou.utils.Random;
 public class ArmoredStatue extends Statue {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return StatueSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.armoredstatue; }
 
 	protected Armor armor;
 
-	public ArmoredStatue(){
-		super();
-
-		//double HP
-		HP = HT = 30 + Dungeon.depth * 10;
+	@Override
+	public int GetMaxHP() {
+		return 30 + Dungeon.depth * 10;
 	}
 
 	@Override

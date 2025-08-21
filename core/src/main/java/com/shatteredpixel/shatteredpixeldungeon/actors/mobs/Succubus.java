@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -33,7 +33,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -44,8 +43,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SuccubusSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -55,42 +52,19 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 
 public class Succubus extends Mob {
-
 	private int blinkCooldown = 0;
-	
-	{
-		HP = HT = 90;
-		defenseSkill = 25;
-		viewDistance = Light.DISTANCE - 1;
-		
-		EXP = 12;
-		maxLvl = 25;
-		
-		loot = Generator.Category.SCROLL;
-		lootChance = 0.33f;
 
-		properties.add(Property.DEMONIC);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.succubus; }
 
-		return SuccubusSprite.class;
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 30;
-		return Random.NormalIntRange( 25, 30 );
-	}
-	
 	@Override
 	public int attackProc( Char enemy, int damage ) {
 		damage = super.attackProc( enemy, damage );
 		
 		if (enemy.buff(Charm.class) != null ){
-			int shield = (HP - HT) + (5 + damage);
+			int shield = (HP - GetMaxHP()) + (5 + damage);
 			if (shield > 0){
-				HP = HT;
+				HP = GetMaxHP();
 				if (shield < 5){
 					sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5-shield), FloatingText.HEALING);
 				}
@@ -184,25 +158,15 @@ public class Succubus extends Mob {
 	protected void spendConstant( float time ){
 		int oldTime = (int)this.getTime(); // cut it off
 		super.spendConstant(time);
-		if (HP > 0 && HP < HT && getRandomizerEnabled(RandomTraits.REGENERATIVE_ALLURE) && this.getTime() > oldTime) { // we go up one turn
+		if (HP > 0 && HP < GetMaxHP() && getRandomizerEnabled(RandomTraits.REGENERATIVE_ALLURE) && this.getTime() > oldTime) { // we go up one turn
 			int oldHP = HP;
-			HP = Math.min(HT, HP + 2);
+			HP = Math.min(GetMaxHP(), HP + 2);
 			sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(HP - oldHP), FloatingText.HEALING);
 		}
 	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 40;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
-	}
 
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Class<?extends Scroll> loot;
 		do{
 			loot = (Class<? extends Scroll>) Random.oneOf(Generator.Category.SCROLL.classes);

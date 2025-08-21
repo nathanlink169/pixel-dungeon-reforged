@@ -128,25 +128,13 @@ public class SpiritForm extends ClericSpell {
 			icon.hardlight(0, 1, 0);
 		}
 
+		public void setEffect(Bundlable effect){
+			this.effect = effect;
+		}
+
 		@Override
 		public float iconFadePercent() {
 			return Math.max(0, (DURATION - visualcooldown()) / DURATION);
-		}
-
-		public void setEffect(Bundlable effect){
-			this.effect = effect;
-			if (effect instanceof RingOfMight){
-				((Ring) effect).level(ringLevel());
-				Dungeon.hero.updateHT( false );
-			}
-		}
-
-		@Override
-		public void detach() {
-			super.detach();
-			if (effect instanceof RingOfMight){
-				Dungeon.hero.updateHT( false );
-			}
 		}
 
 		public Ring ring(){
@@ -210,7 +198,9 @@ public class SpiritForm extends ClericSpell {
 			if (!spawnPoints.isEmpty()) {
 				Wraith w = Wraith.spawnAt(Random.element(spawnPoints), Wraith.class);
 
-				w.HP = w.HT = 20 + 8*artifactLevel();
+				int hp = 20 + 8 * artifactLevel();
+				w.SetMaxHPOverride(hp);
+				w.HP = hp;
 				Buff.affect(w, Corruption.class);
 			}
 			Talent.onArtifactUsed(Dungeon.hero);

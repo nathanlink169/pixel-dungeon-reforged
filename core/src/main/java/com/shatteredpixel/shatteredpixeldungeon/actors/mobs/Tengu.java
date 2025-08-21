@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -88,40 +89,22 @@ import java.util.HashSet;
 public class Tengu extends Mob {
 	
 	{
-		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 250 : 200;
-		EXP = 20;
-		defenseSkill = 15;
-		
 		HUNTING = new Hunting();
-		
-		properties.add(Property.BOSS);
-		
-		viewDistance = 12;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.tengu; }
 
-		return TenguSprite.class;
-	}
-	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 12;
-		return Random.NormalIntRange( 6, 12 );
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.25f : 1.0f));
 	}
-	
+
 	@Override
 	public int attackSkill( Char target ) {
-		if (Dungeon.level.adjacent(pos, target.pos)){
-			return 10;
-		} else {
-			return 20;
+		if (!Dungeon.level.adjacent(pos, target.pos)){
+			return super.attackSkill(target) * 2;
 		}
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
+		return super.attackSkill(target);
 	}
 
 	boolean loading = false;
@@ -143,7 +126,7 @@ public class Tengu extends Mob {
 
 		PrisonBossLevel.State state = ((PrisonBossLevel)Dungeon.level).state();
 		
-		int hpBracket = HT / 8;
+		int hpBracket = GetMaxHP() / 8;
 
 		int curbracket = HP / hpBracket;
 
@@ -184,8 +167,8 @@ public class Tengu extends Mob {
 		}
 
 		//phase 1 of the fight is over
-		if (state == PrisonBossLevel.State.FIGHT_START && HP <= HT/2){
-			HP = (HT/2);
+		if (state == PrisonBossLevel.State.FIGHT_START && HP <= GetMaxHP()/2){
+			HP = (GetMaxHP()/2);
 			yell(Messages.get(this, "interesting"));
 			((PrisonBossLevel)Dungeon.level).progress();
 			BossHealthBar.bleed(true);
@@ -282,7 +265,7 @@ public class Tengu extends Mob {
 				if (level.heroFOV[newPos]) CellEmitter.get( newPos ).burst( Speck.factory( Speck.WOOL ), 6 );
 				Sample.INSTANCE.play( Assets.Sounds.PUFF );
 
-				float fill = 0.9f - 0.5f*((HP-(HT/2f))/(HT/2f));
+				float fill = 0.9f - 0.5f*((HP-(GetMaxHP()/2f))/(GetMaxHP()/2f));
 				level.placeTrapsInTenguCell(fill);
 				
 			//otherwise, jump in a larger possible area, as the room is bigger
@@ -339,8 +322,8 @@ public class Tengu extends Mob {
 		super.notice();
 		if (!BossHealthBar.isAssigned()) {
 			BossHealthBar.assignBoss(this);
-			if (HP <= HT/2) BossHealthBar.bleed(true);
-			if (HP == HT) {
+			if (HP <= GetMaxHP()/2) BossHealthBar.bleed(true);
+			if (HP == GetMaxHP()) {
 				yell(Messages.get(this, "notice_gotcha", Dungeon.hero.name(false)));
 				for (Char ch : Actor.chars()){
 					if (ch instanceof DriedRose.GhostHero){
@@ -385,7 +368,7 @@ public class Tengu extends Mob {
 		abilityCooldown = bundle.getInt( ABILITY_COOLDOWN );
 		
 		BossHealthBar.assignBoss(this);
-		if (HP <= HT/2) BossHealthBar.bleed(true);
+		if (HP <= GetMaxHP()/2) BossHealthBar.bleed(true);
 	}
 	
 	//tengu is always hunting, and can use simpler rules because he never moves
@@ -454,7 +437,7 @@ public class Tengu extends Mob {
 	//expects to be called once per turn;
 	public boolean canUseAbility(){
 		
-		if (HP > HT/2) return false;
+		if (HP > GetMaxHP()/2) return false;
 		
 		if (abilitiesUsed >= targetAbilityUses()){
 			return false;

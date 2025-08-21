@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -63,14 +64,8 @@ import com.watabou.utils.PathFinder;
 import java.util.ArrayList;
 
 public class Shopkeeper extends NPC {
-
-	{
-		properties.add(Property.IMMOVABLE);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return ShopkeeperSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.shopkeeper; }
 
 	public static int MAX_BUYBACK_HISTORY = 3;
 	public ArrayList<Item> buybackItems = new ArrayList<>();

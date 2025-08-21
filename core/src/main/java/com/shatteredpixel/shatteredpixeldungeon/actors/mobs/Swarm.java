@@ -24,49 +24,27 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SwarmSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
 public class Swarm extends Mob {
-
-	{
-		HP = HT = getRandomizerEnabled(RandomTraits.DEPLETED_NUMBERS) ? 25 : 50;
-		defenseSkill = 5;
-		baseSpeed = getRandomizerEnabled(RandomTraits.CRAB_SPEED) ? 2f : 1f;
-
-		EXP = 3;
-		maxLvl = 9;
-		
-		flying = true;
-
-		loot = PotionOfHealing.class;
-		lootChance = 0.1667f; //by default, see lootChance()
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return SwarmSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.swarm; }
 	
 	private static final float SPLIT_DELAY	= 1f;
 	
@@ -84,7 +62,6 @@ public class Swarm extends Mob {
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		generation = bundle.getInt( GENERATION );
-		if (generation > 0) EXP = 0;
 	}
 
 	@Override
@@ -94,7 +71,7 @@ public class Swarm extends Mob {
 		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.WEAKENED_SWARM)) {
 			// 50%-100% health
 			float multiplier = Random.Float(0.5f, 1.0f);
-			HP = (int) (HT * multiplier);
+			HP = (int) (GetMaxHP() * multiplier);
 		}
 	}
 
@@ -102,12 +79,6 @@ public class Swarm extends Mob {
 	public void die(Object cause) {
 		flying = false;
 		super.die(cause);
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 4;
-		return Random.NormalIntRange( 1, 4 );
 	}
 
 	@Override
@@ -161,11 +132,6 @@ public class Swarm extends Mob {
 		
 		return super.defenseProc(enemy, damage);
 	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 10;
-	}
 
 	@Override
 	public int attackProc( Char enemy, int damage ) {
@@ -179,11 +145,16 @@ public class Swarm extends Mob {
 
 		return damage;
 	}
+
+	@Override
+	public int GetXP() {
+		if (generation == 0) return super.GetXP();
+		return 0;
+	}
 	
 	private Swarm split() {
 		Swarm clone = new Swarm();
 		clone.generation = generation + 1;
-		clone.EXP = 0;
 		if (buff( Burning.class ) != null) {
 			Buff.affect( clone, Burning.class ).reignite( clone );
 		}
@@ -199,15 +170,15 @@ public class Swarm extends Mob {
 	}
 
 	@Override
-	public float lootChance() {
-		lootChance = 1f/(6 * (generation+1) );
-		return super.lootChance() * (5f - Dungeon.LimitedDrops.SWARM_HP.count) / 5f;
+	public float GetLootChance(int slot) {
+		float lootChance = 1f/(6 * (generation+1) );
+		return super.GetLootChance(slot) * ((5f - Dungeon.LimitedDrops.SWARM_HP.count) / 5f) * lootChance;
 	}
 	
 	@Override
-	public Item createLoot(){
+	public Item createLoot(int itemSlot){
 		Dungeon.LimitedDrops.SWARM_HP.count++;
-		return super.createLoot();
+		return super.createLoot(itemSlot);
 	}
 
 	public enum RandomTraits {

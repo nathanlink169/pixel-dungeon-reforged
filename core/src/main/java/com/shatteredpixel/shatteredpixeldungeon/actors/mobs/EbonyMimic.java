@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
@@ -48,10 +49,7 @@ import com.watabou.noosa.audio.Sample;
 public class EbonyMimic extends Mimic {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return MimicSprite.Ebony.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ebonymimic; }
 
 	@Override
 	public String name(boolean forceNoMonsterUnknown) {
@@ -92,11 +90,11 @@ public class EbonyMimic extends Mimic {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (alignment == Alignment.NEUTRAL){
-			return Math.round(super.damageRoll(isMaxDamage)*2f); //BIG damage on surprise
+			return Math.round(super.damageRoll(type, isMaxDamage)*2f); //BIG damage on surprise
 		} else {
-			return super.damageRoll(isMaxDamage);
+			return super.damageRoll(type, isMaxDamage);
 		}
 	}
 

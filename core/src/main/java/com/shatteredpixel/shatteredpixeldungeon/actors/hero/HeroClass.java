@@ -53,6 +53,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.En
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.HeroicLeap;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.Shockwave;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Waterskin;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
@@ -78,8 +79,10 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMappi
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRage;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollTeleportToStaircase;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
@@ -88,6 +91,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Dagger;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Gloves;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Rapier;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarHammer;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingKnife;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
@@ -136,7 +140,29 @@ public enum HeroClass {
 		new ScrollOfIdentify().identify();
 
 		if (DeviceCompat.isDebug()) {
+			new ScrollKillAll().collect();
+			new ScrollTeleportToStaircase().collect();
+			for (int j = 0; j < 30; ++j) {
+				new ScrollOfMagicMapping().collect();
+				new ScrollOfTransmutation().collect();
+			}
+			Dungeon.hero.belongings.identify();
+		}
 
+		if (Dungeon.isChallenged(Challenges.TRINKET_MADNESS)) {
+			Trinket[] trinkets = new Trinket[3];
+			trinkets[0] = (Trinket) Generator.random(Generator.Category.TRINKET);
+			do {
+				trinkets[1] = (Trinket) Generator.random(Generator.Category.TRINKET);
+			} while (trinkets[0] == trinkets[1]);
+			do {
+				trinkets[2] = (Trinket) Generator.random(Generator.Category.TRINKET);
+			} while (trinkets[0] == trinkets[2] || trinkets[1] == trinkets[2]);
+
+			for (int j = 0; j < 3; ++j) {
+				trinkets[j].upgrade(3).collect();
+				trinkets[j].identify(false);
+			}
 		}
 
 		switch (this) {

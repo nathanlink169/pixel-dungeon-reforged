@@ -72,7 +72,7 @@ public abstract class CrystalSpireSprite extends MobSprite {
 
 		float hpPercent = 1f;
 		if (ch != null){
-			hpPercent = ch.HP/(float)ch.HT;
+			hpPercent = ch.HP/(float)ch.GetMaxHP();
 		}
 
 		TextureFilm frames = new TextureFilm( texture, 24, 41 );

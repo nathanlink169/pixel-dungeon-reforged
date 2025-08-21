@@ -26,34 +26,23 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Earthroot;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM100Sprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -64,25 +53,9 @@ import com.watabou.utils.Random;
 public class DM100 extends Mob implements Callback {
 
 	private static final float TIME_TO_ZAP	= 1f;
-	
-	{
-		HP = HT = 20;
-		defenseSkill = 8;
-		
-		EXP = 6;
-		maxLvl = 13;
-		
-		loot = Generator.Category.SCROLL;
-		lootChance = 0.25f;
-		
-		properties.add(Property.ELECTRIC);
-		properties.add(Property.INORGANIC);
-	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return DM100Sprite.class;
-	}
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm100; }
 
 	private boolean seenPlayer = false;
 	private boolean hasZapped = false;
@@ -124,27 +97,11 @@ public class DM100 extends Mob implements Callback {
 			immunities.add(Sleep.class);
 		}
 	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 8;
-		return Random.NormalIntRange( 2, 8 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 11;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 4);
-	}
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
 		if (getRandomizerEnabled(RandomTraits.PASSIVE_PROTOCOL)) {
-			if (HP == HT) return false;
+			if (HP == GetMaxHP()) return false;
 		}
 
 		boolean canRanged = new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
@@ -181,7 +138,7 @@ public class DM100 extends Mob implements Callback {
 
 			Invisibility.dispel(this);
 			if (hit( this, enemy, true )) {
-				int dmg = Random.NormalIntRange(3, 10);
+				int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
 				dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
 				enemy.damage( dmg, new LightningBolt() );
 
@@ -218,7 +175,7 @@ public class DM100 extends Mob implements Callback {
 	protected void spendConstant( float time ){
 		int oldTime = (int)this.getTime(); // cut it off
 		super.spendConstant(time);
-		if (getRandomizerEnabled(RandomTraits.ELECTRICAL_AURA) && this.getTime() > oldTime) { // we go up one turn
+		if (getRandomizerEnabled(RandomTraits.ELECTRICAL_AURA) && (int)(this.getTime()) > oldTime) { // we go up one turn
 			auraDamage();
 		}
 	}
@@ -233,7 +190,7 @@ public class DM100 extends Mob implements Callback {
 					continue;
 				}
 
-				int damage = Math.round(Random.NormalIntRange(1, 8));
+				int damage = damageRoll(AttackType.RANGED_MAGICAL, false);
 				enemy.damage( damage, new LightningBolt() );
 			}
 		}

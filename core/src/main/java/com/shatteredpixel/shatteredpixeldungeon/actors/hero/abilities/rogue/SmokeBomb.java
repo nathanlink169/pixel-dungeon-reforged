@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.rogue;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -52,15 +52,13 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.BArray;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
@@ -172,27 +170,29 @@ public class SmokeBomb extends ArmorAbility {
 	public static class NinjaLog extends NPC {
 
 		{
-			defenseSkill = 0;
-
-			properties.add(Property.INORGANIC); //wood is organic, but this is accurate for game logic
-
 			alignment = Alignment.ALLY;
-
-			HT = 20;
-			if (Dungeon.hero != null) HT *= Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT);
-			HP = HT;
 		}
+
+		private int m_bodyReplacementPoints;
+		public NinjaLog() {
+			super();
+			m_bodyReplacementPoints = Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT);
+		}
+
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return NinjaLogSprite.class;
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ninjalog; }
+
+		@Override
+		public int GetMaxHP() {
+			return super.GetMaxHP() * m_bodyReplacementPoints;
 		}
 
 		@Override
 		public int drRoll() {
 			int dr = super.drRoll();
 
-			dr += Random.NormalIntRange(Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT),
-					3*Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT));
+			dr += Random.NormalIntRange(m_bodyReplacementPoints,
+					3*m_bodyReplacementPoints);
 
 			return dr;
 		}
@@ -206,6 +206,19 @@ public class SmokeBomb extends ArmorAbility {
 			immunities.add( AllyBuff.class );
 		}
 
+		private static final String BODY_REPLACEMENT_POINTS = "body_replacement_points";
+
+		@Override
+		public void storeInBundle( Bundle bundle ) {
+			super.storeInBundle( bundle );
+			bundle.put(BODY_REPLACEMENT_POINTS, m_bodyReplacementPoints);
+		}
+
+		@Override
+		public void restoreFromBundle( Bundle bundle ) {
+			super.restoreFromBundle( bundle );
+			m_bodyReplacementPoints = bundle.getInt(BODY_REPLACEMENT_POINTS);
+		}
 	}
 
 	public static class NinjaLogSprite extends MobSprite {

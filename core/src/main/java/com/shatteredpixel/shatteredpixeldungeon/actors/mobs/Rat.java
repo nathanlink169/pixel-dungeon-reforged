@@ -24,40 +24,32 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-import java.util.Collections;
-
 public class Rat extends Mob {
-
-	{
-		HP = HT = getRandomizerEnabled(RandomTraits.FRAIL_VERMIN) ? 4 : 8;
-		defenseSkill = getRandomizerEnabled(RandomTraits.EVASIVE_PESTS) ? 25 : 2;
-
-		maxLvl = 5;
-
-		loot = getRandomizerEnabled(RandomTraits.MEATY_RATS) ? MysteryMeat.class : null;
-		lootChance = getRandomizerEnabled(RandomTraits.MEATY_RATS) ? 0.5f : 0.0f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return RatSprite.class;
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rat; }
+
+	@Override
+	public int GetMaxHP() {
+		return super.GetMaxHP() / (getRandomizerEnabled(RandomTraits.FRAIL_VERMIN) ? 2 : 1);
+	}
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		return super.defenseSkill(enemy) * (getRandomizerEnabled(RandomTraits.EVASIVE_PESTS) ? 5 : 1);
 	}
 
 	@Override
@@ -70,22 +62,19 @@ public class Rat extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		int minDamage = getRandomizerEnabled(RandomTraits.NIBBLING_NUISANCES) ? 0 : 1;
-		int maxDamage = getRandomizerEnabled(RandomTraits.NIBBLING_NUISANCES) ? 2 : 4;
+	public int minDamage(AttackType type) {
+		if (type == AttackType.MELEE && getRandomizerEnabled(RandomTraits.NIBBLING_NUISANCES)) {
+			return super.minDamage(type) / 2;
+		}
+		return super.minDamage(type);
+	}
 
-		if (isMaxDamage) return maxDamage;
-		return Random.NormalIntRange( minDamage, maxDamage );
-	}
-	
 	@Override
-	public int attackSkill( Char target ) {
-		return 8;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 1);
+	public int maxDamage(AttackType type) {
+		if (type == AttackType.MELEE && getRandomizerEnabled(RandomTraits.NIBBLING_NUISANCES)) {
+			return super.maxDamage(type) / 2;
+		}
+		return super.maxDamage(type);
 	}
 
 	private static final String RAT_ALLY = "rat_ally";
@@ -116,6 +105,16 @@ public class Rat extends Mob {
 			}
 		}
 		return super.attackProc(enemy, damage);
+	}
+
+	@Override
+	public void rollToDropLoot() {
+		super.rollToDropLoot();
+		if (Dungeon.hero.lvl > GetMaxLevel() + 2) return;
+
+		if (getRandomizerEnabled(RandomTraits.MEATY_RATS) && Random.Float() > 0.5f) {
+			Dungeon.level.drop(new MysteryMeat(), pos).sprite.drop();
+		}
 	}
 
 	public enum RandomTraits {

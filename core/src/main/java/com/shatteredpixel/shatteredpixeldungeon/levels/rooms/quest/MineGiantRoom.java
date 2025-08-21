@@ -26,7 +26,6 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalSpire;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.FungalCore;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollGeomancer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wyrm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
@@ -130,19 +129,6 @@ public class MineGiantRoom extends CaveRoom {
 			g.pos = level.pointToCell(center);
 			Buff.affect(g, GnollGeomancer.RockArmor.class).setShield(50);
 			level.mobs.add(g);
-
-		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.FUNGI){
-			Painter.fillEllipse(level, this, 2, Terrain.HIGH_GRASS);
-
-			Painter.fillEllipse(level, this, 3, Terrain.GRASS);
-
-			Painter.fillEllipse(level, this, 4, Terrain.HIGH_GRASS);
-			Painter.fillEllipse(level, this, 5, Terrain.GRASS);
-
-			Point p = center();
-			FungalCore m = new FungalCore();
-			m.pos = level.pointToCell(p);
-			level.mobs.add(m);
 
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.KOBOLD) {
 			Painter.fillEllipse(level, this, 3, Terrain.EMPTY);

@@ -24,45 +24,31 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSapperSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class GnollSapper extends Mob {
-
 	{
 		//always acts after guards, makes it easier to kite them into attacks
 		actPriority = Actor.MOB_PRIO-1;
-
-		HP = HT = 45;
-		defenseSkill = 15;
-
-		EXP = 10;
-		maxLvl = -2;
-
-		properties.add(Property.MINIBOSS);
-
 		HUNTING = new Hunting();
 		WANDERING = new Wandering();
 		state = SLEEPING;
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
 
-		return GnollSapperSprite.class;
-	}
+	@Override
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollsapper; }
 
 	public int spawnPos;
 	private int partnerID = -1;
@@ -105,25 +91,9 @@ public class GnollSapper extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 6;
-		return Random.NormalIntRange( 1, 6 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 18;
-	}
-
-	@Override
 	public void damage(int dmg, Object src, int damageType) {
 		super.damage(dmg, src, damageType);
 		abilityCooldown -= dmg/10f;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 6);
 	}
 
 	@Override

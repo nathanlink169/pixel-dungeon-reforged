@@ -86,7 +86,7 @@ public class Hunger extends Buff implements Hero.Doom {
 				++timeStarving;
 
 				float multiplier = (float)(((Math.pow(1.001, timeStarving)) - 1.0f) * 0.25f);
-				partialDamage += target.HT * multiplier;
+				partialDamage += target.GetMaxHP() * multiplier;
 
 				if (partialDamage > 1){
 					target.damage( (int)partialDamage, this);
@@ -158,7 +158,7 @@ public class Hunger extends Buff implements Hero.Doom {
 		} else if (level > STARVING) {
 			float excess = level - STARVING;
 			level = STARVING;
-			partialDamage += excess * (target.HT/1000f);
+			partialDamage += excess * (target.GetMaxHP()/1000f);
 			if (partialDamage > 1f){
 				target.damage( (int)partialDamage, this );
 				partialDamage -= (int)partialDamage;

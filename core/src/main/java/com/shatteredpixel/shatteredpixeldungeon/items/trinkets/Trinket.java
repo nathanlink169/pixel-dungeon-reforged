@@ -24,7 +24,9 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.trinkets;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
@@ -44,6 +46,14 @@ public abstract class Trinket extends Item {
 	@Override
 	public boolean isUpgradable() {
 		return false;
+	}
+
+	@Override
+	public ArrayList<String> actions(Hero hero) {
+		if (Dungeon.isChallenged(Challenges.TRINKET_MADNESS)) {
+			return new ArrayList<>();
+		}
+		return super.actions(hero);
 	}
 
 	protected abstract int upgradeEnergyCost();

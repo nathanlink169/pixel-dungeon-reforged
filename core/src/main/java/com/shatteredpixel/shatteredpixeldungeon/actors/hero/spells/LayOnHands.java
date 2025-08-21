@@ -118,10 +118,10 @@ public class LayOnHands extends TargetedClericSpell {
 			Buff.affect(ch, Barrier.class).incShield(totalBarrier);
 			ch.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(totalBarrier), FloatingText.SHIELDING );
 		} else {
-			if (ch.HT - ch.HP < totalHeal){
-				totalBarrier = totalHeal - (ch.HT - ch.HP);
-				if (ch.HP != ch.HT) {
-					ch.HP = ch.HT;
+			if (ch.GetMaxHP() - ch.HP < totalHeal){
+				totalBarrier = totalHeal - (ch.GetMaxHP() - ch.HP);
+				if (ch.HP != ch.GetMaxHP()) {
+					ch.HP = ch.GetMaxHP();
 					ch.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(totalHeal - totalBarrier), FloatingText.HEALING);
 				}
 				if (totalBarrier > 0) {

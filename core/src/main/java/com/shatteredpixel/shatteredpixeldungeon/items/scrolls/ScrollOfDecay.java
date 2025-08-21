@@ -72,7 +72,7 @@ public class ScrollOfDecay extends Scroll {
                             Buff.affect(ch, Bless.class, Bless.DURATION);
                             Buff.affect(ch, Adrenaline.class, Adrenaline.DURATION);
                         } else if (!ch.isImmune(getClass())) {
-                            int damage = (int)Math.max(0.6f * ch.HP, 0.1f * ch.HT);
+                            int damage = (int)Math.max(0.6f * ch.HP, 0.1f * ch.GetMaxHP());
                             ch.damage(damage, this);
                             Buff.affect(ch, Weakness.class, Weakness.DURATION);
 
@@ -81,7 +81,7 @@ public class ScrollOfDecay extends Scroll {
                             }
                         }
                     } else /*if (ch == curUser)*/ {
-                        int damage = (int)Math.max(0.3f * ch.HP, 0.05f * ch.HT);
+                        int damage = (int)Math.max(0.3f * ch.HP, 0.05f * ch.GetMaxHP());
                         ch.damage(damage, this);
                         Buff.affect(ch, Weakness.class, Weakness.DURATION * 0.5f);
                     }

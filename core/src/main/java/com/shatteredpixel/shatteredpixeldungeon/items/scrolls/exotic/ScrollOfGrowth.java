@@ -69,7 +69,7 @@ public class ScrollOfGrowth extends ExoticScroll {
 						Buff.affect(ch, Bless.class, Bless.DURATION);
 						Buff.affect(ch, Adrenaline.class, Adrenaline.DURATION);
 					} else if (!ch.isImmune(getClass())) {
-						int damage = (int)Math.max(0.6f * ch.HP, 0.1f * ch.HT);
+						int damage = (int)Math.max(0.6f * ch.HP, 0.1f * ch.GetMaxHP());
 						ch.damage(damage, this);
 						Buff.affect(ch, Weakness.class, Weakness.DURATION);
 

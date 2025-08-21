@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -44,7 +44,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Chains;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Effects;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.FerretTuft;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -52,8 +51,6 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GuardSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
@@ -65,30 +62,10 @@ public class Guard extends Mob {
 	private boolean chainsUsed = false;
 
 	{
-		HP = HT = 40;
-		defenseSkill = 10;
-
-		EXP = 7;
-		maxLvl = 14;
-
-		loot = Generator.Category.ARMOR;
-		lootChance = 0.2f; //by default, see lootChance()
-
-		properties.add(Property.UNDEAD);
-		
 		HUNTING = new Hunting();
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return GuardSprite.class;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 12;
-		return Random.NormalIntRange(4, 12);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.guard; }
 
 	private boolean chain(int target){
 		if ((chainsUsed && !getRandomizerEnabled(RandomTraits.CHAIN_MASTER)) || enemy.properties().contains(Property.IMMOVABLE))
@@ -239,26 +216,16 @@ public class Guard extends Mob {
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		return 12;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 7);
-	}
-
-	@Override
-	public float lootChance() {
+	public float GetLootChance(int slot) {
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/5, 1/15, 1/45, 1/135, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.GUARD_ARM.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/3f, Dungeon.LimitedDrops.GUARD_ARM.count);
 	}
 
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Dungeon.LimitedDrops.GUARD_ARM.count++;
-		return super.createLoot();
+		return super.createLoot(itemSlot);
 	}
 
 	private final String CHAINSUSED = "chainsused";

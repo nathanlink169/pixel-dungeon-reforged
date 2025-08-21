@@ -37,7 +37,7 @@ public class Fury extends Buff {
 	
 	@Override
 	public boolean act() {
-		if (target.HP > target.HT * LEVEL) {
+		if (target.HP > target.GetMaxHP() * LEVEL) {
 			detach();
 		}
 		

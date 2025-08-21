@@ -57,6 +57,7 @@ public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+		add_v0_1_2_Changes(changeInfos);
 		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_Changes(changeInfos);
 	}
@@ -67,27 +68,15 @@ public class pdr_v0_X_Changes {
 		changes.hardlight(0xCCCCCC);
 		changeInfos.add(changes);
 
-		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Next Update",
-				"I think the majority of gamebreaking bugs have been addressed at this point (he says, before another 60 are reported.) Now I want to do some reworks and major tweaks of balancing.\n" +
-						"\n" +
-						"The first major balance is the Artificer's gun. It is a bit underwhelming, so it will be getting a much more powerful ability that can effect multiple enemies, with positioning being important. This means that it's not just \"shoot as soon as you see an enemy.\" As such, the penalty for being up close will also be removed for the gun specifically.\n\n" +
-						"\n" +
-						"The other two major balances needed are the Wyrm fight being easily beaten with the Sniper (and being weak to ranged attacks in general,) and the Artificers activated abilities being very overpowered."));
-
 		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Overview",
-				"The next minor update will be addressing balancing feedback. I'm sure some things are overtuned or undertuned, especially with the Artificer and the new boss. The minor update will be bug fixes and balancing those two in particular.\n" +
-				"\n" +
-				"After that, I have a few ideas in mind. The other features explained in the coming soon section will be the next major update. After that, the ultimate goal is to create an \"endless mode\" as an alternative to the ascension challenge. On top of that, I want to create an alternate boss for each region.\n" +
+				"This area is meant to go over all of my plans that I will add. That doesn't mean all of these will come in the next update, but they should come sometime!\n" +
 				"\n" +
 				"I plan to keep this branched away from Shattered Pixel Dungeon. I'll bring things in if I feel they'll really improve the experience, in the same way I've brought over some features from Darkest Pixel Dungeon, Chancel Pixel Dungeon, etc.\n\nFor those mods, the goal is to celebrate those features, not outright steal them. A lot of the games I've pulled features from are no longer receiving updates, but if any of the creators have a problem with me using their content, let me know and I will remedy that."));
 
-		changes.addButton( new ChangeButton(new Image(new SkeletonSprite()), "New Prison Boss",
+		changes.addButton( new ChangeButton(new Image(new SkeletonSprite()), "New Prison Boss (and a new boss for each region)",
 				"One of the things I want to do is different sized dynamic bosses. I know we technically have the crystal in the troll quest, but that is very static.\n" +
 				"\n" +
 				"The current plan is to bring in a very large skeleton (name pending.) The only way to destroy it is to crush its skull, but you'll have to break down its legs to get there. This large, dynamic, multi-stage boss is something that I think will add more life to the existing bosses."));
-
-		changes.addButton( new ChangeButton(Icons.get(Icons.PREFS), "Behind the Scenes Changes",
-				"One of the main things I'd like to do is some behind the scenes changes to how data is laid out. Everything is very hard-coded (i.e. the numbers such as health, damage, etc. are put directly in the code rather than another file,) which can make it a little difficult to change what you need quickly. I'd like to create some tools allow faster development on certain things."));
 
 		changes.addButton( new ChangeButton(HeroSprite.avatar(HeroClass.MAGE, 1), "Hero Visual Customization",
 				"I'd like to add some visual customization for heroes. I won't be able to change the hero splash art because I am not good at art, but I would like to be able to change the sprite: skin colour, hair colour, hairstyle, gender presentation, etc."));
@@ -111,6 +100,41 @@ public class pdr_v0_X_Changes {
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
 	}
 
+	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.1.2", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.GUN), "Railgun",
+				"Friendship ended with \"Gun,\" now \"Homemade Railgun\" is my new best friend.\n\n" +
+						"**-** Gun has been renamed to Homemade Railgun\n" +
+						"**-** Homemade Railgun can pierce infinite enemies\n" +
+						"**-** Every creature hit generates a small explosion around the enemy, dealing half damage to all creatures within the area\n" +
+						"**-** Explosions can destroy any destroyable items (like potions or scrolls) so be careful!"));
+
+		changes.addButton( new ChangeButton(HeroSprite.avatar(HeroClass.ARTIFICER, 1), "Adaptive Minefield",
+				"Due to the gun changes, adaptive minefield has been reworked. Instead of disabling traps with the gun, the artificer now has a bonus chance to passively find traps, due to her intimate knowledge of trap creation and deployment."));
+
+		changes.addButton( new ChangeButton(Icons.CHALLENGE_COLOR.get(), "Trinket Madness",
+				"Another new challenge, Trinket Madness! Start with three random fully upgraded trinkets. You cannot get rid of the trinkets, transmute them, throw them, or anything like that. You will also not find a magical catalyst in the dungeon.\n\n" +
+						"To save on space, during this challenge, trinkets will go into your Velvet Pouch."));
+
+		changes.addButton( new ChangeButton(new Image(new KoboldSprite.Red()), "Kobold Quest Boss Buff",
+				"The boss of the kobold quest had a few issues with being easily defeated. Now it will approach anyone attacking at range!"));
+
+		changes.addButton( new ChangeButton(HeroSprite.avatar(HeroClass.ARTIFICER, 6), "Artificer Armor Abilities Nerfed",
+				"**The Artificers armour abilities have been nerfed, as they were a massive power spike.**\n" +
+						"\n" +
+						"**Quickdraws** base cost has been upped from 35% to 50%, and the amount of shots it shoots at base has been reduced from 5 to 2 (given the gun rework, I think this should still work fine)\n" +
+						"\n" +
+						"**Truesight** base cost has been upped from 20% to 40%, and bright light's chance has been pulled from 20% change per point to 10%\n" +
+						"\n" +
+						"**Reflection** has been left unchanged for now."));
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PREFS), "Behind the Scenes Change",
+				"Enemy stats are no longer hardcoded, instead generated from .csv files. This means the .java files should be smaller and easier to navigate. There will be more overhauls like this. Ultimately, you shouldn't notice anything, but it will make it easier for me to navigate the codebase."));
+	}
 	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {
 
 		ChangeInfo changes = new ChangeInfo("v0.1.1", true, "");

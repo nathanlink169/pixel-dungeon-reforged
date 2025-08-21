@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -46,24 +47,11 @@ import com.watabou.utils.Random;
 public class GreatCrab extends Crab {
 
 	{
-		HP = HT = 25;
-		defenseSkill = 0; //see damage()
-		baseSpeed = 1f;
-
-		EXP = 6;
-
 		WANDERING = new Wandering();
 		state = WANDERING;
-
-		loot = new MysteryMeat().quantity(2);
-		lootChance = 1f;
-
-		properties.add(Property.MINIBOSS);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return GreatCrabSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.greatcrab; }
 
 	private int moving = 0;
 

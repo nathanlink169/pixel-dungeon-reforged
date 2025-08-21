@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -38,10 +38,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.RatSkull;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PiranhaSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -49,13 +47,6 @@ import com.watabou.utils.Random;
 public class Piranha extends Mob {
 	
 	{
-		baseSpeed = 2f;
-		
-		EXP = 0;
-		
-		loot = MysteryMeat.class;
-		lootChance = 1f;
-		
 		SLEEPING = new Sleeping();
 		WANDERING = new Wandering();
 		HUNTING = new Hunting();
@@ -64,16 +55,16 @@ public class Piranha extends Mob {
 
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.piranha; }
 
-		return PiranhaSprite.class;
+	@Override
+	public int GetMaxHP() {
+		return 10 + Dungeon.depth * 5;
 	}
-	
-	public Piranha() {
-		super();
-		
-		HP = HT = 10 + Dungeon.depth * 5;
-		defenseSkill = 10 + Dungeon.depth * 2;
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		return 10 + Dungeon.depth * 2;
 	}
 	
 	@Override
@@ -91,7 +82,7 @@ public class Piranha extends Mob {
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return 4 + Dungeon.depth * 2;
 		return Random.NormalIntRange( Dungeon.depth, 4 + Dungeon.depth * 2 );
 	}
@@ -181,7 +172,7 @@ public class Piranha extends Mob {
 		@Override
 		public boolean act(boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, viewDistance);
+				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
 				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
 			}
 			
@@ -193,7 +184,7 @@ public class Piranha extends Mob {
 		@Override
 		public boolean act(boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, viewDistance);
+				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
 				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
 			}
 			
@@ -206,7 +197,7 @@ public class Piranha extends Mob {
 		@Override
 		public boolean act(boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, viewDistance);
+				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
 				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
 			}
 			

@@ -63,12 +63,12 @@ public class WaterOfHealth extends WellWater {
 
 		if (VialOfBlood.delayBurstHealing()){
 			Healing healing = Buff.affect(hero, Healing.class);
-			healing.setHeal(hero.HT, 0, VialOfBlood.maxHealPerTurn());
+			healing.setHeal(hero.GetMaxHP(), 0, VialOfBlood.maxHealPerTurn());
 			healing.applyVialEffect();
 		} else {
-			hero.HP = hero.HT;
+			hero.HP = hero.GetMaxHP();
 			hero.sprite.emitter().start(Speck.factory(Speck.HEALING), 0.4f, 4);
-			hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(hero.HT), FloatingText.HEALING);
+			hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(hero.GetMaxHP()), FloatingText.HEALING);
 		}
 		
 		CellEmitter.get( hero.pos ).start( ShaftParticle.FACTORY, 0.2f, 3 );

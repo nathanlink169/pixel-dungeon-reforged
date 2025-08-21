@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.artifacts;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
@@ -300,7 +301,7 @@ public class DriedRose extends Artifact {
 		if (ghost == null){
 			return super.status();
 		} else {
-			return ((ghost.HP*100) / ghost.HT) + "%";
+			return ((ghost.HP*100) / ghost.GetMaxHP()) + "%";
 		}
 	}
 	
@@ -327,9 +328,9 @@ public class DriedRose extends Artifact {
 				}
 				updateQuickslot();
 			}
-		} else if (ghost.HP < ghost.HT) {
+		} else if (ghost.HP < ghost.GetMaxHP()) {
 			int heal = Math.round((1 + level()/3f)*amount);
-			ghost.HP = Math.min( ghost.HT, ghost.HP + heal);
+			ghost.HP = Math.min( ghost.GetMaxHP(), ghost.HP + heal);
 			if (ghost.sprite != null) {
 				ghost.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(heal), FloatingText.HEALING);
 			}
@@ -415,7 +416,7 @@ public class DriedRose extends Artifact {
 			if (ghost != null && !cursed && target.buff(MagicImmune.class) == null){
 				
 				//heals to full over 500 turns
-				if (ghost.HP < ghost.HT && Regeneration.regenOn()) {
+				if (ghost.HP < ghost.GetMaxHP() && Regeneration.regenOn()) {
 					float overclockedCharge = 1.0f;
 					if (Dungeon.hero.pointsInTalent(Talent.OVERCLOCKED_SYSTEMS) == 1) {
 						overclockedCharge *= 1.2f;
@@ -423,7 +424,7 @@ public class DriedRose extends Artifact {
 					if (Dungeon.hero.pointsInTalent(Talent.OVERCLOCKED_SYSTEMS) == 2) {
 						overclockedCharge *= 1.35f;
 					}
-					partialCharge += (ghost.HT / 500f) * RingOfEnergy.artifactChargeMultiplier(target) * overclockedCharge;
+					partialCharge += (ghost.GetMaxHP() / 500f) * RingOfEnergy.artifactChargeMultiplier(target) * overclockedCharge;
 					updateQuickslot();
 					
 					while (partialCharge > 1) {
@@ -554,17 +555,12 @@ public class DriedRose extends Artifact {
 	public static class GhostHero extends DirectableAlly {
 
 		{
-			flying = true;
-			
 			state = HUNTING;
-			
-			properties.add(Property.UNDEAD);
-			properties.add(Property.INORGANIC);
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return GhostSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ghosthero; }
+
+		private int m_CachedHP = 20; // Used in case player drops the rose while the ghost is out
 		
 		private DriedRose rose = null;
 		
@@ -576,7 +572,7 @@ public class DriedRose extends Artifact {
 			super();
 			this.rose = rose;
 			updateRose();
-			HP = HT;
+			HP = GetMaxHP();
 		}
 
 		@Override
@@ -597,15 +593,20 @@ public class DriedRose extends Artifact {
 			super.targetChar(ch);
 		}
 
+		@Override
+		public int GetMaxHP() {
+			if (rose != null)
+				return 20 + 8 * rose.level();
+			return m_CachedHP;
+		}
 		private void updateRose(){
 			if (rose == null) {
 				rose = Dungeon.hero.belongings.getItem(DriedRose.class);
 			}
 			
 			//same dodge as the hero
-			defenseSkill = (Dungeon.hero.lvl+4);
 			if (rose == null) return;
-			HT = 20 + 8*rose.level();
+			m_CachedHP = 20 + 8 * rose.level();
 		}
 
 		@Override
@@ -653,7 +654,7 @@ public class DriedRose extends Artifact {
 		}
 		
 		@Override
-		public int damageRoll(boolean isMaxDamage) {
+		public int damageRoll(AttackType type, boolean isMaxDamage) {
 			int dmg = 0;
 			if (rose != null && rose.weapon != null){
 				dmg += rose.weapon.damageRoll(this, isMaxDamage);
@@ -710,10 +711,10 @@ public class DriedRose extends Artifact {
 			
 			return speed;
 		}
-		
+
 		@Override
 		public int defenseSkill(Char enemy) {
-			int defense = super.defenseSkill(enemy);
+			int defense = Dungeon.hero.lvl + 4;
 
 			if (defense != 0 && rose != null && rose.armor != null ){
 				defense = Math.round(rose.armor.evasionFactor( this, defense ));
@@ -869,6 +870,19 @@ public class DriedRose extends Artifact {
 			immunities.add( AllyBuff.class );
 		}
 
+		private static final String CACHED_HP = "cached_hp";
+
+		@Override
+		public void storeInBundle(Bundle bundle) {
+			super.storeInBundle(bundle);
+			bundle.put(CACHED_HP, m_CachedHP);
+		}
+
+		@Override
+		public void restoreFromBundle(Bundle bundle) {
+			super.restoreFromBundle(bundle);
+			m_CachedHP = bundle.getInt(CACHED_HP);
+		}
 	}
 	
 	private static class WndGhostHero extends Window{

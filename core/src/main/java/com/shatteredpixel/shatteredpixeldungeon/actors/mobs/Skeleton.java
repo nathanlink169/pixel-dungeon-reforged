@@ -25,56 +25,27 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Earthroot;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SkeletonSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Skeleton extends Mob {
-	
-	{
-		HP = HT = 25;
-		defenseSkill = 9;
-		
-		EXP = 5;
-		maxLvl = 10;
-
-		loot = Generator.Category.WEAPON;
-		lootChance = 0.1667f; //by default, see lootChance()
-
-		properties.add(Property.UNDEAD);
-		properties.add(Property.INORGANIC);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.skeleton; }
 
-		return SkeletonSprite.class;
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 10;
-		return Random.NormalIntRange( 2, 10 );
-	}
-	
 	@Override
 	public void die( Object cause ) {
 		
@@ -105,7 +76,7 @@ public class Skeleton extends Mob {
 
 			Char ch = findChar( pos + neighbours[i] );
 			if (ch != null && ch.isAlive()) {
-				int damage = Math.round(Random.NormalIntRange(6, 12));
+				int damage = damageRoll(AttackType.RANGED_PHYSICAL, false);
 
 				if (cause == this && getRandomizerEnabled(RandomTraits.KAMIKAZE_BONES)) {
 					damage *= 3;
@@ -172,29 +143,22 @@ public class Skeleton extends Mob {
 	}
 
 	@Override
-	public float lootChance() {
+	public float GetLootChance(int slot) {
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/6, 1/18, 1/54, 1/162, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.SKELE_WEP.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/3f, Dungeon.LimitedDrops.SKELE_WEP.count);
 	}
 
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Dungeon.LimitedDrops.SKELE_WEP.count++;
-		return super.createLoot();
+		return super.createLoot(itemSlot);
 	}
 
 	@Override
 	public int attackSkill( Char target ) {
-		if (getRandomizerEnabled(RandomTraits.BRITTLE_JOINTS)) return 2;
-		return 12;
+		return super.attackSkill(target) / (getRandomizerEnabled(RandomTraits.BRITTLE_JOINTS) ? 6 : 1);
 	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
-	}
-
 
 	public enum RandomTraits {
 		BONE_BOMB, DRAINING_TOUCH, KAMIKAZE_BONES, FIZZLED_EXPLOSION, HOLLOW_SOCKETS, BRITTLE_JOINTS

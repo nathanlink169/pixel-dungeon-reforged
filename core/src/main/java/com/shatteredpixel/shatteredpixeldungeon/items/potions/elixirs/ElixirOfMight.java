@@ -58,8 +58,10 @@ public class ElixirOfMight extends Elixir {
 		Buff.affect(hero, HTBoost.class).reset();
 		HTBoost boost = Buff.affect(hero, HTBoost.class);
 		boost.reset();
-		
-		hero.updateHT( true );
+
+		int lastHP = hero.GetLastCalculatedHP();
+		int maxHP = hero.GetMaxHP();
+		hero.HP = Math.min(hero.HP + (maxHP - lastHP), maxHP);
 		GLog.p( Messages.get(this, "msg", hero.STR()) );
 
 		Badges.validateStrengthAttained();
@@ -67,7 +69,7 @@ public class ElixirOfMight extends Elixir {
 	}
 	
 	public String desc() {
-		return Messages.get(this, "desc", HTBoost.boost(Dungeon.hero != null ? Dungeon.hero.HT : 20));
+		return Messages.get(this, "desc", HTBoost.boost(Dungeon.hero != null ? Dungeon.hero.GetMaxHP() : 20));
 	}
 	
 	public static class Recipe extends com.shatteredpixel.shatteredpixeldungeon.items.Recipe.SimpleRecipe {

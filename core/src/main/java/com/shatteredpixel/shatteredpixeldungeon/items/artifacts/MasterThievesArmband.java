@@ -155,9 +155,9 @@ public class MasterThievesArmband extends Artifact {
 								exp += 2;
 							}
 
-							float lootChance = ((Mob) ch).lootChance() * lootMultiplier;
+							float lootChance = ((Mob) ch).GetLootChance(0) * lootMultiplier;
 
-							if (Dungeon.hero.lvl > ((Mob) ch).maxLvl + 2) {
+							if (Dungeon.hero.lvl > ((Mob) ch).GetMaxLevel() + 2) {
 								lootChance = 0;
 							} else if (ch.buff(StolenTracker.class) != null){
 								lootChance = 0;
@@ -166,7 +166,7 @@ public class MasterThievesArmband extends Artifact {
 							if (lootChance == 0){
 								GLog.w(Messages.get(MasterThievesArmband.class, "no_steal"));
 							} else if (Random.Float() <= lootChance){
-								Item loot = ((Mob) ch).createLoot();
+								Item loot = ((Mob) ch).createLoot(0);
 								if (Challenges.isItemBlocked(loot)){
 									GLog.i(Messages.get(MasterThievesArmband.class, "failed_steal"));
 									Buff.affect(ch, StolenTracker.class).setItemStolen(false);

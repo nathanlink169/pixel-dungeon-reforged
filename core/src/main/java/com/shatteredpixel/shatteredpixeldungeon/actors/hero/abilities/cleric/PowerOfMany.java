@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -55,8 +55,6 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -250,17 +248,12 @@ public class PowerOfMany extends ArmorAbility {
 	public static class LightAlly extends DirectableAlly {
 
 		{
-			HP = HT = 80;
-
 			immunities.add(AllyBuff.class);
-
-			properties.add(Property.INORGANIC);
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return LightAllySprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.lightally; }
 
+		private int m_HeroLevel = 0;
 		HeroClass cls;
 
 		public LightAlly(){
@@ -270,7 +263,12 @@ public class PowerOfMany extends ArmorAbility {
 
 		public LightAlly(int heroLevel ){
 			this();
-			defenseSkill = heroLevel + 4; //equal to base hero defense skill
+			m_HeroLevel = heroLevel;
+		}
+
+		@Override
+		public int GetDefenseSkillInternal() {
+			return m_HeroLevel + 4;
 		}
 
 		@Override
@@ -308,18 +306,7 @@ public class PowerOfMany extends ArmorAbility {
 
 		@Override
 		public int attackSkill(Char target) {
-			return defenseSkill+5; //equal to base hero attack skill
-		}
-
-		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			if (isMaxDamage) return 30;
-			return Random.NormalIntRange(5, 30); //+0 greatsword
-		}
-
-		@Override
-		public int drRoll() {
-			return super.drRoll() + Random.NormalIntRange(1, 5); //+0 plate
+			return GetDefenseSkillInternal()+5; //equal to base hero attack skill
 		}
 
 		@Override
@@ -344,20 +331,20 @@ public class PowerOfMany extends ArmorAbility {
 		}
 
 		private static final String HERO_CLS = "hero_cls";
-		private static final String DEF_SKILL = "def_skill";
+		private static final String HERO_LVL = "hero_level";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
 			bundle.put(HERO_CLS, cls);
-			bundle.put(DEF_SKILL, defenseSkill);
+			bundle.put(HERO_LVL, m_HeroLevel);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			cls = bundle.getEnum(HERO_CLS, HeroClass.class);
-			defenseSkill = bundle.getInt(DEF_SKILL);
+			m_HeroLevel = bundle.getInt(HERO_LVL);
 		}
 	}
 

@@ -96,11 +96,11 @@ public class GrimTrap extends Trap {
 					}
 					final Char finalTarget = target;
 					//instant kill, use a mix of current HP and max HP, just like psi blast (for resistances)
-					int damage = Math.round(finalTarget.HT/2f + finalTarget.HP/2f);
+					int damage = Math.round(finalTarget.GetMaxHP()/2f + finalTarget.HP/2f);
 
 					//can't do more than 90% HT for the hero specifically
 					if (finalTarget == Dungeon.hero){
-						damage = (int)Math.min(damage, finalTarget.HT*0.9f);
+						damage = (int)Math.min(damage, finalTarget.GetMaxHP()*0.9f);
 					}
 
 					final int finalDmg = damage;

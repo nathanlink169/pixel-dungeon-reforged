@@ -218,7 +218,7 @@ public class ChangesScene extends PixelScene {
 			}
 		}
 
-		content.setSize( panel.innerWidth(), (int)Math.ceil(posY) );
+		content.setSize( panel.innerWidth(), (int)Math.ceil(posY)+30 );
 
 		list.setRect(
 				panel.x + panel.marginLeft(),

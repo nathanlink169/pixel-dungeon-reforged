@@ -161,7 +161,7 @@ public class GamesInProgress {
 		info.strBonus = Dungeon.hero.STR() - Dungeon.hero.STR;
 		info.exp = Dungeon.hero.exp;
 		info.hp = Dungeon.hero.HP;
-		info.ht = Dungeon.hero.HT;
+		info.ht = Dungeon.hero.GetMaxHP();
 		info.shld = Dungeon.hero.shielding();
 		info.heroClass = Dungeon.hero.heroClass;
 		info.subClass = Dungeon.hero.subClass;

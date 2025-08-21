@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -32,9 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ChallengeParti
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.RatSkull;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WraithSprite;
 import com.watabou.noosa.tweeners.AlphaTweener;
 import com.watabou.utils.Bundle;
@@ -49,42 +47,44 @@ public class Wraith extends Mob {
 	private static final float SPAWN_DELAY	= 2f;
 	
 	protected int level;
-	
-	{
-		HP = HT = 1;
-		EXP = 0;
 
-		maxLvl = -2;
-		
-		flying = true;
-
-		properties.add(Property.UNDEAD);
-		properties.add(Property.INORGANIC);
+	private int m_MaxHPOverride = -1;
+	public void SetMaxHPOverride(int override) {
+		m_MaxHPOverride = override;
 	}
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return WraithSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.wraith; }
 	
 	private static final String LEVEL = "level";
+	private static final String MAX_HP_OVERRIDE = "max_hp_override";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
 		bundle.put( LEVEL, level );
+		if (m_MaxHPOverride > -1) {
+			bundle.put(MAX_HP_OVERRIDE, m_MaxHPOverride);
+		}
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
 		level = bundle.getInt( LEVEL );
-		adjustStats( level );
+		if (bundle.contains(MAX_HP_OVERRIDE)) {
+			m_MaxHPOverride = bundle.getInt(MAX_HP_OVERRIDE);
+		}
+	}
+
+	@Override
+	public int GetMaxHP() {
+		if (m_MaxHPOverride != -1) return m_MaxHPOverride;
+		return super.GetMaxHP();
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return 2+level;
 		return Random.NormalIntRange( 1 + level/2, 2 + level );
 	}
@@ -93,11 +93,10 @@ public class Wraith extends Mob {
 	public int attackSkill( Char target ) {
 		return 10 + level;
 	}
-	
-	public void adjustStats( int level ) {
-		this.level = level;
-		defenseSkill = attackSkill( null ) * 5;
-		enemySeen = true;
+
+	@Override
+	public int defenseSkill(Char enemy) {
+		return attackSkill(null) * 5;
 	}
 
 	@Override
@@ -163,7 +162,7 @@ public class Wraith extends Mob {
 			} else {
 				w = Reflection.newInstance(wraithClass);
 			}
-			w.adjustStats( Dungeon.scalingDepth() );
+			w.level = Dungeon.scalingDepth();
 			w.pos = pos;
 			w.state = w.HUNTING;
 			GameScene.add( w, SPAWN_DELAY );

@@ -541,10 +541,7 @@ public class Dungeon {
 				}
 			}
 		}
-		
-		Light light = hero.buff( Light.class );
-		hero.viewDistance = light == null ? level.viewDistance : Math.max( Light.DISTANCE, level.viewDistance );
-		
+
 		hero.curAction = hero.lastAction = null;
 
 		observe();
@@ -635,7 +632,7 @@ public class Dungeon {
 
 	public static boolean trinketCataNeeded(){
 		//one trinket catalyst on floors 1-3
-		return depth < 5 && !LimitedDrops.TRINKET_CATA.dropped() && Random.Int(4-depth) == 0;
+		return depth < 5 && !LimitedDrops.TRINKET_CATA.dropped() && Random.Int(4-depth) == 0 && !Dungeon.isChallenged(Challenges.TRINKET_MADNESS);
 	}
 
 	public static boolean labRoomNeeded(){
@@ -975,7 +972,7 @@ public class Dungeon {
 
 	//default to recomputing based on max hero vision, in case vision just shrank/grew
 	public static void observe(){
-		int dist = Math.max(Dungeon.hero.viewDistance, 8);
+		int dist = Math.max(Dungeon.hero.GetViewDistance(), 8);
 		float distanceMultiplier = 1.0f;
 		distanceMultiplier += 0.25f * Dungeon.hero.pointsInTalent(Talent.FARSIGHT);
 		if (Dungeon.hero.hasTalent(Talent.MECHANICAL_GOGGLES)) {
@@ -1084,7 +1081,7 @@ public class Dungeon {
 				y = ch.pos / level.width();
 
 				//left, right, top, bottom
-				dist = ch.viewDistance+1;
+				dist = ch.GetViewDistance()+1;
 				l = Math.max( 0, x - dist );
 				r = Math.min( x + dist, level.width() - 1 );
 				t = Math.max( 0, y - dist );

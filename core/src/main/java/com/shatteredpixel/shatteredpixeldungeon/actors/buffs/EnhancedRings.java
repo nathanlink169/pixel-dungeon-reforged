@@ -38,21 +38,6 @@ public class EnhancedRings extends FlavourBuff {
 	}
 
 	@Override
-	public boolean attachTo(Char target) {
-		if (super.attachTo(target)){
-			if (target == Dungeon.hero) ((Hero) target).updateHT(false);
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public void detach() {
-		super.detach();
-		if (target == Dungeon.hero) ((Hero) target).updateHT(false);
-	}
-
-	@Override
 	public int icon() {
 		return BuffIndicator.UPGRADE;
 	}

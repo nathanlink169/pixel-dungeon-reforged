@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -47,18 +48,11 @@ public class RatKing extends NPC {
 		state = SLEEPING;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return RatKingSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ratking; }
 	
 	@Override
 	public int defenseSkill( Char enemy ) {
 		return INFINITE_EVASION;
-	}
-	
-	@Override
-	public float speed() {
-		return 2f;
 	}
 	
 	@Override

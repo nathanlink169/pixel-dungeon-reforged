@@ -85,7 +85,7 @@ public class HealthBar extends Component {
 	public void level(Char c){
 		float health = c.HP;
 		float shield = c.shielding();
-		float max = Math.max(health+shield, c.HT);
+		float max = Math.max(health+shield, c.GetMaxHP());
 
 		level(health/max, (health+shield)/max);
 	}

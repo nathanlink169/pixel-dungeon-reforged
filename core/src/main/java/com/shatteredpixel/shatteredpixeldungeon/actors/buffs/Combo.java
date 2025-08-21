@@ -32,7 +32,6 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
-import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -96,7 +95,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		count++;
 		comboTime = 5f;
 
-		if (!enemy.isAlive() || (enemy.buff(Corruption.class) != null && enemy.HP == enemy.HT)){
+		if (!enemy.isAlive() || (enemy.buff(Corruption.class) != null && enemy.HP == enemy.GetMaxHP())){
 			comboTime = Math.max(comboTime, 15*((Hero)target).pointsInTalent(Talent.CLEAVE));
 		}
 
@@ -401,7 +400,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 					for (Char ch : Actor.chars()) {
 						if (ch != enemy && ch.alignment == Char.Alignment.ENEMY
 								&& PathFinder.distance[ch.pos] < Integer.MAX_VALUE) {
-							int aoeHit = Math.round(target.damageRoll(false) * 0.25f * count);
+							int aoeHit = Math.round(target.damageRoll(Char.AttackType.MELEE, false) * 0.25f * count);
 							aoeHit /= 2;
 							aoeHit -= ch.drRoll();
 							if (ch.buff(Vulnerable.class) != null) aoeHit *= 1.33f;

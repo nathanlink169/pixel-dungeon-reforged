@@ -22,6 +22,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -419,21 +420,19 @@ public class WandOfRegrowth extends Wand {
 
 		{
 			alignment = Alignment.NEUTRAL;
-			properties.add(Property.IMMOVABLE);
-			properties.add(Property.STATIC);
-
-			viewDistance = 1;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return LotusSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.lotus; }
 
 		private int wandLvl = 0;
 
 		private void setLevel( int lvl ){
 			wandLvl = lvl;
-			HP = HT = 25 + 3*lvl;
+		}
+
+		@Override
+		public int GetMaxHP() {
+			return 25 + 3 * wandLvl;
 		}
 
 		public boolean inRange(int pos){
@@ -475,7 +474,7 @@ public class WandOfRegrowth extends Wand {
 		public void destroy() {
 			super.destroy();
 			Dungeon.observe();
-			GameScene.updateFog(pos, viewDistance+1);
+			GameScene.updateFog(pos, GetViewDistance()+1);
 		}
 
 		@Override

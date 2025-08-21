@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -48,6 +49,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalGuardianSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -57,46 +59,37 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
 public class CrystalSpire extends Mob {
-
 	{
-		//this translates to roughly 33/27/23/20/18/16 pickaxe hits at +0/1/2/3/4/5
-		HP = HT = 300;
-
-		EXP = 20;
-
 		//acts after other mobs, which makes baiting crystal guardians more consistent
 		actPriority = MOB_PRIO-1;
 
 		state = PASSIVE;
 
 		alignment = Alignment.NEUTRAL;
-
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.BOSS);
-		properties.add(Property.INORGANIC);
-		properties.add(Property.STATIC);
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		if (spriteClass == null) {
-			switch (Random.Int(3)){
-				case 0: default:
-					spriteClass = CrystalSpireSprite.Blue.class;
-					break;
-				case 1:
-					spriteClass = CrystalSpireSprite.Green.class;
-					break;
-				case 2:
-					spriteClass = CrystalSpireSprite.Red.class;
-					break;
-			}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.crystalspire; }
+
+	@Override
+	public Class<? extends CharSprite> GetSpriteName() {
+		if (m_SpriteVariant == -1) {
+			m_SpriteVariant = Random.Int(3);
 		}
 
-		return spriteClass;
+		switch (m_SpriteVariant){
+			case 0: default:
+				return CrystalSpireSprite.Blue.class;
+			case 1:
+				return CrystalSpireSprite.Green.class;
+			case 2:
+				return CrystalSpireSprite.Red.class;
+		}
 	}
 
 	private Class<? extends CharSprite> spriteClass = null;
@@ -147,9 +140,9 @@ public class CrystalSpire extends Mob {
 				Char ch = Actor.findChar(i);
 
 				if (ch != null && !(ch instanceof CrystalWisp || ch instanceof CrystalSpire)){
-					int dmg = Random.NormalIntRange(6, 15);
+					int dmg = damageRoll(AttackType.MELEE, false);
 
-					//guardians are hit harder by the attack
+					// guardians are hit harder by the attack
 					if (ch instanceof CrystalGuardian) {
 						dmg += 12; //18-27 damage
 						Buff.prolong(ch, Cripple.class, 30f);
@@ -160,7 +153,7 @@ public class CrystalSpire extends Mob {
 
 					int movePos = i;
 					//crystal guardians get knocked away from the hero, others get knocked away from the spire
-					if (ch instanceof CrystalGuardian){
+					if (ch instanceof CrystalGuardian) {
 						for (int j : PathFinder.NEIGHBOURS8){
 							if (!Dungeon.level.solid[i+j] && Actor.findChar(i+j) == null &&
 									Dungeon.level.trueDistance(i+j, Dungeon.hero.pos) > Dungeon.level.trueDistance(movePos, Dungeon.hero.pos)){
@@ -241,10 +234,10 @@ public class CrystalSpire extends Mob {
 		aoeCells.addAll(spreadDiamondAOE(aoeCells));
 		targetedCells.add(new ArrayList<>(aoeCells));
 
-		if (HP < 2*HT/3f){
+		if (HP < 2*GetMaxHP()/3f){
 			aoeCells.addAll(spreadDiamondAOE(aoeCells));
 			targetedCells.add(new ArrayList<>(aoeCells));
-			if (HP < HT/3f) {
+			if (HP < GetMaxHP()/3f) {
 				aoeCells.addAll(spreadDiamondAOE(aoeCells));
 				targetedCells.add(aoeCells);
 			}
@@ -278,27 +271,14 @@ public class CrystalSpire extends Mob {
 		}
 
 		targetedCells.add(new ArrayList<>(lineCells));
-		if (HP < 2*HT/3f){
+		if (HP < 2*GetMaxHP()/3f){
 			lineCells.addAll(spreadDiamondAOE(lineCells));
 			targetedCells.add(new ArrayList<>(lineCells));
-			if (HP < HT/3f) {;
+			if (HP < GetMaxHP()/3f) {;
 				lineCells.addAll(spreadDiamondAOE(lineCells));
 				targetedCells.add(lineCells);
 			}
 		}
-	}
-
-	private ArrayList<Integer> spreadAOE(ArrayList<Integer> currentCells){
-		ArrayList<Integer> spreadCells = new ArrayList<>();
-		for (int i : currentCells){
-			for (int j : PathFinder.NEIGHBOURS8){
-				if ((!Dungeon.level.solid[i+j] || Dungeon.level.map[i+j] == Terrain.MINE_CRYSTAL)
-						&& !spreadCells.contains(i+j) && !currentCells.contains(i+j)){
-					spreadCells.add(i+j);
-				}
-			}
-		}
-		return spreadCells;
 	}
 
 	@Override
@@ -352,7 +332,7 @@ public class CrystalSpire extends Mob {
 					sprite.bloodBurstA(Dungeon.hero.sprite.center(), dmg);
 					sprite.flash();
 
-					BossHealthBar.bleed(HP <= HT/3);
+					BossHealthBar.bleed(HP <= GetMaxHP()/3);
 
 					if (isAlive()) {
 						Sample.INSTANCE.play(Assets.Sounds.SHATTER, 1f, Random.Float(1.15f, 1.25f));
@@ -383,7 +363,7 @@ public class CrystalSpire extends Mob {
 						for (Char ch : Actor.chars()){
 							if (fieldOfView[ch.pos]) {
 								if (ch instanceof CrystalGuardian) {
-									ch.damage(ch.HT, new SpireSpike());
+									ch.damage(ch.GetMaxHP(), new SpireSpike());
 								}
 								if (ch instanceof CrystalWisp) {
 									Buff.affect(ch, Blindness.class, 5f);

@@ -25,12 +25,11 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
@@ -40,7 +39,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
@@ -53,25 +51,11 @@ import com.watabou.utils.Random;
 public class RipperDemon extends Mob {
 
 	{
-		HP = HT = 70;
-		defenseSkill = 22;
-		viewDistance = Light.DISTANCE - 1;
-
-		EXP = 9; //for corrupting
-		maxLvl = -2;
-
 		HUNTING = new Hunting();
-
-		baseSpeed = 1f;
-
-		properties.add(Property.DEMONIC);
-		properties.add(Property.UNDEAD);
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return RipperSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ripperdemon; }
 
 	@Override
 	public float spawningWeight() {
@@ -79,28 +63,13 @@ public class RipperDemon extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (getRandomizerEnabled(RandomTraits.DULL_CLAWS)) {
-			if (isMaxDamage) return 20;
-			return Random.NormalIntRange(5, 20);
-		}
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 15, 25 );
+	public int minDamage(AttackType type) {
+		return super.minDamage(type) / (getRandomizerEnabled(RandomTraits.DULL_CLAWS) ? 3 : 1);
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		return 30;
-	}
-
-	@Override
-	public float attackDelay() {
-		return super.attackDelay()*0.5f;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 4);
+	public int maxDamage(AttackType type) {
+		return (int) (super.maxDamage(type) * (getRandomizerEnabled(RandomTraits.DULL_CLAWS) ? 0.8f : 1.0f));
 	}
 
 	private static final String LAST_ENEMY_POS = "last_enemy_pos";
@@ -230,7 +199,7 @@ public class RipperDemon extends Mob {
 
 						if (leapVictim != null && alignment != leapVictim.alignment){
 							if (hit(RipperDemon.this, leapVictim, Char.INFINITE_ACCURACY, false)) {
-								Buff.affect(leapVictim, Bleeding.class).set(0.75f * damageRoll(false));
+								Buff.affect(leapVictim, Bleeding.class).set(0.75f * damageRoll(AttackType.MELEE, false));
 								leapVictim.sprite.flash();
 								Sample.INSTANCE.play(Assets.Sounds.HIT);
 							} else {

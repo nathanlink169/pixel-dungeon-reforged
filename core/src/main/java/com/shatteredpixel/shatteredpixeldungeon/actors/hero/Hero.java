@@ -27,7 +27,6 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -58,6 +57,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Levitation;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MindVision;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
@@ -97,7 +97,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
@@ -253,8 +252,6 @@ public class Hero extends Char {
 	private int constructRespawnTimer = 0;
 	private boolean doesConstructExist = false;
 	
-	public int HTBoost = 0;
-	
 	private ArrayList<Mob> visibleEnemies;
 
 	//This list is maintained so that some logic checks can be skipped
@@ -264,33 +261,41 @@ public class Hero extends Char {
 	public Hero() {
 		super();
 
-		updateHT(false);
-		HP = HT;
+		HP = GetMaxHP();
 		STR = STARTING_STR;
 		
 		belongings = new Belongings( this );
 		
 		visibleEnemies = new ArrayList<>();
 	}
-	
-	public void updateHT( boolean boostHP ){
-		int curHT = HT;
-		
-		HT = 20 + 5*(lvl-1) + HTBoost;
-		float tempHT = HT; // temp float due to multiple multipliers
-		float difficultyMultiplier = Dungeon.difficulty * -0.1f + 1.2f; // 1.1 easy, 1.0 med, 0.9 hard, 0.8 imp
-		tempHT = tempHT * difficultyMultiplier;
+
+	private int m_LastCalculatedHP;
+	public int GetLastCalculatedHP() { return m_LastCalculatedHP; }
+
+	@Override
+	public int GetMaxHP() {
+		float maxHP = 20 + 5 * (lvl-1);
+		float difficultyMultiplier = Dungeon.difficulty * -0.1f + 1.2f; // x1.1 easy, x1.0 med, x0.9 hard, x0.8 imp
+		maxHP *= difficultyMultiplier;
 		float ringOfMightMultiplier = RingOfMight.HTMultiplier(this);
-		HT = Math.round(ringOfMightMultiplier * tempHT);
-		
-		if (buff(ElixirOfMight.HTBoost.class) != null){
-			HT += buff(ElixirOfMight.HTBoost.class).boost();
+		maxHP *= ringOfMightMultiplier;
+
+		if (buff(ElixirOfMight.HTBoost.class) != null) {
+			maxHP += buff(ElixirOfMight.HTBoost.class).boost();
 		}
-		
-		if (boostHP){
-			HP += Math.max(HT - curHT, 0);
+
+		HP = Math.min(HP, (int)maxHP);
+		m_LastCalculatedHP = (int)maxHP;
+		return (int)maxHP;
+	}
+
+	@Override
+	public int GetViewDistance() {
+		int viewDistance = Math.min(super.GetViewDistance(), Dungeon.level.viewDistance);
+		if (buff(Light.class) != null) {
+			viewDistance = Math.max(viewDistance, Light.DISTANCE);
 		}
-		HP = Math.min(HP, HT);
+		return viewDistance;
 	}
 
 	public int STR() {
@@ -319,8 +324,8 @@ public class Hero extends Char {
 	private static final String STRENGTH	= "STR";
 	private static final String LEVEL		= "lvl";
 	private static final String EXPERIENCE	= "exp";
-	private static final String HTBOOST     = "htboost";
 	private static final String CONSTRUCT_RESPAWN_TIMER = "construct_respawn_timer";
+	protected static final String TAG_HT    = "HT";
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -339,8 +344,8 @@ public class Hero extends Char {
 		
 		bundle.put( LEVEL, lvl );
 		bundle.put( EXPERIENCE, exp );
-		
-		bundle.put( HTBOOST, HTBoost );
+
+		bundle.put( TAG_HT, GetMaxHP()); // we don't restore this, we just save it to show in saves
 
 		if (heroClass == HeroClass.ARTIFICER && subClass == HeroSubClass.CONSTRUCTOR) {
 			bundle.put(CONSTRUCT_RESPAWN_TIMER, constructRespawnTimer);
@@ -354,8 +359,6 @@ public class Hero extends Char {
 
 		lvl = bundle.getInt( LEVEL );
 		exp = bundle.getInt( EXPERIENCE );
-
-		HTBoost = bundle.getInt(HTBOOST);
 
 		super.restoreFromBundle( bundle );
 
@@ -381,7 +384,7 @@ public class Hero extends Char {
 		info.str = bundle.getInt( STRENGTH );
 		info.exp = bundle.getInt( EXPERIENCE );
 		info.hp = bundle.getInt( Char.TAG_HP );
-		info.ht = bundle.getInt( Char.TAG_HT );
+		info.ht = bundle.getInt( TAG_HT );
 		info.shld = bundle.getInt( Char.TAG_SHLD );
 		info.heroClass = bundle.getEnum( CLASS, HeroClass.class );
 		info.subClass = bundle.getEnum( SUBCLASS, HeroSubClass.class );
@@ -688,7 +691,7 @@ public class Hero extends Char {
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		KindOfWeapon wep = belongings.attackingWeapon();
 		int dmg;
 
@@ -1586,7 +1589,7 @@ public class Hero extends Char {
 			if (heroClass != HeroClass.DUELIST
 					&& hasTalent(Talent.AGGRESSIVE_BARRIER)
 					&& buff(Talent.AggressiveBarrierCooldown.class) == null
-					&& (HP / (float)HT) <= 0.5f){
+					&& (HP / (float)GetMaxHP()) <= 0.5f){
 				int shieldAmt = 1 + 2*pointsInTalent(Talent.AGGRESSIVE_BARRIER);
 				Buff.affect(this, Barrier.class).setShield(shieldAmt);
 				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shieldAmt), FloatingText.SHIELDING);
@@ -1809,7 +1812,7 @@ public class Hero extends Char {
 
 		//flash red when hit for serious damage.
 		float percentDMG = effectiveDamage / (float)preHP; //percent of current HP that was taken
-		float percentHP = 1 - ((HT - postHP) / (float)HT); //percent health after damage was taken
+		float percentHP = 1 - ((GetMaxHP() - postHP) / (float)GetMaxHP()); //percent health after damage was taken
 		// The flash intensity increases primarily based on damage taken and secondarily on missing HP.
 		float flashIntensity = 0.25f * (percentDMG * percentDMG) / percentHP;
 		//if the intensity is very low don't flash at all
@@ -2200,8 +2203,10 @@ public class Hero extends Char {
 				if (buff(ElixirOfMight.HTBoost.class) != null){
 					buff(ElixirOfMight.HTBoost.class).onLevelUp();
 				}
-				
-				updateHT( true );
+
+				int lastHP = GetLastCalculatedHP();
+				int maxHP = GetMaxHP();
+				HP = Math.min(HP + (maxHP - lastHP), maxHP);
 				attackSkill++;
 				defenseSkill++;
 
@@ -2303,7 +2308,7 @@ public class Hero extends Char {
 			interrupt();
 
 			if (ankh.isBlessed()) {
-				this.HP = HT / 4;
+				this.HP = GetMaxHP() / 4;
 
 				PotionOfHealing.cure(this);
 				Buff.prolong(this, Invulnerability.class, Invulnerability.DURATION);
@@ -2650,11 +2655,7 @@ public class Hero extends Char {
 						//unintentional trap detection scales from 40% at floor 0 to 30% at floor 25
 						} else if (Dungeon.level.map[curr] == Terrain.SECRET_TRAP) {
 							chance = 0.4f - (Dungeon.depth / 250f);
-
-							// Bonus for adaptive minefield
-							if (heroClass != HeroClass.ARTIFICER) {
-								chance += 0.1f * pointsInTalent(Talent.ADAPTIVE_MINEFIELD);
-							}
+							chance += 0.2f * pointsInTalent(Talent.ADAPTIVE_MINEFIELD);
 							
 						//unintentional door detection scales from 20% at floor 0 to 0% at floor 20
 						} else {
@@ -2724,7 +2725,7 @@ public class Hero extends Char {
 	}
 	
 	public void resurrect() {
-		HP = HT;
+		HP = GetMaxHP();
 		live();
 
 		MagicalHolster holster = belongings.getItem(MagicalHolster.class);
@@ -2753,8 +2754,6 @@ public class Hero extends Char {
 				((MagesStaff) i).applyWandChargeBuff(this);
 			}
 		}
-
-		updateHT(false);
 	}
 
 	@Override

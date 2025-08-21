@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -39,47 +39,37 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalGuardianSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.Reflection;
 
-public class CrystalGuardian extends Mob{
-
+public class CrystalGuardian extends Mob {
 	{
-		HP = HT = 100;
-		defenseSkill = 14;
-
-		EXP = 10;
-		maxLvl = -2;
-
 		SLEEPING = new Sleeping();
 		state = SLEEPING;
-
-		properties.add(Property.INORGANIC);
-		properties.add(Property.MINIBOSS);
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		if (spriteClass == null) {
-			switch (Random.Int(3)){
-				case 0: default:
-					spriteClass = CrystalGuardianSprite.Blue.class;
-					break;
-				case 1:
-					spriteClass = CrystalGuardianSprite.Green.class;
-					break;
-				case 2:
-					spriteClass = CrystalGuardianSprite.Red.class;
-					break;
-			}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.crystalguardian; }
+
+	@Override
+	public Class<? extends CharSprite> GetSpriteName() {
+		if (m_SpriteVariant == -1) {
+			m_SpriteVariant = Random.Int(3);
 		}
 
-		return spriteClass;
+		switch (m_SpriteVariant){
+			case 0: default:
+				return CrystalGuardianSprite.Blue.class;
+			case 1:
+				return CrystalGuardianSprite.Green.class;
+			case 2:
+				return CrystalGuardianSprite.Red.class;
+		}
 	}
 
 	private Class<? extends CharSprite> spriteClass = null;
@@ -94,11 +84,11 @@ public class CrystalGuardian extends Mob{
 	protected boolean act() {
 		if (recovering){
 			throwItems();
-			HP = Math.min(HT, HP+5);
+			HP = Math.min(GetMaxHP(), HP+5);
 			if (Dungeon.level.heroFOV[pos]) {
 				sprite.showStatusWithIcon(CharSprite.POSITIVE, "5", FloatingText.HEALING);
 			}
-			if (HP == HT){
+			if (HP == GetMaxHP()){
 				recovering = false;
 				if (sprite instanceof CrystalGuardianSprite) ((CrystalGuardianSprite) sprite).endCrumple();
 			}
@@ -106,17 +96,6 @@ public class CrystalGuardian extends Mob{
 			return true;
 		}
 		return super.act();
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 16;
-		return Random.NormalIntRange( 10, 16 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
 	}
 
 	@Override
@@ -132,11 +111,6 @@ public class CrystalGuardian extends Mob{
 	}
 
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
-	}
-
-	@Override
 	public boolean reset() {
 		return true;
 	}
@@ -147,7 +121,7 @@ public class CrystalGuardian extends Mob{
 		if (enemy == Dungeon.hero){
 			boolean spireNear = false;
 			for (Mob m : Dungeon.level.mobs.toArray(new Mob[0])){
-				if (m instanceof CrystalSpire && m.HP != m.HT && Dungeon.level.distance(pos, m.pos) <= 8){
+				if (m instanceof CrystalSpire && m.HP != m.GetMaxHP() && Dungeon.level.distance(pos, m.pos) <= 8){
 					spireNear = true;
 				}
 			}

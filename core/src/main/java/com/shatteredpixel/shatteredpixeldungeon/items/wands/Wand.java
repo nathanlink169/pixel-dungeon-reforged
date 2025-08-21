@@ -534,7 +534,7 @@ public abstract class Wand extends Item {
 		if (Dungeon.hero.hasTalent(ARCSHIELDING)) {
 			float threshold = 0.25f;
 			if (Dungeon.hero.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
-			if (Dungeon.hero.HP/(float)Dungeon.hero.HT <= threshold) {
+			if (Dungeon.hero.HP/(float)Dungeon.hero.GetMaxHP() <= threshold) {
 				int shielding = 3;
 				if (Dungeon.hero.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
 				Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);
@@ -716,7 +716,7 @@ public abstract class Wand extends Item {
 							return;
 						}
 
-						float shield = curUser.HT * (0.04f*curWand.curCharges);
+						float shield = curUser.GetMaxHP() * (0.04f*curWand.curCharges);
 						if (curUser.pointsInTalent(Talent.SHIELD_BATTERY) == 2) shield *= 1.5f;
 						Buff.affect(curUser, Barrier.class).setShield(Math.round(shield));
 						curUser.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(shield)), FloatingText.SHIELDING);

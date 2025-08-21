@@ -23,6 +23,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -30,22 +31,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
-import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.GooBlob;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.RatClaw;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GooSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatUsurperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.watabou.utils.Bundle;
@@ -55,23 +50,12 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class RatUsurper extends Mob {
-
-    {
-        HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 120 : 80;
-        EXP = 10;
-        defenseSkill = 8;
-
-        properties.add(Property.BOSS);
-    }
     @Override
-    public Class<? extends CharSprite> GetSpriteClass() {
-        return RatUsurperSprite.class;
-    }
+    public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ratusurper; }
 
     @Override
-    public int damageRoll(boolean isMaxDamage) {
-        if (isMaxDamage) return 4;
-        return Random.NormalIntRange( 4, 10 );
+    public int GetMaxHP() {
+        return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.5f : 1.0f));
     }
 
     @Override
@@ -95,28 +79,18 @@ public class RatUsurper extends Mob {
     }
 
     @Override
-    public int attackSkill( Char target ) {
-        return 16;
-    }
-
-    @Override
-    public int drRoll() {
-        return super.drRoll() + Random.NormalIntRange(0, 2);
-    }
-
-    @Override
     public void damage(int dmg, Object src, int damageType) {
         if (!BossHealthBar.isAssigned()){
             BossHealthBar.assignBoss( this );
             Dungeon.level.seal();
         }
         int lastHP = HP;
-        boolean bleeding = (HP*2 <= HT);
+        boolean bleeding = (HP*2 <= GetMaxHP());
         super.damage(dmg, src, damageType);
         if (lastHP != HP && HP > 0) {
             // only spawn rat if actually takes damage
             if (bleeding) {
-                int hpBracket = HT / 8;
+                int hpBracket = GetMaxHP() / 8;
                 int oldBracket = lastHP / hpBracket;
                 int curbracket = HP / hpBracket;
 
@@ -149,7 +123,7 @@ public class RatUsurper extends Mob {
             }
         }
 
-        if ((HP*2 <= HT) && !bleeding){
+        if ((HP*2 <= GetMaxHP()) && !bleeding){
             BossHealthBar.bleed(true);
             yell(Messages.get(this, "help"));
         }
@@ -284,7 +258,7 @@ public class RatUsurper extends Mob {
 
         super.restoreFromBundle( bundle );
         if (state != SLEEPING) BossHealthBar.assignBoss(this);
-        if ((HP*2 <= HT)) BossHealthBar.bleed(true);
+        if ((HP*2 <= GetMaxHP())) BossHealthBar.bleed(true);
     }
 
 
@@ -292,7 +266,11 @@ public class RatUsurper extends Mob {
         {
             properties.add(Property.BOSS_MINION);
             state = HUNTING;
-            maxLvl = -2;
+        }
+
+        @Override
+        public int GetMaxLevel() {
+            return -2;
         }
 
         public static void spawnAround(int pos) {

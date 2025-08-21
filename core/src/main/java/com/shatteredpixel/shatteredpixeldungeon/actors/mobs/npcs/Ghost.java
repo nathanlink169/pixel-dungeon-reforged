@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -62,18 +63,11 @@ import com.watabou.utils.Random;
 public class Ghost extends NPC {
 
 	{
-		flying = true;
-
 		WANDERING = new Wandering();
 		state = WANDERING;
-
-		//not actually large of course, but this makes the ghost stick to the exit room
-		properties.add(Property.LARGE);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return GhostSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ghost; }
 
 	protected class Wandering extends Mob.Wandering{
 		@Override
@@ -105,11 +99,6 @@ public class Ghost extends NPC {
 	@Override
 	public int defenseSkill( Char enemy ) {
 		return INFINITE_EVASION;
-	}
-	
-	@Override
-	public float speed() {
-		return 0.5f;
 	}
 	
 	@Override

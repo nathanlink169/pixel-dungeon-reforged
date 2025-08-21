@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -52,24 +53,15 @@ import java.util.ArrayList;
 public class Pylon extends Mob {
 
 	{
-		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 80 : 50;
-
-		maxLvl = -2;
-
-		properties.add(Property.MINIBOSS);
-		properties.add(Property.BOSS_MINION);
-		properties.add(Property.INORGANIC);
-		properties.add(Property.ELECTRIC);
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.STATIC);
-
 		state = PASSIVE;
 		alignment = Alignment.NEUTRAL;
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		// MonsterUnknown doesn't really apply to this one, I wouldn't really call it a mob tbh
-		return PylonSprite.class;
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.pylon; }
+
+	@Override
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.6f : 1.0f));
 	}
 
 	private int targetNeighbor = Random.Int(8);
@@ -141,7 +133,7 @@ public class Pylon extends Mob {
 	private void shockChar( Char ch ){
 		if (ch != null && !(ch instanceof DM300)){
 			ch.sprite.flash();
-			ch.damage(Random.NormalIntRange(10, 20), new Electricity());
+			ch.damage(damageRoll(AttackType.RANGED_MAGICAL, false), new Electricity());
 
 			if (ch == Dungeon.hero) {
 				Statistics.qualifiedForBossChallengeBadge = false;

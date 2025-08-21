@@ -25,28 +25,20 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -54,20 +46,11 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class Gnoll extends Mob {
-	
 	{
-		HP = HT = 12;
-		defenseSkill = 4;
-		
-		EXP = 2;
-		maxLvl = 8;
-		
-		loot = Gold.class;
-		lootChance = 0.5f;
-
 		WANDERING = new Wandering();
 		HUNTING = getRandomizerEnabled(RandomTraits.PACIFIST_PATROL) ? new Fleeing() : new Hunting();
 	}
+
 	protected int partnerID = -1;
 	protected boolean seenPlayer = false;
 
@@ -78,7 +61,7 @@ public class Gnoll extends Mob {
 		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.BATTLE_SCARRED)) {
 			// 50%-100% health
 			float multiplier = Random.Float(0.5f, 1.0f);
-			HP = (int) (HT * multiplier);
+			HP = (int) (GetMaxHP() * multiplier);
 		}
 	}
 
@@ -99,10 +82,7 @@ public class Gnoll extends Mob {
 	private static final String PARTNER_ID = "partner_id";
 	private static final String SEEN_PLAYER = "seen_player";
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return GnollSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnoll; }
 
 	@Override
 	protected boolean act() {
@@ -167,22 +147,11 @@ public class Gnoll extends Mob {
 	}
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 6;
-		return Random.NormalIntRange( 1, 6 );
-	}
-	
-	@Override
-	public int attackSkill( Char target ) {
-		return 10;
-	}
-	
-	@Override
 	public int drRoll() {
 		if (getRandomizerEnabled(RandomTraits.BRITTLE_ARMOUR)) {
 			return super.drRoll() - 1;
 		}
-		return super.drRoll() + Random.NormalIntRange(0, 2);
+		return super.drRoll() + (getRandomizerEnabled(RandomTraits.BRITTLE_ARMOUR) ? -2 : 0);
 	}
 
 	private class Wandering extends Mob.Wandering {

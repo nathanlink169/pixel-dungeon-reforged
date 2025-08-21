@@ -24,19 +24,17 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ThiefSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
@@ -44,27 +42,14 @@ import com.watabou.utils.Random;
 public class Thief extends Mob {
 	
 	public Item item;
-	
+
 	{
-		HP = HT = 20;
-		defenseSkill = 12;
-		
-		EXP = 5;
-		maxLvl = 11;
-
-		loot = Random.oneOf(Generator.Category.RING, Generator.Category.ARTIFACT);
-		lootChance = 0.03f; //initially, see lootChance()
-
 		WANDERING = new Wandering();
 		FLEEING = new Fleeing();
-
-		properties.add(Property.UNDEAD);
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return ThiefSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.thief; }
 
 	private static final String ITEM = "item";
 	private static final String MAX_GOLD = "max_gold";
@@ -92,24 +77,18 @@ public class Thief extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 10;
-		return Random.NormalIntRange( 1, 10 );
-	}
-
-	@Override
 	public float attackDelay() {
 		if (getRandomizerEnabled(RandomTraits.SINGLE_STRIKE)) {
-			return super.attackDelay();
+			return super.attackDelay() * 2;
 		}
-		return super.attackDelay()*0.5f;
+		return super.attackDelay();
 	}
 
 	@Override
-	public float lootChance() {
+	public float GetLootChance(int slot) {
 		//each drop makes future drops 1/3 as likely
 		// so loot chance looks like: 1/33, 1/100, 1/300, 1/900, etc.
-		return super.lootChance() * (float)Math.pow(1/3f, Dungeon.LimitedDrops.THEIF_MISC.count);
+		return super.GetLootChance(slot) * (float)Math.pow(1/3f, Dungeon.LimitedDrops.THEIF_MISC.count);
 	}
 
 	@Override
@@ -124,19 +103,9 @@ public class Thief extends Mob {
 	}
 
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Dungeon.LimitedDrops.THEIF_MISC.count++;
-		return super.createLoot();
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 12;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 3);
+		return super.createLoot(itemSlot);
 	}
 
 	@Override
@@ -163,7 +132,7 @@ public class Thief extends Mob {
 			if (maxGold == 0) {
 				maxGold = Random.Int(25, 50);
 			}
-			float percDamage = (float)damage / (float)HT;
+			float percDamage = (float)damage / (float)GetMaxHP();
 			Dungeon.level.drop( new Gold((int) (maxGold * percDamage)), pos ).sprite.drop();
 		}
 		else if (state == FLEEING) {

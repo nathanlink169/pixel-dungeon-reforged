@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -42,14 +43,8 @@ public class Bandit extends Thief {
 	
 	public Item item;
 
-	{
-		//guaranteed first drop, then 1/3, 1/9, etc.
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return BanditSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bandit; }
 	
 	@Override
 	protected boolean steal( Hero hero ) {

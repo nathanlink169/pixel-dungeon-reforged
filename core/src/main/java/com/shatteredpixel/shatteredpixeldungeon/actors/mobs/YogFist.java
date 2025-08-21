@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -68,15 +69,6 @@ import com.watabou.utils.Random;
 public abstract class YogFist extends Mob {
 
 	{
-		HP = HT = 300;
-		defenseSkill = 20;
-
-		viewDistance = Light.DISTANCE;
-
-		//for doomed resistance
-		EXP = 25;
-		maxLvl = -2;
-
 		state = HUNTING;
 
 		properties.add(Property.BOSS);
@@ -178,22 +170,6 @@ public abstract class YogFist extends Mob {
 		next();
 	}
 
-	@Override
-	public int attackSkill( Char target ) {
-		return 36;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 36;
-		return Random.NormalIntRange( 18, 36 );
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 15);
-	}
-
 	{
 		immunities.add( Sleep.class );
 	}
@@ -218,15 +194,8 @@ public abstract class YogFist extends Mob {
 	}
 
 	public static class BurningFist extends YogFist {
-
-		{
-			properties.add(Property.FIERY);
-		}
-
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Burning.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.burningfist; }
 
 		@Override
 		public boolean act() {
@@ -295,9 +264,7 @@ public abstract class YogFist extends Mob {
 
 	public static class SoiledFist extends YogFist {
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Soiled.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.soiledfist; }
 
 		@Override
 		public boolean act() {
@@ -389,23 +356,17 @@ public abstract class YogFist extends Mob {
 	}
 
 	public static class RottingFist extends YogFist {
-
-		{
-			properties.add(Property.ACIDIC);
-		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Rotting.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rottingfist; }
 
 		@Override
 		protected boolean act() {
 			//ensures toxic gas acts at the appropriate time when added
 			GameScene.add(Blob.seed(pos, 0, ToxicGas.class));
 
-			if (Dungeon.level.water[pos] && HP < HT) {
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(HT/50), FloatingText.HEALING);
-				HP = Math.min(HT, HP + HT/50);
+			if (Dungeon.level.water[pos] && HP < GetMaxHP()) {
+				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(GetMaxHP()/50), FloatingText.HEALING);
+				HP = Math.min(GetMaxLevel(), HP + GetMaxHP()/50);
 			}
 
 			return super.act();
@@ -458,21 +419,8 @@ public abstract class YogFist extends Mob {
 	}
 
 	public static class RustedFist extends YogFist {
-
-		{
-			properties.add(Property.LARGE);
-			properties.add(Property.INORGANIC);
-		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Rusted.class;
-		}
-
-		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			if (isMaxDamage) return 44;
-			return Random.NormalIntRange( 22, 44 );
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rustedfist; }
 
 		@Override
 		public void damage(int dmg, Object src, int damageType) {
@@ -498,14 +446,10 @@ public abstract class YogFist extends Mob {
 	public static class BrightFist extends YogFist {
 
 		{
-			properties.add(Property.ELECTRIC);
-
 			canRangedInMelee = false;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Bright.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.brightfist; }
 
 		@Override
 		protected void incrementRangedCooldown() {
@@ -523,7 +467,7 @@ public abstract class YogFist extends Mob {
 			Char enemy = this.enemy;
 			if (hit( this, enemy, true )) {
 
-				enemy.damage( Random.NormalIntRange(10, 20), new LightBeam() );
+				enemy.damage( damageRoll(AttackType.RANGED_MAGICAL, false), new LightBeam() );
 				Buff.prolong( enemy, Blindness.class, Blindness.DURATION/2f );
 
 				if (!enemy.isAlive() && enemy == Dungeon.hero) {
@@ -543,8 +487,8 @@ public abstract class YogFist extends Mob {
 		public void damage(int dmg, Object src, int damageType) {
 			int beforeHP = HP;
 			super.damage(dmg, src, damageType);
-			if (isAlive() && beforeHP > HT/2 && HP < HT/2){
-				HP = HT/2;
+			if (isAlive() && beforeHP > GetMaxHP()/2 && HP < GetMaxHP()/2){
+				HP = GetMaxHP()/2;
 				Buff.prolong( Dungeon.hero, Blindness.class, Blindness.DURATION*1.5f );
 				int i;
 				do {
@@ -571,9 +515,7 @@ public abstract class YogFist extends Mob {
 			canRangedInMelee = false;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return FistSprite.Dark.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.darkfist; }
 
 		@Override
 		protected void incrementRangedCooldown() {
@@ -591,7 +533,7 @@ public abstract class YogFist extends Mob {
 			Char enemy = this.enemy;
 			if (hit( this, enemy, true )) {
 
-				enemy.damage( Random.NormalIntRange(10, 20), new DarkBolt() );
+				enemy.damage( damageRoll(AttackType.RANGED_MAGICAL, false), new DarkBolt() );
 
 				Light l = enemy.buff(Light.class);
 				if (l != null){
@@ -615,8 +557,8 @@ public abstract class YogFist extends Mob {
 		public void damage(int dmg, Object src, int damageType) {
 			int beforeHP = HP;
 			super.damage(dmg, src, damageType);
-			if (isAlive() && beforeHP > HT/2 && HP < HT/2){
-				HP = HT/2;
+			if (isAlive() && beforeHP > GetMaxHP()/2 && HP < GetMaxHP()/2){
+				HP = GetMaxHP()/2;
 				Light l = Dungeon.hero.buff(Light.class);
 				if (l != null){
 					l.detach();

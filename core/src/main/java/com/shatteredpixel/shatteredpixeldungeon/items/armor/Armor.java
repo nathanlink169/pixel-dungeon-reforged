@@ -414,7 +414,7 @@ public class Armor extends EquipableItem {
 						hpThreshold = 0.25f;
 						break;
 				}
-				if ((float)Dungeon.hero.HP / (float)Dungeon.hero.HT <= hpThreshold) {
+				if ((float)Dungeon.hero.HP / (float)Dungeon.hero.GetMaxHP() <= hpThreshold) {
 					artificerDamageReduction += 2;
 				}
 			}
@@ -451,7 +451,7 @@ public class Armor extends EquipableItem {
 						hpThreshold = 0.25f;
 						break;
 				}
-				if ((float)Dungeon.hero.HP / (float)Dungeon.hero.HT <= hpThreshold) {
+				if ((float)Dungeon.hero.HP / (float)Dungeon.hero.GetMaxHP() <= hpThreshold) {
 					artificerDamageReduction += 2;
 				}
 			}

@@ -60,7 +60,7 @@ public class ElixirOfArcaneClaws extends Elixir {
 
     @Override
     public void apply(Hero hero) {
-        Buff.affect(hero, ArcaneClaws.class).set(Math.round(hero.HT * 4f));
+        Buff.affect(hero, ArcaneClaws.class).set(Math.round(hero.GetMaxHP() * 4f));
 
         identify();
         Buff.prolong( hero, MindVision.class, MindVision.DURATION );
@@ -131,7 +131,7 @@ public class ElixirOfArcaneClaws extends Elixir {
 
         @Override
         public float iconFadePercent() {
-            float max = Math.round(target.HT * 1.5f);
+            float max = Math.round(target.GetMaxHP() * 1.5f);
             return Math.max(0, (max - left) / max);
         }
 

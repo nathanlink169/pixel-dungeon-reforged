@@ -108,11 +108,11 @@ public class BlessSpell extends TargetedClericSpell {
 		} else {
 			Buff.prolong(ch, Bless.class, 5f + 5*hero.pointsInTalent(Talent.BLESS));
 			int totalHeal = 5 + 5*hero.pointsInTalent(Talent.BLESS);
-			if (ch.HT - ch.HP < totalHeal){
-				int barrier = totalHeal - (ch.HT - ch.HP);
+			if (ch.GetMaxHP() - ch.HP < totalHeal){
+				int barrier = totalHeal - (ch.GetMaxHP() - ch.HP);
 				barrier = Math.max(barrier, 0);
-				if (ch.HP != ch.HT) {
-					ch.HP = ch.HT;
+				if (ch.HP != ch.GetMaxHP()) {
+					ch.HP = ch.GetMaxHP();
 					ch.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(totalHeal - barrier), FloatingText.HEALING);
 				}
 				if (barrier > 0) {

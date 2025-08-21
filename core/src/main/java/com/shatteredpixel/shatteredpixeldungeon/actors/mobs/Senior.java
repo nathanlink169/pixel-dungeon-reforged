@@ -24,26 +24,15 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Pasty;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SeniorSprite;
 import com.watabou.utils.Random;
 
 public class Senior extends Monk {
-
-	{
-		loot = Pasty.class;
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return SeniorSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.senior; }
 	
 	@Override
 	public void move( int step, boolean travelling) {
@@ -57,11 +46,4 @@ public class Senior extends Monk {
 		}
 		super.move( step, travelling);
 	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 16, 25 );
-	}
-	
 }

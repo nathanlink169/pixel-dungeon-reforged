@@ -54,20 +54,9 @@ public class MagicImmune extends FlavourBuff {
 					}
 				}
 			}
-			if (target instanceof Hero){
-				((Hero) target).updateHT(false);
-			}
 			return true;
 		} else {
 			return false;
-		}
-	}
-
-	@Override
-	public void detach() {
-		super.detach();
-		if (target instanceof Hero){
-			((Hero) target).updateHT(false);
 		}
 	}
 

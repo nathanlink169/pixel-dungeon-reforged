@@ -24,38 +24,21 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ScaleArmor;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ShieldedSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.Random;
 
 public class ArmoredBrute extends Brute {
-
-	{
-		//see rollToDropLoot
-		loot = Generator.Category.ARMOR;
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return ShieldedSprite.class;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + 4; //4-12 DR total
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.armoredbrute; }
 	
 	@Override
 	protected void triggerEnrage () {
@@ -63,8 +46,8 @@ public class ArmoredBrute extends Brute {
 			rooted = true;
 		}
 
-		Buff.affect(this, ArmoredRage.class).setShield(HT/2 + 1);
-		sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(HT/2 + 1), FloatingText.SHIELDING );
+		Buff.affect(this, ArmoredRage.class).setShield(GetMaxHP()/2 + 1);
+		sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(GetMaxHP()/2 + 1), FloatingText.SHIELDING );
 		if (Dungeon.level.heroFOV[pos]) {
 			sprite.showStatus( CharSprite.WARNING, Messages.get(this, "enraged") );
 		}
@@ -73,7 +56,7 @@ public class ArmoredBrute extends Brute {
 	}
 	
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		if (Random.Int( 4 ) == 0) {
 			return new PlateArmor().random();
 		}

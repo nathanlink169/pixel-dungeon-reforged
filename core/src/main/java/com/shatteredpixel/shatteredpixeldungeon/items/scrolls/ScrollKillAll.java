@@ -33,7 +33,7 @@ public class ScrollKillAll extends Scroll {
         GameScene.flash( 0x80000000 );
 
         //scales from 0x to 1x power, maxing at ~10% HP
-        float hpPercent = (curUser.HT - curUser.HP)/(float)(curUser.HT);
+        float hpPercent = (curUser.GetMaxHP() - curUser.HP)/(float)(curUser.GetMaxHP());
         float power = Math.min( 4f, 4.45f*hpPercent);
 
         Sample.INSTANCE.play( Assets.Sounds.BLAST );
@@ -61,7 +61,7 @@ public class ScrollKillAll extends Scroll {
         readAnimation();
 
         Healing healing = Buff.affect(Dungeon.hero, Healing.class);
-        healing.setHeal((int) (0.8f * Dungeon.hero.HT + 14), 0.25f, 0);
+        healing.setHeal((int) (0.8f * Dungeon.hero.GetMaxHP() + 14), 0.25f, 0);
         healing.applyVialEffect();
 
     }

@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -45,15 +46,8 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class PhantomPiranha extends Piranha {
-
-	{
-		loot = PhantomMeat.class;
-		lootChance = 1f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return PhantomPiranhaSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.phantompiranha; }
 
 	@Override
 	public void damage(int dmg, Object src, int damageType) {

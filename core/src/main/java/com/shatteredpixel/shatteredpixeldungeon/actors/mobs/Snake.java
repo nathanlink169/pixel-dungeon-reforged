@@ -25,44 +25,33 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barkskin;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SnakeSprite;
 import com.watabou.utils.Random;
 
 import java.util.HashSet;
 
 public class Snake extends Mob {
-	
-	{
-		HP = HT = getRandomizerEnabled(RandomTraits.PAPER_THIN) ? 1 : 4;
-		defenseSkill = 25;
-		
-		EXP = 2;
-		maxLvl = 7;
-		
-		loot = Generator.Category.SEED;
-		lootChance = getRandomizerEnabled(RandomTraits.SEED_HOARDERS) ? 1.0f :  0.25f;
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.snake; }
 
-		return SnakeSprite.class;
+	@Override
+	public int GetMaxHP() {
+		if (getRandomizerEnabled(RandomTraits.PAPER_THIN)) return 1;
+		return super.GetMaxHP();
 	}
 
 	@Override
@@ -147,12 +136,6 @@ public class Snake extends Mob {
 		}
 
 		return dr;
-	}
-	
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 4;
-		return Random.NormalIntRange( 1, 4 );
 	}
 
 	@Override

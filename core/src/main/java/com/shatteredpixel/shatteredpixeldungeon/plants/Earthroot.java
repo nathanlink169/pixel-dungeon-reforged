@@ -52,7 +52,7 @@ public class Earthroot extends Plant {
 			if (ch instanceof Hero && ((Hero) ch).subClass == HeroSubClass.WARDEN) {
 				Barkskin.conditionallyAppend(Dungeon.hero, Dungeon.hero.lvl + 5, 5);
 			} else {
-				Buff.affect(ch, Armor.class).level(ch.HT);
+				Buff.affect(ch, Armor.class).level(ch.GetMaxHP());
 			}
 		}
 		
@@ -128,7 +128,7 @@ public class Earthroot extends Plant {
 
 		@Override
 		public float iconFadePercent() {
-			return Math.max(0, (target.HT - level) / (float) target.HT);
+			return Math.max(0, (target.GetMaxHP() - level) / (float) target.GetMaxHP());
 		}
 
 		@Override

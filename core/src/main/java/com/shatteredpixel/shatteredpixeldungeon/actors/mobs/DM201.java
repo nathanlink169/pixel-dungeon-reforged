@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
@@ -33,31 +33,16 @@ import com.shatteredpixel.shatteredpixeldungeon.items.quest.MetalShard;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM201Sprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class DM201 extends DM200 {
-
 	{
-		HP = HT = 120;
-
-		properties.add(Property.IMMOVABLE);
-
 		HUNTING = new Hunting();
 	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return DM201Sprite.class;
-	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 15, 25 );
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm201; }
 
 	private boolean threatened = false;
 
@@ -105,7 +90,7 @@ public class DM201 extends DM200 {
 
 	@Override
 	public void rollToDropLoot() {
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (Dungeon.hero.lvl > GetMaxHP() + 2) return;
 
 		super.rollToDropLoot();
 

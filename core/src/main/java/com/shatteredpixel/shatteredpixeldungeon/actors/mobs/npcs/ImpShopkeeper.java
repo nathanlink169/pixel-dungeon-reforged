@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -33,9 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ImpSprite;
 public class ImpShopkeeper extends Shopkeeper {
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return ImpSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.impshopkeeper; }
 	private boolean seenBefore = false;
 	
 	@Override

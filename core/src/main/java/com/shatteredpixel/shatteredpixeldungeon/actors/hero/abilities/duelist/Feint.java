@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -164,22 +165,14 @@ public class Feint extends ArmorAbility {
 	public static class AfterImage extends Mob {
 
 		{
-			defenseSkill = 0;
-
-			properties.add(Property.IMMOVABLE);
-
 			alignment = Alignment.ALLY;
 			state = PASSIVE;
-
-			HP = HT = 1;
 
 			//fades just before the hero's next action
 			actPriority = Actor.HERO_PRIO+1;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return AfterImageSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.afterimage; }
 
 		@Override
 		public boolean canInteract(Char c) {

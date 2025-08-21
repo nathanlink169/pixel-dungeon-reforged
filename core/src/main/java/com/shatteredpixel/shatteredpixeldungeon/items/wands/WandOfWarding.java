@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -240,21 +241,32 @@ public class WandOfWarding extends Wand {
 
 		{
 			alignment = Alignment.ALLY;
-
-			properties.add(Property.IMMOVABLE);
-			properties.add(Property.INORGANIC);
-
-			viewDistance = 4;
 			state = WANDERING;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return WardSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ward; }
 
 		@Override
 		public String name(boolean forceNoMonsterUnknown) {
 			return Messages.get(this, "name_" + tier );
+		}
+
+		@Override
+		public int GetMaxHP() {
+			switch (tier) {
+				case 3:
+					return 35;
+				case 4:
+					return 54;
+				case 5:
+					return 84;
+			}
+			return 1;
+		}
+
+		@Override
+		public int GetViewDistance() {
+			return 3 + tier;
 		}
 
 		public void upgrade(int wandLevel ){
@@ -266,15 +278,12 @@ public class WandOfWarding extends Wand {
 				case 1: case 2: default:
 					break; //do nothing
 				case 3:
-					HT = 35;
 					HP = 15 + (5-totalZaps)*4;
 					break;
 				case 4:
-					HT = 54;
 					HP += 19;
 					break;
 				case 5:
-					HT = 84;
 					HP += 30;
 					break;
 				case 6:
@@ -288,12 +297,11 @@ public class WandOfWarding extends Wand {
 
 			if (tier < 6){
 				tier++;
-				viewDistance++;
 				if (sprite != null){
 					((WardSprite)sprite).updateTier(tier);
 					sprite.place(pos);
 				}
-				GameScene.updateFog(pos, viewDistance+1);
+				GameScene.updateFog(pos, GetViewDistance()+1);
 			}
 
 		}
@@ -325,27 +333,22 @@ public class WandOfWarding extends Wand {
 					break;
 			}
 
-			HP = Math.min(HT, HP+heal);
+			HP = Math.min(GetMaxHP(), HP+heal);
 			if (sprite != null) sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(heal), FloatingText.HEALING);
 
 		}
 
 		@Override
-		public int defenseSkill(Char enemy) {
-			if (tier > 3){
-				defenseSkill = 4 + Dungeon.scalingDepth();
-			}
-			return super.defenseSkill(enemy);
+		protected int GetDefenseSkillInternal() {
+			return 4 + Dungeon.scalingDepth();
 		}
 
 		@Override
-		public int drRoll() {
-			int dr = super.drRoll();
-			if (tier > 3){
-				return dr + Math.round(Random.NormalIntRange(0, 3 + Dungeon.scalingDepth()/2) / (7f - tier));
-			} else {
-				return dr;
+		public int getMaxDR() { // min dr is already 0
+			if (tier > 3) {
+				return (int) ((3 + Dungeon.scalingDepth() / 2.0f) / (7f - tier));
 			}
+			return 0;
 		}
 
 		@Override
@@ -434,7 +437,7 @@ public class WandOfWarding extends Wand {
 		public void destroy() {
 			super.destroy();
 			Dungeon.observe();
-			GameScene.updateFog(pos, viewDistance+1);
+			GameScene.updateFog(pos, GetViewDistance()+1);
 		}
 		
 		@Override
@@ -505,7 +508,6 @@ public class WandOfWarding extends Wand {
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			tier = bundle.getInt(TIER);
-			viewDistance = 3 + tier;
 			wandLevel = bundle.getInt(WAND_LEVEL);
 			totalZaps = bundle.getInt(TOTAL_ZAPS);
 		}

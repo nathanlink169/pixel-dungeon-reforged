@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -32,34 +32,18 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.BatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 public class Bat extends Mob {
-
-	{
-		HP = HT = 30;
-		defenseSkill = 15;
-		baseSpeed = getRandomizerEnabled(RandomTraits.SUPERSONIC_SPEED) ? 3.5f : 2f;
-		
-		EXP = 7;
-		maxLvl = 15;
-		
-		flying = true;
-		
-		loot = PotionOfHealing.class;
-		lootChance = 0.1667f; //by default, see lootChance()
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bat; }
 
-		return BatSprite.class;
+	@Override
+	public float speed() {
+		return super.speed() * (getRandomizerEnabled(RandomTraits.SUPERSONIC_SPEED) ? 1.75f : 1f);
 	}
 
 	private static final String ATTACHED = "attached_char_id";
@@ -79,16 +63,8 @@ public class Bat extends Mob {
 
 	
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		int dmg;
-		if (isMaxDamage) dmg = 18;
-		else dmg = Random.NormalIntRange( 5, 18 );
-
-		if (getRandomizerEnabled(RandomTraits.BLUNTED_FANGS)) {
-			dmg /= 2;
-		}
-
-		return dmg;
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
+		return super.damageRoll(type, isMaxDamage) / (getRandomizerEnabled(RandomTraits.BLUNTED_FANGS) ? 2 : 1);
 	}
 	
 	@Override
@@ -96,12 +72,7 @@ public class Bat extends Mob {
 		if (attached == target.id()) {
 			return INFINITE_ACCURACY;
 		}
-		return 16;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 4);
+		return super.attackSkill(target);
 	}
 
 	@Override
@@ -113,7 +84,7 @@ public class Bat extends Mob {
 	@Override
 	public int attackProc( Char enemy, int damage ) {
 		damage = super.attackProc( enemy, damage );
-		int reg = Math.min( damage - 4, HT - HP );
+		int reg = Math.min( damage - 4, GetMaxHP() - HP );
 		if (getRandomizerEnabled(RandomTraits.WEAK_REGENERATION)) {
 			reg /= 4;
 		}
@@ -172,26 +143,26 @@ public class Bat extends Mob {
 	}
 	
 	@Override
-	public float lootChance(){
+	public float GetLootChance(int slot){
 		if (getRandomizerEnabled(RandomTraits.MEMBRANE_CARRIER)) {
 			return 1.0f;
 		}
-		return super.lootChance() * ((7f - Dungeon.LimitedDrops.BAT_HP.count) / 7f);
+		return super.GetLootChance(slot) * ((7f - Dungeon.LimitedDrops.BAT_HP.count) / 7f);
 	}
 	
 	@Override
-	public Item createLoot(){
+	public Item createLoot(int itemSlot){
 		if (getRandomizerEnabled(RandomTraits.MEMBRANE_CARRIER)) {
-			if (Random.Float() < super.lootChance() * ((7f - Dungeon.LimitedDrops.BAT_HP.count) / 7f)) {
+			if (Random.Float() < super.GetLootChance(0) * ((7f - Dungeon.LimitedDrops.BAT_HP.count) / 7f)) {
 				Dungeon.LimitedDrops.BAT_HP.count++;
-				return super.createLoot();
+				return super.createLoot(itemSlot);
 			}
 			// we didn't drop a health potion, drop a membrane instead
 			return new Membrane();
 		}
 
 		Dungeon.LimitedDrops.BAT_HP.count++;
-		return super.createLoot();
+		return super.createLoot(itemSlot);
 	}
 
 

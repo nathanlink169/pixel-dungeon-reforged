@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -63,15 +64,8 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 
 public class Wandmaker extends NPC {
-
-	{
-		properties.add(Property.IMMOVABLE);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return WandmakerSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.wandmaker; }
 
 	@Override
 	public Notes.Landmark landmark() {

@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -69,29 +70,15 @@ import java.util.ArrayList;
 public class GnollGeomancer extends Mob {
 
 	{
-		HP = HT = 150;
-		EXP = 20;
-
 		//acts after other mobs, just like sappers
 		actPriority = MOB_PRIO-1;
 
 		SLEEPING = new Sleeping();
 		HUNTING = new Hunting();
 		state = SLEEPING;
-
-		//FOV is used to attack hero when they are in open space created by geomancer
-		// but geomancer will lose sight and stop attacking if the hero flees behind walls.
-		// Because of this geomancer can see through high grass and shrouding fod
-		viewDistance = 12;
-
-		properties.add(Property.BOSS);
-		properties.add(Property.IMMOVABLE); //moves itself via ability, otherwise is static
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return GnollGeomancerSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollgeomancer; }
 
 	private int abilityCooldown = Random.NormalIntRange(3, 5);
 	private boolean lastAbilityWasRockfall;
@@ -151,22 +138,6 @@ public class GnollGeomancer extends Mob {
 		} else {
 			return super.add(buff);
 		}
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 6;
-		return Random.NormalIntRange( 3, 6 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 6);
 	}
 
 	@Override
@@ -274,7 +245,7 @@ public class GnollGeomancer extends Mob {
 
 	@Override
 	public void damage(int dmg, Object src, int damageType) {
-		int hpBracket = HT / 3;
+		int hpBracket = GetMaxHP() / 3;
 
 		int curbracket = HP / hpBracket;
 		if (curbracket == 3) curbracket--; //full HP isn't its own bracket
@@ -589,7 +560,7 @@ public class GnollGeomancer extends Mob {
 					// 50/50 to either throw a rock or do rockfall, but never do rockfall twice
 					// unless target is next to a barricade, then always try to throw
 					// unless nothing to throw, then always rockfall
-					int hpBracket = HT / 3;
+					int hpBracket = GetMaxHP() / 3;
 
 					int curbracket = HP / hpBracket;
 					if (curbracket == 3) curbracket--; //full HP isn't its own bracket

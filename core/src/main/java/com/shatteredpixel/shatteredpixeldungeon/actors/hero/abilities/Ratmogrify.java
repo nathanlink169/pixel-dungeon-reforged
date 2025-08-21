@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -196,24 +197,26 @@ public class Ratmogrify extends ArmorAbility {
 			firstAdded = false;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return RatSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rat; } // hopefully only used for its sprite
 
 		private Mob original;
 		private boolean allied;
+		private int m_MaxHP;
+		private int m_DefenseSkill;
+		private int m_XP;
+		private int m_MaxLevel;
 
 		public void setup(Mob original) {
 			this.original = original;
 			original.clearTime();
 
 			HP = original.HP;
-			HT = original.HT;
+			m_MaxHP = original.GetMaxHP();
 
-			defenseSkill = original.defenseSkill;
+			m_DefenseSkill = original.defenseSkill(null);
 
-			EXP = original.EXP;
-			maxLvl = original.maxLvl;
+			m_XP = original.GetXP();
+			m_MaxLevel = original.GetMaxLevel();
 
 			if (original.state == original.SLEEPING) {
 				state = SLEEPING;
@@ -242,7 +245,7 @@ public class Ratmogrify extends ArmorAbility {
 				this.original = null;
 				GameScene.add(original);
 
-				EXP = 0;
+				m_XP = 0;
 				destroy();
 				sprite.killAndErase();
 				CellEmitter.get(original.pos).burst(Speck.factory(Speck.WOOL), 4);
@@ -276,8 +279,20 @@ public class Ratmogrify extends ArmorAbility {
 		}
 
 		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			int damage = original.damageRoll(isMaxDamage);
+		public int GetMaxHP() {return m_MaxHP;}
+		@Override
+		public int GetXP(){return m_XP;}
+		@Override
+		public int GetMaxLevel(){return m_MaxLevel;}
+
+		@Override
+		public int defenseSkill(Char enemy) {
+			return m_DefenseSkill;
+		}
+
+		@Override
+		public int damageRoll(AttackType type, boolean isMaxDamage) {
+			int damage = original.damageRoll(AttackType.MELEE, isMaxDamage);
 			if (!allied && Dungeon.hero.hasTalent(Talent.RATSISTANCE)){
 				damage *= Math.pow(0.9f, Dungeon.hero.pointsInTalent(Talent.RATSISTANCE));
 			}
@@ -328,8 +343,9 @@ public class Ratmogrify extends ArmorAbility {
 			super.restoreFromBundle(bundle);
 
 			original = (Mob) bundle.get(ORIGINAL);
-			defenseSkill = original.defenseSkill;
-			EXP = original.EXP;
+			m_DefenseSkill = original.defenseSkill(null);
+			m_XP = original.GetXP();
+			m_MaxLevel = original.GetMaxLevel();
 
 			allied = bundle.getBoolean(ALLIED);
 			if (allied) alignment = Alignment.ALLY;

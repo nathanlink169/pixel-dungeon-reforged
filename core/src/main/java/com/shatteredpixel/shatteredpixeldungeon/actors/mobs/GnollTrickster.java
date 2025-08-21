@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -34,15 +34,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollTricksterSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -50,31 +45,14 @@ import com.watabou.utils.Random;
 public class GnollTrickster extends Gnoll {
 
 	{
-		HP = HT = 20;
-		defenseSkill = 5;
-
-		EXP = 5;
-
 		WANDERING = new Wandering();
 		state = WANDERING;
-
-		//at half quantity, see createLoot()
-		loot = Generator.Category.MISSILE;
-		lootChance = 1f;
-
-		properties.add(Property.MINIBOSS);
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return GnollTricksterSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnolltrickster; }
 
 	private int combo = 0;
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 16;
-	}
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
@@ -133,8 +111,8 @@ public class GnollTrickster extends Gnoll {
 	}
 	
 	@Override
-	public Item createLoot() {
-		MissileWeapon drop = (MissileWeapon)super.createLoot();
+	public Item createLoot(int itemSlot) {
+		MissileWeapon drop = (MissileWeapon)super.createLoot(itemSlot);
 		//half quantity, rounded up
 		drop.quantity((drop.quantity()+1)/2);
 		return drop;

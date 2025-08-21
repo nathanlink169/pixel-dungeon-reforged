@@ -54,7 +54,7 @@ import java.util.ArrayList;
 public class Truesight extends ArmorAbility {
 
 	{
-		baseChargeUse = 20f;
+		baseChargeUse = 40f;
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class Truesight extends ArmorAbility {
 		}
 
 		if (hero.hasTalent(Talent.BRIGHT_LIGHT)) {
-			int chance = hero.pointsInTalent(Talent.BRIGHT_LIGHT) * 2;
+			int chance = hero.pointsInTalent(Talent.BRIGHT_LIGHT);
 			for (Mob m : Dungeon.level.mobs) {
 				if (m.state != m.SLEEPING && m.fieldOfView[Dungeon.hero.pos]) {
 					if (Random.Int(10) < chance) {

@@ -50,7 +50,7 @@ public class CrackedGun extends RemainsItem {
 
 			Char ch = Dungeon.level.findMob(hero.pos + neighbourOffset);
 			if (ch != null) {
-				ch.damage(Random.Int(Math.max((int) (ch.HT * 0.05f), 1), Math.max((int) (ch.HT * 0.15f), 2)), hero);
+				ch.damage(Random.Int(Math.max((int) (ch.GetMaxHP() * 0.05f), 1), Math.max((int) (ch.GetMaxHP() * 0.15f), 2)), hero);
 
 				//trace a ballistica to our target (which will also extend past them)
 				Ballistica trajectory = new Ballistica(hero.pos, ch.pos, Ballistica.STOP_TARGET);

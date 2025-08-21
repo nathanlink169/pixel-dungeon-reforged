@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -57,10 +58,7 @@ public class CrystalMimic extends Mimic {
 		FLEEING = new Fleeing();
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return MimicSprite.Crystal.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.crystalmimic; }
 
 	@Override
 	public String name(boolean forceNoMonsterUnknown) {
@@ -101,14 +99,14 @@ public class CrystalMimic extends Mimic {
 
 	//does not deal bonus damage, steals instead. See attackProc
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
 		if (alignment == Alignment.NEUTRAL) {
 			alignment = Alignment.ENEMY;
-			int dmg = super.damageRoll(isMaxDamage);
+			int dmg = super.damageRoll(type, isMaxDamage);
 			alignment = Alignment.NEUTRAL;
 			return dmg;
 		} else {
-			return super.damageRoll(isMaxDamage);
+			return super.damageRoll(type, isMaxDamage);
 		}
 	}
 

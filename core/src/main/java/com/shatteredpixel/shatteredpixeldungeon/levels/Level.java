@@ -1324,7 +1324,7 @@ public abstract class Level implements Bundlable {
 				blocking = Dungeon.level.losBlocking;
 			}
 
-			float viewDist = c.viewDistance;
+			float viewDist = c.GetViewDistance();
 			if (c instanceof Hero){
 				viewDist *= 1f + 0.25f*((Hero) c).pointsInTalent(Talent.FARSIGHT);
 				if (((Hero) c).hasTalent(Talent.MECHANICAL_GOGGLES)) {

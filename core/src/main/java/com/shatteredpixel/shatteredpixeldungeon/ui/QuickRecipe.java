@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.ui;
 
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.items.ArcaneResin;
@@ -382,7 +383,9 @@ public class QuickRecipe extends Component {
 				result.add(new QuickRecipe(new ElixirOfMight.Recipe()));
 				result.add(null);
 				result.add(null);
-				result.add(new QuickRecipe(new PotionOfHealing.MembraneRecipe()));
+				if (Badges.isUnlocked(Badges.Badge.VICTORY)) { // only show after unlocking randomizer
+					result.add(new QuickRecipe(new PotionOfHealing.MembraneRecipe()));
+				}
 				return result;
 			case 8:
 				result.add(new QuickRecipe(new UnstableSpell.Recipe(), new ArrayList<>(Arrays.asList(new Scroll.PlaceHolder(), new  Runestone.PlaceHolder())), new UnstableSpell()));

@@ -25,14 +25,13 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
@@ -46,51 +45,22 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.EyeSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 public class Eye extends Mob {
-	
 	{
-		HP = HT = getRandomizerEnabled(RandomTraits.DURABLE_EYE) ? 150 : 110;
-		defenseSkill = 20;
-		viewDistance = Light.DISTANCE - 1;
-		
-		EXP = 13;
-		maxLvl = 26;
-		
-		flying = true;
-
 		HUNTING = new Hunting();
-		
-		loot = new Dewdrop();
-		lootChance = 1f;
-
-		properties.add(Property.DEMONIC);
-	}
-	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return EyeSprite.class;
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 30;
-		return Random.NormalIntRange(20, 30);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.eye; }
 
 	@Override
-	public int attackSkill( Char target ) {
-		return 30;
-	}
-	
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (getRandomizerEnabled(RandomTraits.DURABLE_EYE) ? 15.0f / 11.0f : 1.0f));
 	}
 	
 	private Ballistica beam;
@@ -217,7 +187,7 @@ public class Eye extends Mob {
 			}
 
 			if (isHit) {
-				int dmg = Random.NormalIntRange( 30, 50 );
+				int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
 				dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
 
 				//logic for fists or Yog-Dzewa taking 1/2 or 1/4 damage from aggression stoned minions
@@ -257,7 +227,7 @@ public class Eye extends Mob {
 
 	//generates an average of 1 dew, 0.25 seeds, and 0.25 stones
 	@Override
-	public Item createLoot() {
+	public Item createLoot(int itemSlot) {
 		Item loot;
 		switch(Random.Int(4)){
 			case 0: case 1: default:

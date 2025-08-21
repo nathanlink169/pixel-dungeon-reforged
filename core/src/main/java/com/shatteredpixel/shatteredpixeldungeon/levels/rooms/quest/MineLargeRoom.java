@@ -25,7 +25,6 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalGuardian;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.FungalSentry;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollGuard;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollSapper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
@@ -184,34 +183,6 @@ public class MineLargeRoom extends CaveRoom {
 					}
 				}
 			}
-		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.FUNGI){
-
-			for (Point p : getPoints()){
-				int cell = level.pointToCell(p);
-				if (level.map[cell] == Terrain.EMPTY){
-					level.map[cell] = Terrain.HIGH_GRASS;
-				}
-			}
-
-			Painter.fillEllipse(level, this, 3, Terrain.GRASS);
-
-			for (int i = 0; i < width() * height() / 6; i++) {
-				Point r = random(1);
-				if (level.map[level.pointToCell(r)] != Terrain.WALL) {
-					Painter.set(level, r, Terrain.HIGH_GRASS);
-				}
-			}
-
-			Point p = center();
-			FungalSentry m = new FungalSentry();
-			m.pos = level.pointToCell(p);
-			level.mobs.add(m);
-			Painter.set(level, p, Terrain.GRASS);
-
-			//no high grass directly above the sentry
-			p.y--;
-			Painter.set(level, p, Terrain.GRASS);
-
 		} else if (Blacksmith.Quest.Type() == Blacksmith.Quest.KOBOLD) {
 			int traps = square() > 150 ? 3 : 2;
 			for (int i = 0; i < traps; ++i){

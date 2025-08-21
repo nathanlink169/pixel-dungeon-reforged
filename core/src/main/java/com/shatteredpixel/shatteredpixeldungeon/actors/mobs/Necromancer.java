@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -35,7 +36,6 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -47,26 +47,19 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+import com.watabou.utils.Reflection;
 
 public class Necromancer extends Mob {
-	
 	{
-		HP = HT = getRandomizerEnabled(RandomTraits.FRAIL_FORM) ? 10 : 40;
-		defenseSkill = 14;
-		
-		EXP = 7;
-		maxLvl = 14;
-		
-		loot = PotionOfHealing.class;
-		lootChance = 0.2f; //see lootChance()
-		
-		properties.add(Property.UNDEAD);
-		
 		HUNTING = new Hunting();
 	}
+
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return NecromancerSprite.class;
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.necromancer; }
+
+	@Override
+	public int GetMaxHP() {
+		return super.GetMaxHP() / (getRandomizerEnabled(RandomTraits.FRAIL_FORM) ? 4 : 1);
 	}
 	
 	public boolean summoning = false;
@@ -95,21 +88,16 @@ public class Necromancer extends Mob {
 			mySkeleton.aggro(ch);
 		}
 	}
-
+	
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
+	public float GetLootChance(int slot) {
+		return super.GetLootChance(slot) * ((6f - Dungeon.LimitedDrops.NECRO_HP.count) / 6f);
 	}
 	
 	@Override
-	public float lootChance() {
-		return super.lootChance() * ((6f - Dungeon.LimitedDrops.NECRO_HP.count) / 6f);
-	}
-	
-	@Override
-	public Item createLoot(){
+	public Item createLoot(int itemSlot){
 		Dungeon.LimitedDrops.NECRO_HP.count++;
-		return super.createLoot();
+		return super.createLoot(itemSlot);
 	}
 	
 	@Override
@@ -174,15 +162,15 @@ public class Necromancer extends Mob {
 		}
 		
 		//heal skeleton first
-		if (mySkeleton.HP < mySkeleton.HT){
+		if (mySkeleton.HP < mySkeleton.GetMaxHP()){
 
 			if (sprite.visible || mySkeleton.sprite.visible) {
 				sprite.parent.add(new Beam.HealthRay(sprite.center(), mySkeleton.sprite.center()));
 			}
 			
-			mySkeleton.HP = Math.min(mySkeleton.HP + mySkeleton.HT/5, mySkeleton.HT);
+			mySkeleton.HP = Math.min(mySkeleton.HP + mySkeleton.GetMaxHP()/5, mySkeleton.GetMaxHP());
 			if (mySkeleton.sprite.visible) {
-				mySkeleton.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString( mySkeleton.HT/5 ), FloatingText.HEALING );
+				mySkeleton.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString( mySkeleton.GetMaxHP()/5 ), FloatingText.HEALING );
 			}
 			
 		//otherwise give it adrenaline
@@ -373,9 +361,9 @@ public class Necromancer extends Mob {
 					//zap skeleton
 					boolean shouldZapSkeleton;
 					if (getRandomizerEnabled(RandomTraits.APPRENTICE)) {
-						shouldZapSkeleton = mySkeleton.HP < mySkeleton.HT;
+						shouldZapSkeleton = mySkeleton.HP < mySkeleton.GetMaxHP();
 					} else {
-						shouldZapSkeleton = mySkeleton.HP < mySkeleton.HT || mySkeleton.buff(Adrenaline.class) == null;
+						shouldZapSkeleton = mySkeleton.HP < mySkeleton.GetMaxHP() || mySkeleton.buff(Adrenaline.class) == null;
 					}
 
 					if (shouldZapSkeleton) {
@@ -406,18 +394,25 @@ public class Necromancer extends Mob {
 		
 		{
 			state = WANDERING;
-
-			//no loot or exp
-			maxLvl = -5;
-			
-			//20/25 health to start
-			HP = 20;
-
-			baseSpeed = Necromancer.getRandomizerEnabled(Necromancer.RandomTraits.SHAMBLING_BONES) ? 0.25f : 1.0f;
 		}
+
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return NecroSkeletonSprite.class;
+		protected void onAdd(){
+			boolean previousFirstAdded = firstAdded;
+			super.onAdd();
+			if (previousFirstAdded) {
+				HP = (int) (GetMaxHP() * 0.8f);
+			}
+		}
+
+		@Override
+		public CharSprite sprite() {
+			return Reflection.newInstance(NecroSkeletonSprite.class);
+		}
+
+		@Override
+		public int GetMaxLevel() {
+			return -5;
 		}
 
 		@Override

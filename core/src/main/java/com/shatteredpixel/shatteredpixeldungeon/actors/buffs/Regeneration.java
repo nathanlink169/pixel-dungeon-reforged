@@ -108,7 +108,7 @@ public class Regeneration extends Buff {
 	}
 	
 	public int regencap(){
-		return target.HT;
+		return target.GetMaxHP();
 	}
 
 	public static boolean regenOn(){

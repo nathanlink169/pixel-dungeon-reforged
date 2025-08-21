@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -34,9 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RotHeartSprite;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
@@ -44,22 +42,10 @@ import com.watabou.utils.Random;
 public class RotHeart extends Mob {
 
 	{
-		HP = HT = 80;
-		defenseSkill = 0;
-
-		EXP = 4;
-
 		state = PASSIVE;
-
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.MINIBOSS);
-		properties.add(Property.STATIC);
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return RotHeartSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rotheart; }
 
 	@Override
 	protected boolean act() {
@@ -126,21 +112,6 @@ public class RotHeart extends Mob {
 	@Override
 	public boolean reset() {
 		return true;
-	}
-
-	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		return 0;
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 0;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 5);
 	}
 	
 	{

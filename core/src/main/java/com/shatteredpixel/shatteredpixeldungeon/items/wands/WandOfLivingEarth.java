@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.wands;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -373,39 +374,40 @@ public class WandOfLivingEarth extends DamageWand {
 			state = HUNTING;
 			intelligentAlly = true;
 
-			properties.add(Property.INORGANIC);
-
 			WANDERING = new Wandering();
 
 			//before other mobs
 			actPriority = MOB_PRIO + 1;
-
-			HP = HT = 0;
 		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return EarthGuardianSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.earthguardian; }
 
 		private int wandLevel = -1;
 
 		public void setInfo(Hero hero, int wandLevel, int healthToAdd){
 			if (wandLevel > this.wandLevel) {
 				this.wandLevel = wandLevel;
-				HT = 16 + 8 * wandLevel;
 			}
 			if (HP != 0 && sprite != null){
 				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(healthToAdd), FloatingText.HEALING);
 			}
-			HP = Math.min(HT, HP + healthToAdd);
-			//half of hero's evasion
-			defenseSkill = (hero.lvl + 4)/2;
+			HP = Math.min(GetMaxHP(), HP + healthToAdd);
+		}
+
+		@Override
+		public int GetMaxHP() {
+			return 16 + 8 * wandLevel;
+		}
+
+		@Override
+		public int GetDefenseSkillInternal() {
+			return (Dungeon.hero.lvl + 4) / 2;
 		}
 
 		@Override
 		public int attackSkill(Char target) {
 			//same as the hero
-			return 2*defenseSkill + 5;
+			return 2*GetDefenseSkillInternal() + 5;
 		}
 
 		@Override
@@ -415,7 +417,7 @@ public class WandOfLivingEarth extends DamageWand {
 		}
 
 		@Override
-		public int damageRoll(boolean isMaxDamage) {
+		public int damageRoll(AttackType type, boolean isMaxDamage) {
 			if (isMaxDamage) return 4 + Dungeon.scalingDepth()/2;
 			return Random.NormalIntRange(2, 4 + Dungeon.scalingDepth()/2);
 		}
@@ -450,20 +452,17 @@ public class WandOfLivingEarth extends DamageWand {
 			immunities.add( AllyBuff.class );
 		}
 
-		private static final String DEFENSE = "defense";
 		private static final String WAND_LEVEL = "wand_level";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
-			bundle.put(DEFENSE, defenseSkill);
 			bundle.put(WAND_LEVEL, wandLevel);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
-			defenseSkill = bundle.getInt(DEFENSE);
 			wandLevel = bundle.getInt(WAND_LEVEL);
 		}
 

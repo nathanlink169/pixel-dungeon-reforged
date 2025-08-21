@@ -152,7 +152,7 @@ public class Chasm implements Hero.Doom {
 		//Hero has a 50% chance to bleed out at 66% HP, and begins to risk instant-death at 25%
 		if (!hero.hasTalent(Talent.ARMOR_MOD_INFINITE_FALLING)) {
 			Buff.prolong(hero, Cripple.class, Cripple.DURATION);
-			Buff.affect( hero, Bleeding.class).set( Math.round(hero.HT / (6f + (6f*(hero.HP/(float)hero.HT)))), Chasm.class);
+			Buff.affect( hero, Bleeding.class).set( Math.round(hero.GetMaxHP() / (6f + (6f*(hero.HP/(float)hero.GetMaxHP())))), Chasm.class);
 		}
 
 		float damageMultiplier = 1.0f;
@@ -162,7 +162,7 @@ public class Chasm implements Hero.Doom {
 		else if (hero.pointsInTalent(Talent.ARMOR_MOD_INFINITE_FALLING) == 3) {
 			damageMultiplier = 0.25f;
 		}
-		hero.damage((int)(Math.max(hero.HP / 2, Random.NormalIntRange(hero.HP / 2, hero.HT / 4)) * damageMultiplier), new Chasm());
+		hero.damage((int)(Math.max(hero.HP / 2, Random.NormalIntRange(hero.HP / 2, hero.GetMaxHP() / 4)) * damageMultiplier), new Chasm());
 	}
 
 	public static void mobFall( Mob mob ) {

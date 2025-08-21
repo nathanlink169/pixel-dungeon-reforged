@@ -28,6 +28,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -80,35 +81,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class DwarfKing extends Mob {
-
-	{
-		HP = HT = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 450 : 300;
-		EXP = 40;
-		defenseSkill = 22;
-
-		properties.add(Property.BOSS);
-		properties.add(Property.UNDEAD);
-	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return KingSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dwarfking; }
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (isMaxDamage) return 25;
-		return Random.NormalIntRange( 15, 25 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 26;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 10);
+	public int GetMaxHP() {
+		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.5f : 1.0f));
 	}
 
 	private int phase = 1;
@@ -502,7 +480,7 @@ public class DwarfKing extends Mob {
 				phase = 2;
 				summonsMade = 0;
 				sprite.idle();
-				Buff.affect(this, DKBarrior.class).setShield(HT);
+				Buff.affect(this, DKBarrior.class).setShield(GetMaxHP());
 				for (Summoning s : buffs(Summoning.class)) {
 					s.detach();
 				}
@@ -608,6 +586,8 @@ public class DwarfKing extends Mob {
 			properties.add(Property.BOSS_MINION);
 			state = HUNTING;
 		}
+		@Override
+		public int GetMaxLevel() { return -2; }
 
 		@Override
 		protected boolean act() {
@@ -621,6 +601,8 @@ public class DwarfKing extends Mob {
 			properties.add(Property.BOSS_MINION);
 			state = HUNTING;
 		}
+		@Override
+		public int GetMaxLevel() { return -2; }
 	}
 
 	public static class DKWarlock extends Warlock {
@@ -628,6 +610,8 @@ public class DwarfKing extends Mob {
 			properties.add(Property.BOSS_MINION);
 			state = HUNTING;
 		}
+		@Override
+		public int GetMaxLevel() { return -2; }
 
 		@Override
 		protected void zap() {
@@ -643,6 +627,9 @@ public class DwarfKing extends Mob {
 			properties.add(Property.BOSS_MINION);
 			state = HUNTING;
 		}
+
+		@Override
+		public int GetMaxLevel() { return -2; }
 	}
 
 	public static class Summoning extends Buff {
@@ -698,7 +685,6 @@ public class DwarfKing extends Mob {
 				if (Actor.findChar(pos) == null) {
 					Mob m = Reflection.newInstance(summon);
 					m.pos = pos;
-					m.maxLvl = -2;
 					GameScene.add(m);
 					Dungeon.level.occupyCell(m);
 					m.state = m.HUNTING;
@@ -710,9 +696,9 @@ public class DwarfKing extends Mob {
 					ch.damage(Random.NormalIntRange(20, 40), this);
 					if (((DwarfKing)target).phase == 2){
 						if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-							target.damage(target.HT/18, new KingDamager());
+							target.damage(target.GetMaxHP()/18, new KingDamager());
 						} else {
-							target.damage(target.HT/12, new KingDamager());
+							target.damage(target.GetMaxHP()/12, new KingDamager());
 						}
 					}
 					if (!ch.isAlive() && ch == Dungeon.hero) {
@@ -789,7 +775,7 @@ public class DwarfKing extends Mob {
 			super.detach();
 			for (Mob m : Dungeon.level.mobs){
 				if (m instanceof DwarfKing){
-					int damage = m.HT / (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 18 : 12);
+					int damage = m.GetMaxHP() / (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 18 : 12);
 					m.damage(damage, this);
 				}
 			}

@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -39,22 +40,10 @@ import com.watabou.utils.Random;
 public class GnollGuard extends Mob {
 
 	{
-		HP = HT = 35;
-		defenseSkill = 15;
-
-		EXP = 7;
-		maxLvl = -2;
-
-		loot = Spear.class;
-		lootChance = 0.1f;
-
 		WANDERING = new Wandering();
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return GnollGuardSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollguard; }
 
 	private int sapperID = -1;
 
@@ -87,14 +76,11 @@ public class GnollGuard extends Mob {
 	}
 
 	@Override
-	public int damageRoll(boolean isMaxDamage) {
-		if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos)){
-			if (isMaxDamage) return 22;
-			return Random.NormalIntRange( 16, 22 );
-		} else {
-			if (isMaxDamage) return 12;
-			return Random.NormalIntRange( 6, 12 );
+	public int damageRoll(AttackType type, boolean isMaxDamage) {
+		if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos) && type == AttackType.MELEE){
+			return super.damageRoll(AttackType.RANGED_PHYSICAL, isMaxDamage);
 		}
+		return super.damageRoll(type, isMaxDamage);
 	}
 
 	@Override
@@ -104,16 +90,6 @@ public class GnollGuard extends Mob {
 			GLog.n(Messages.get(this, "spear_warn"));
 		}
 		return dmg;
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 20;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 6);
 	}
 
 	@Override

@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -69,26 +70,12 @@ import java.util.HashSet;
 public class YogDzewa extends Mob {
 
 	{
-		HP = HT = 1000;
-
-		EXP = 50;
-
 		//so that allies can attack it. States are never actually used.
 		state = HUNTING;
-
-		viewDistance = 12;
-
-		properties.add(Property.BOSS);
-		properties.add(Property.IMMOVABLE);
-		properties.add(Property.DEMONIC);
-		properties.add(Property.STATIC);
 	}
 
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-
-		return YogSprite.class;
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.yogdzewa; }
 
 	private int phase = 0;
 
@@ -183,7 +170,7 @@ public class YogDzewa extends Mob {
 		//end of char/mob logic
 
 		if (phase == 0){
-			if (Dungeon.hero.viewDistance >= Dungeon.level.distance(pos, Dungeon.hero.pos)) {
+			if (Dungeon.hero.GetViewDistance() >= Dungeon.level.distance(pos, Dungeon.hero.pos)) {
 				Dungeon.observe();
 			}
 			if (Dungeon.level.heroFOV[pos]) {
@@ -250,7 +237,7 @@ public class YogDzewa extends Mob {
 
 			if (abilityCooldown <= 0){
 
-				int beams = 1 + (HT - HP)/400;
+				int beams = 1 + (GetMaxHP() - HP)/400;
 				HashSet<Integer> affectedCells = new HashSet<>();
 				for (int i = 0; i < beams; i++){
 
@@ -399,7 +386,7 @@ public class YogDzewa extends Mob {
 		if (phase == 0 || findFist() != null) return;
 
 		if (phase < 4) {
-			HP = Math.max(HP, HT - 300 * phase);
+			HP = Math.max(HP, GetMaxHP() - 300 * phase);
 		} else if (phase == 4) {
 			HP = Math.max(HP, 100);
 		}
@@ -410,7 +397,7 @@ public class YogDzewa extends Mob {
 			summonCooldown -= dmgTaken / 10f;
 		}
 
-		if (phase < 4 && HP <= HT - 300*phase){
+		if (phase < 4 && HP <= GetMaxHP() - 300*phase){
 
 			phase++;
 
@@ -483,9 +470,6 @@ public class YogDzewa extends Mob {
 		}
 		level.viewDistance = viewDistance;
 		if (Dungeon.hero != null) {
-			if (Dungeon.hero.buff(Light.class) == null) {
-				Dungeon.hero.viewDistance = level.viewDistance;
-			}
 			Dungeon.observe();
 		}
 	}
@@ -641,58 +625,33 @@ public class YogDzewa extends Mob {
 	}
 
 	public static class Larva extends Mob {
-
-		{
-			HP = HT = 20;
-			defenseSkill = 12;
-			viewDistance = Light.DISTANCE;
-
-			EXP = 5;
-			maxLvl = -2;
-
-			properties.add(Property.DEMONIC);
-			properties.add(Property.BOSS_MINION);
-		}
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return LarvaSprite.class;
-		}
-
-		@Override
-		public int attackSkill( Char target ) {
-			return 30;
-		}
-
-		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			if (isMaxDamage) return 25;
-			return Random.NormalIntRange( 15, 25 );
-		}
-
-		@Override
-		public int drRoll() {
-			return super.drRoll() + Random.NormalIntRange(0, 4);
-		}
-
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.larva; }
 	}
 
 	//used so death to yog's ripper demons have their own rankings description
 	public static class YogRipper extends RipperDemon {
 		{
-			maxLvl = -2;
 			properties.add(Property.BOSS_MINION);
 		}
+
+		@Override
+		public int GetMaxLevel() { return -2; }
 	}
 	public static class YogEye extends Eye {
 		{
-			maxLvl = -2;
 			properties.add(Property.BOSS_MINION);
 		}
+
+		@Override
+		public int GetMaxLevel() { return -2; }
 	}
 	public static class YogScorpio extends Scorpio {
 		{
-			maxLvl = -2;
 			properties.add(Property.BOSS_MINION);
 		}
+
+		@Override
+		public int GetMaxLevel() { return -2; }
 	}
 }

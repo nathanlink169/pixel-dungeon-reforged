@@ -24,7 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -36,38 +36,23 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.EtherealChains;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.DarkGold;
-import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
-import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ParchmentScrap;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.HallsLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
-import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
-import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.BlacksmithRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.BlacksmithSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HalfRipperSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndBlacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHalfRipperRewards;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
-import com.shatteredpixel.shatteredpixeldungeon.windows.WndSadGhost;
 import com.watabou.noosa.Game;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
@@ -75,18 +60,11 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 
 public class HalfRipper extends NPC {
 
     {
-        properties.add(Property.DEMONIC);
-
-        HP = HT = 60;
-        defenseSkill = 16;
-
         WANDERING = new HalfRipper.Wandering();
         state = WANDERING;
     }
@@ -195,9 +173,7 @@ public class HalfRipper extends NPC {
     }
 
     @Override
-    public Class<? extends CharSprite> GetSpriteClass() {
-        return HalfRipperSprite.class;
-    }
+    public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.halfripper; }
 
     @Override
     public Notes.Landmark landmark() {
@@ -418,7 +394,7 @@ public class HalfRipper extends NPC {
     }
 
     @Override
-    public int damageRoll(boolean isMaxDamage) {
+    public int damageRoll(AttackType type, boolean isMaxDamage) {
         if (isMaxDamage) return 15;
         return Random.NormalIntRange( 10, 15 );
     }

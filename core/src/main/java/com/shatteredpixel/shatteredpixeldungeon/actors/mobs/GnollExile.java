@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -52,33 +53,9 @@ public class GnollExile extends Gnoll {
 		WANDERING = new Wandering();
 		HUNTING = new Hunting();
 		state = PASSIVE;
-
-		defenseSkill = 6;
-		HP = HT = 24;
-
-		lootChance = 0f; //see rollToDropLoot
 	}
 	@Override
-	public Class<? extends CharSprite> GetSpriteClass() {
-		return GnollExileSprite.class;
-	}
-
-	@Override
-	public int damageRoll( boolean isMaxDamage)	{
-		if (isMaxDamage)
-			return 10;
-		return Random.NormalIntRange( 1, 10 );
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		return 15;
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 1);
-	}
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollexile; }
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
@@ -108,7 +85,7 @@ public class GnollExile extends Gnoll {
 	public void rollToDropLoot() {
 		super.rollToDropLoot();
 
-		if (Dungeon.hero.lvl > maxLvl + 2) return;
+		if (Dungeon.hero.lvl > GetMaxLevel() + 2) return;
 
 		//drops 2 or 3 random items
 		ArrayList<Item> items = new ArrayList<>();

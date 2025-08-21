@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.rogue;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
+import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -46,8 +46,6 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.TextureFilm;
@@ -149,32 +147,39 @@ public class ShadowClone extends ArmorAbility {
 	}
 
 	public static class ShadowAlly extends DirectableAlly {
-
 		{
-			HP = HT = 80;
-
 			immunities.add(AllyBuff.class);
+		}
 
-			properties.add(Property.INORGANIC);
-		}
+		private int m_HeroLevel; // cached so that we get the level when the shadow ally was created, not the live version
+
 		@Override
-		public Class<? extends CharSprite> GetSpriteClass() {
-			return ShadowSprite.class;
-		}
+		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.shadowally; }
 
 		public ShadowAlly(){
 			super();
 		}
 
-		public ShadowAlly( int heroLevel ){
+		public ShadowAlly( int heroLevel ) {
 			super();
-			int hpBonus = 15 + 5*heroLevel;
+			m_HeroLevel = heroLevel;
+			HP = GetMaxHP();
+		}
+
+		@Override
+		public int GetMaxHP() {
+			int hp = super.GetMaxHP();
+			int hpBonus = 15 + 5 * m_HeroLevel;
 			hpBonus = Math.round(0.1f * Dungeon.hero.pointsInTalent(Talent.PERFECT_COPY) * hpBonus);
 			if (hpBonus > 0){
-				HT += hpBonus;
-				HP += hpBonus;
+				hp += hpBonus;
 			}
-			defenseSkill = heroLevel + 4; //equal to base hero defense skill
+			return hp;
+		}
+
+		@Override
+		public int GetDefenseSkillInternal() {
+			return m_HeroLevel + 4;
 		}
 
 		@Override
@@ -208,18 +213,18 @@ public class ShadowClone extends ArmorAbility {
 
 		@Override
 		public int attackSkill(Char target) {
-			return defenseSkill+5; //equal to base hero attack skill
+			return GetDefenseSkillInternal()+5; //equal to base hero attack skill
 		}
 
 		@Override
-		public int damageRoll(boolean isMaxDamage) {
-			int damage = Random.NormalIntRange(10, 20);
+		public int damageRoll(AttackType type, boolean isMaxDamage) {
+			int damage = super.damageRoll(type, isMaxDamage);
 			if (isMaxDamage) damage = 20;
-			int heroDamage = Dungeon.hero.damageRoll(isMaxDamage);
+			float heroDamage = Dungeon.hero.damageRoll(AttackType.MELEE, isMaxDamage);
 			heroDamage /= Dungeon.hero.attackDelay(); //normalize hero damage based on atk speed
 			heroDamage = Math.round(0.08f * Dungeon.hero.pointsInTalent(Talent.SHADOW_BLADE) * heroDamage);
 			if (heroDamage > 0){
-				damage += heroDamage;
+				damage += (int) heroDamage;
 			}
 			return damage;
 		}
@@ -337,18 +342,18 @@ public class ShadowClone extends ArmorAbility {
 			}
 		}
 
-		private static final String DEF_SKILL = "def_skill";
+		private static final String HERO_LEVEL = "hero_level";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
-			bundle.put(DEF_SKILL, defenseSkill);
+			bundle.put(HERO_LEVEL, m_HeroLevel);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
-			defenseSkill = bundle.getInt(DEF_SKILL);
+			m_HeroLevel = bundle.getInt(HERO_LEVEL);
 		}
 	}
 

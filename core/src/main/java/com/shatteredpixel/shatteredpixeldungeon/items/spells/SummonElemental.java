@@ -117,7 +117,7 @@ public class SummonElemental extends Spell {
 			GameScene.add( elemental );
 			Buff.affect(elemental, InvisAlly.class);
 			elemental.setSummonedALly();
-			elemental.HP = elemental.HT;
+			elemental.HP = elemental.GetMaxHP();
 			ScrollOfTeleportation.appear( elemental, Random.element(spawnPoints) );
 			Invisibility.dispel(curUser);
 			curUser.sprite.operate(curUser.pos);

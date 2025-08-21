@@ -169,11 +169,11 @@ public class SacrificialFire extends Blob {
 					exp = 1 + Dungeon.depth/2;
 				} else if (ch instanceof Wraith) {
 					exp = 1 + Dungeon.depth/3;
-				} else if (ch instanceof Swarm && ((Swarm) ch).EXP == 0){
+				} else if (ch instanceof Swarm && ((Swarm) ch).GetMaxHP() == 0){
 					//give 1 exp for child swarms, instead of 0
 					exp = 1;
-				} else if (((Mob) ch).EXP > 0) {
-					exp = 1 + ((Mob)ch).EXP;
+				} else if (((Mob) ch).GetXP() > 0) {
+					exp = 1 + ((Mob)ch).GetXP();
 				}
 				exp *= Random.IntRange( 2, 3 );
 			} else if (ch instanceof Hero) {
