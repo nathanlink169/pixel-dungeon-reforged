@@ -136,25 +136,24 @@ public abstract class Mob extends Char {
 
 	protected boolean firstAdded = true;
 	protected void onAdd() {
+		Constants.mobs.mobsBase c = GetConstants();
+		if (c.getPropertyAcidic() && !properties.contains(Property.ACIDIC)) addProperty(Property.ACIDIC);
+		if (c.getPropertyBoss() && !properties.contains(Property.BOSS)) addProperty(Property.BOSS);
+		if (c.getPropertyBoss_Minion() && !properties.contains(Property.BOSS_MINION)) addProperty(Property.BOSS_MINION);
+		if (c.getPropertyDemonic() && !properties.contains(Property.DEMONIC)) addProperty(Property.DEMONIC);
+		if (c.getPropertyMiniboss() && !properties.contains(Property.MINIBOSS)) addProperty(Property.MINIBOSS);
+		if (c.getPropertyUndead() && !properties.contains(Property.UNDEAD)) addProperty(Property.UNDEAD);
+		if (c.getPropertyInorganic() && !properties.contains(Property.INORGANIC)) addProperty(Property.INORGANIC);
+		if (c.getPropertyFiery() && !properties.contains(Property.FIERY)) addProperty(Property.FIERY);
+		if (c.getPropertyIcy() && !properties.contains(Property.ICY)) addProperty(Property.ICY);
+		if (c.getPropertyElectric() && !properties.contains(Property.ELECTRIC)) addProperty(Property.ELECTRIC);
+		if (c.getPropertyLarge() && !properties.contains(Property.LARGE)) addProperty(Property.LARGE);
+		if (c.getPropertyImmovable() && !properties.contains(Property.IMMOVABLE)) addProperty(Property.IMMOVABLE);
+		if (c.getPropertyStatic() && !properties.contains(Property.STATIC)) addProperty(Property.STATIC);
 		if (firstAdded) {
 			HP = GetMaxHP();
 
-			Constants.mobs.mobsBase c = GetConstants();
-
 			flying = c.getFlying();
-			if (c.getPropertyAcidic()) addProperty(Property.ACIDIC);
-			if (c.getPropertyBoss()) addProperty(Property.BOSS);
-			if (c.getPropertyBoss_Minion()) addProperty(Property.BOSS_MINION);
-			if (c.getPropertyDemonic()) addProperty(Property.DEMONIC);
-			if (c.getPropertyMiniboss()) addProperty(Property.MINIBOSS);
-			if (c.getPropertyUndead()) addProperty(Property.UNDEAD);
-			if (c.getPropertyInorganic()) addProperty(Property.INORGANIC);
-			if (c.getPropertyFiery()) addProperty(Property.FIERY);
-			if (c.getPropertyIcy()) addProperty(Property.ICY);
-			if (c.getPropertyElectric()) addProperty(Property.ELECTRIC);
-			if (c.getPropertyLarge()) addProperty(Property.LARGE);
-			if (c.getPropertyImmovable()) addProperty(Property.IMMOVABLE);
-			if (c.getPropertyStatic()) addProperty(Property.STATIC);
 		}
 	}
 

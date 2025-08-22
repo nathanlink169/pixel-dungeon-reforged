@@ -37,6 +37,10 @@ public abstract class NPC extends Mob {
 
 	@Override
 	protected boolean act() {
+		if (alignment == Alignment.NEUTRAL && GetMaxHP() == 1 && HP == 0) { // Bug Fix from 0.1.2
+			HP = 1;
+		}
+
 		if (Dungeon.level.heroFOV[pos]){
 			Bestiary.setSeen(getClass());
 		}

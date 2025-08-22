@@ -327,6 +327,11 @@ public class Gun extends Weapon {
         }
 
         for (Integer p : positionsToDamage) {
+
+            if (p < 0 || p >= Dungeon.level.map.length) {
+                continue;
+            }
+
             if (Dungeon.level.map[p] == Terrain.EMPTY ||
                     Dungeon.level.map[p] == Terrain.EMPTY_DECO ||
                     Dungeon.level.map[p] == Terrain.OPEN_DOOR ||
