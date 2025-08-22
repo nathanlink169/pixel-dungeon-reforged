@@ -224,16 +224,6 @@ public class Gun extends Weapon {
         if (((Hero)owner).hasTalent(EFFECTIVE_SHOT)) {
             if (owner.buff(EffectiveShotCooldown.class) == null) {
                 isMaxDamage = true;
-                Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));
-            }
-            else {
-                EffectiveShotCooldown cd = owner.buff(EffectiveShotCooldown.class);
-                if (cd.left == 1) {
-                    cd.detach();
-                }
-                else {
-                    cd.left--;
-                }
             }
         }
         int damage = augment.damageFactor(super.damageRoll(owner, isMaxDamage));
@@ -346,14 +336,29 @@ public class Gun extends Weapon {
                 Dungeon.level.destroy(p);
                 Level.set(p, Terrain.EMBERS);
                 GameScene.updateMap( p );
+            }
 
-                Heap heap = Dungeon.level.heaps.get(p);
-                if (heap != null) {
-                    heap.explode();
+            Heap heap = Dungeon.level.heaps.get(p);
+            if (heap != null) {
+                heap.explode();
+            }
+
+            if (Dungeon.level.heroFOV[p]) {
+                CellEmitter.get(p).burst(SmokeParticle.FACTORY, 8);
+            }
+        }
+
+        if (user.hasTalent(EFFECTIVE_SHOT)) {
+            if (user.buff(EffectiveShotCooldown.class) == null) {
+                Buff.affect(user, EffectiveShotCooldown.class).set(7 - (user).pointsInTalent(EFFECTIVE_SHOT));
+            }
+            else {
+                EffectiveShotCooldown cd = user.buff(EffectiveShotCooldown.class);
+                if (cd.left == 1) {
+                    cd.detach();
                 }
-
-                if (Dungeon.level.heroFOV[p]) {
-                    CellEmitter.get(p).burst(SmokeParticle.FACTORY, 8);
+                else {
+                    cd.left--;
                 }
             }
         }

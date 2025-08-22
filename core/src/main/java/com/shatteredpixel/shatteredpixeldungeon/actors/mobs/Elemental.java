@@ -78,7 +78,7 @@ public abstract class Elemental extends Mob {
 	@Override
 	public int GetMaxHP() {
 		if (!summonedALly) {
-			return super.GetMaxHP() * (getRandomizerEnabled(RandomTraits.EMPOWERED_FORM, this) ? 90 : 60);
+			return (int) (super.GetMaxHP() * (getRandomizerEnabled(RandomTraits.EMPOWERED_FORM, this) ? 1.5f : 1.0f));
 		} else {
 			return 15 * Math.max(2, (1 + Dungeon.scalingDepth()/5));
 		}

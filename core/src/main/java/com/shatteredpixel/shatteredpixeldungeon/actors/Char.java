@@ -863,6 +863,10 @@ public abstract class Char extends Actor {
 			return;
 		}
 
+		if (HP > GetMaxHP()) {
+			HP = GetMaxHP(); // bug fix for v0.1.2, elementals had thousands of health
+		}
+
 		if (!(src instanceof LifeLink || src instanceof Hunger) && buff(LifeLink.class) != null){
 			HashSet<LifeLink> links = buffs(LifeLink.class);
 			for (LifeLink link : links.toArray(new LifeLink[0])){
