@@ -316,11 +316,7 @@ public class Ghoul extends Mob {
 						return true;
 					}
 				}
-				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
-					ghoul.HP = ghoul.GetMaxHP();
-				} else {
-					ghoul.HP = Math.round(ghoul.GetMaxHP() / 10f);
-				}
+
 				ghoul.beingLifeLinked = false;
 				Actor.add(ghoul);
 				ghoul.timeToNow();
@@ -331,6 +327,11 @@ public class Ghoul extends Mob {
 					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(ghoul.GetMaxHP()), FloatingText.HEALING);
 				} else {
 					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(ghoul.GetMaxHP()/10f)), FloatingText.HEALING);
+				}
+				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
+					ghoul.HP = ghoul.GetMaxHP();
+				} else {
+					ghoul.HP = Math.round(ghoul.GetMaxHP() / 10f);
 				}
 				super.detach();
 				return true;

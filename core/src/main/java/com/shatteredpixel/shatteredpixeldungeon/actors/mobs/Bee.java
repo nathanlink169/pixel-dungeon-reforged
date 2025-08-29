@@ -45,7 +45,7 @@ public class Bee extends Mob {
 		intelligentAlly = true;
 	}
 	@Override
-	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bat; }
+	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bee; }
 
 	private int level;
 

@@ -41,13 +41,11 @@ public class Updates {
 	private static final long CHECK_DELAY = 1000*60*60; //1 hour
 
 	public static boolean supportsUpdatePrompts(){
-		// return supportsUpdates() && service.supportsUpdatePrompts();
-		return false;
+		return supportsUpdates() && service.supportsUpdatePrompts();
 	}
 
 	public static boolean supportsBetaChannel(){
-		// return supportsUpdates() && service.supportsBetaChannel();
-		return false;
+		return supportsUpdates() && service.supportsBetaChannel();
 	}
 
 	public static void checkForUpdate(){

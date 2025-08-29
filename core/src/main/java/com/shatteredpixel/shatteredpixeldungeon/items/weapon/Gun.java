@@ -94,7 +94,7 @@ public class Gun extends Weapon {
 
     public static final String AC_SHOOT		    = "SHOOT";
     public static final String AC_RELOAD        = "RELOAD";
-    public static final float TIME_TO_RELOAD	= 4f;
+    public static final float TIME_TO_RELOAD	= 6f;
 
     private boolean isLoaded = true;
 
@@ -205,7 +205,7 @@ public class Gun extends Weapon {
 
     @Override
     public int min(int lvl) {
-        int dmg = 4 + (2*Dungeon.hero.lvl/5)
+        int dmg = 4 + (4*Dungeon.hero.lvl/5)
                 + (RingOfSharpshooting.levelDamageBonus(Dungeon.hero) / 2)
                 + (curseInfusionBonus ? 1 + Dungeon.hero.lvl/30 : 0);
         return Math.max(0, dmg);
@@ -213,7 +213,7 @@ public class Gun extends Weapon {
 
     @Override
     public int max(int lvl) {
-        int dmg = 8 + (int)((Dungeon.hero.lvl/5.0f)*5)
+        int dmg = 8 + (8*Dungeon.hero.lvl/5)
                 + RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
                 + (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
         return Math.max(0, dmg);
@@ -341,11 +341,6 @@ public class Gun extends Weapon {
                 Dungeon.level.destroy(p);
                 Level.set(p, Terrain.EMBERS);
                 GameScene.updateMap( p );
-            }
-
-            Heap heap = Dungeon.level.heaps.get(p);
-            if (heap != null) {
-                heap.explode();
             }
 
             if (Dungeon.level.heroFOV[p]) {

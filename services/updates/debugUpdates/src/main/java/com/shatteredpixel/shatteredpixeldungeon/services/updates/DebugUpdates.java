@@ -25,20 +25,39 @@
 package com.shatteredpixel.shatteredpixeldungeon.services.updates;
 
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Net;
 import com.watabou.noosa.Game;
+import com.watabou.utils.Bundle;
+import com.watabou.utils.DeviceCompat;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.net.ssl.SSLProtocolException;
 
 public class DebugUpdates extends UpdateService {
+	private static Pattern minAndroidPattern = Pattern.compile("Android .*\\(API ([0-9]*)\\)\\+ Devices", Pattern.CASE_INSENSITIVE);
+	private static Pattern minIOSPattern = Pattern.compile("iOS ([0-9]*)\\+ Devices", Pattern.CASE_INSENSITIVE);
 
 	private static AvailableUpdateData debugUpdateInfo;
 
 	@Override
 	public boolean supportsUpdatePrompts() {
-		return false; //turn on to debug update prompts
+		return true; //turn on to debug update prompts
 	}
 
 	@Override
 	public boolean supportsBetaChannel() {
 		return true;
+	}
+
+	private int GetVersionNumberFromCode(String versionCode) {
+		String[] parts = versionCode.split("\\.");
+		int majorVersion = Integer.parseInt(parts[0].replace("v","")) * 1000000;
+		int minorVersion = Integer.parseInt(parts[1]) * 1000;
+		int patchVersion = Integer.parseInt(parts[2].replace("-INDEV",""));
+		return majorVersion + minorVersion + patchVersion;
 	}
 
 	@Override
@@ -49,11 +68,82 @@ public class DebugUpdates extends UpdateService {
 			return;
 		}
 
-		debugUpdateInfo = new AvailableUpdateData();
-		debugUpdateInfo.versionCode = Game.versionCode+1;
-		debugUpdateInfo.URL = "http://www.google.com";
+		Net.HttpRequest httpGet = new Net.HttpRequest(Net.HttpMethods.GET);
+		httpGet.setUrl("https://api.github.com/repos/nathanlink169/pixel-dungeon-reforged/releases");
+		httpGet.setHeader("Accept", "application/vnd.github.v3+json");
 
-		callback.onUpdateAvailable(debugUpdateInfo);
+		Gdx.net.sendHttpRequest(httpGet, new Net.HttpResponseListener() {
+			@Override
+			public void handleHttpResponse(Net.HttpResponse httpResponse) {
+				try {
+					Bundle latestRelease = null;
+					int latestVersionCode = GetVersionNumberFromCode(Game.version);
+
+					for (Bundle b : Bundle.read( httpResponse.getResultAsStream() ).getBundleArray()){
+						String m = b.getString("tag_name");
+
+						//skip release that aren't the latest update (or an update at all)
+						if (GetVersionNumberFromCode(m) <= latestVersionCode) {
+							continue;
+
+							// or that are betas when we haven't opted in
+						} else if (!includeBetas && b.getBoolean("prerelease")){
+							continue;
+
+							// or that aren't compatible
+						} else if (DeviceCompat.isAndroid()){
+							Matcher minAndroid = minAndroidPattern.matcher(b.getString("body"));
+							if (minAndroid.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minAndroid.group(1))){
+								continue;
+							}
+						} else if (DeviceCompat.isiOS()){
+							Matcher minIOS = minIOSPattern.matcher(b.getString("body"));
+							if (minIOS.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minIOS.group(1))){
+								continue;
+							}
+						}
+
+						latestRelease = b;
+						latestVersionCode = GetVersionNumberFromCode(m);
+					}
+
+					if (latestRelease == null){
+						callback.onNoUpdateFound();
+					} else {
+
+						AvailableUpdateData update = new AvailableUpdateData();
+
+						update.versionName = latestRelease.getString("name");
+						update.versionCode = latestVersionCode;
+						update.desc = latestRelease.getString("body");
+						update.URL = latestRelease.getString("html_url");
+
+						callback.onUpdateAvailable(update);
+					}
+				} catch (Exception e) {
+					Game.reportException( e );
+					callback.onConnectionFailed();
+				}
+			}
+
+			@Override
+			public void failed(Throwable t) {
+				//Failure in SSL handshake, possibly because GitHub requires TLS 1.2+.
+				// Often happens for old OS versions with outdated security protocols.
+				// Future update attempts won't work anyway, so just pretend nothing was found.
+				if (t instanceof SSLProtocolException){
+					callback.onNoUpdateFound();
+				} else {
+					Game.reportException(t);
+					callback.onConnectionFailed();
+				}
+			}
+
+			@Override
+			public void cancelled() {
+				callback.onConnectionFailed();
+			}
+		});
 
 	}
 

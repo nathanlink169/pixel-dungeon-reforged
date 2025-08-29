@@ -95,7 +95,6 @@ public class DemonGoo extends Mob {
 
 			if (candidates.size() > 0) {
 				DemonGoo clone = split();
-				clone.HP = (HP - damage) / 2;
 				clone.pos = Random.element(candidates);
 				clone.state = clone.HUNTING;
 
@@ -104,7 +103,8 @@ public class DemonGoo extends Mob {
 				}
 
 				GameScene.add(clone, SPLIT_DELAY);
-				Actor.addDelayed(new Pushing(clone, pos, clone.pos), -1);
+				clone.HP = (HP - damage) / 2;
+				Actor.add(new Pushing(clone, pos, clone.pos));
 
 				HP -= clone.HP;
 			}

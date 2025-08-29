@@ -105,7 +105,7 @@ public class HornOfPlenty extends Artifact {
 				//consume as much food as it takes to be full, to a minimum of 1
 				int satietyPerCharge = (int) (Hunger.STARVING/5f);
 				if (Dungeon.isChallenged(Challenges.NO_FOOD)){
-					satietyPerCharge /= 3;
+					satietyPerCharge *= Challenges.NoFoodMultiplier();
 				}
 
 				Hunger hunger = Buff.affect(Dungeon.hero, Hunger.class);
@@ -130,7 +130,7 @@ public class HornOfPlenty extends Artifact {
 	public void doEatEffect(Hero hero, int chargesToUse){
 		int satietyPerCharge = (int) (Hunger.STARVING/5f);
 		if (Dungeon.isChallenged(Challenges.NO_FOOD)){
-			satietyPerCharge /= 3;
+			satietyPerCharge *= Challenges.NoFoodMultiplier();
 		}
 
 		Buff.affect(hero, Hunger.class).satisfy(satietyPerCharge * chargesToUse);
@@ -151,7 +151,8 @@ public class HornOfPlenty extends Artifact {
 				|| Dungeon.hero.hasTalent(Talent.MYSTICAL_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.INVIGORATING_MEAL)
 				|| Dungeon.hero.hasTalent(Talent.FOCUSED_MEAL)
-				|| Dungeon.hero.hasTalent(Talent.ENLIGHTENING_MEAL)){
+				|| Dungeon.hero.hasTalent(Talent.ENLIGHTENING_MEAL)
+				|| Dungeon.hero.hasTalent(Talent.QUICK_CALIBRATION)){
 			hero.spend(Food.TIME_TO_EAT - 2);
 		} else {
 			hero.spend(Food.TIME_TO_EAT);

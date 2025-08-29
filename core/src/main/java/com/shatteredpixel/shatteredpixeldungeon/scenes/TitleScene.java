@@ -35,12 +35,10 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.BannerSprites;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Fireball;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.services.news.News;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.AvailableUpdateData;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.Updates;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpitterSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Archs;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ExitButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
@@ -50,15 +48,12 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndSettings;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndVictoryCongrats;
 import com.watabou.glwrap.Blending;
-import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Music;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.DeviceCompat;
-
-import java.util.Date;
 
 public class TitleScene extends PixelScene {
 	
@@ -185,24 +180,6 @@ public class TitleScene extends PixelScene {
 		StyledButton btnSettings = new SettingsButton(GREY_TR, Messages.get(this, "settings"));
 		add(btnSettings);
 
-		StyledButton btnFeedback = new StyledButton(GREY_TR, Messages.get(this, "feedback")){
-			@Override
-			protected void onClick() {
-				ShatteredPixelDungeon.platform.openURI( "https://forms.gle/tqT95s7Wb4tud8Cm6" );
-			}
-		};
-		btnFeedback.icon(Icons.get(Icons.KEYBOARD));
-		add(btnFeedback);
-
-		StyledButton btnBugReport = new StyledButton(GREY_TR, Messages.get(this, "bugreport")){
-			@Override
-			protected void onClick() {
-				ShatteredPixelDungeon.platform.openURI( "https://forms.gle/d9QdhFP8GUTYW3AY7" );
-			}
-		};
-		btnBugReport.icon(new Image(new SpinnerSprite()));
-		add(btnBugReport);
-		
 		final int BTN_HEIGHT = 20;
 		int GAP = (int)(h - topRegion - (landscape() ? 3 : 4)*BTN_HEIGHT)/3;
 		GAP /= landscape() ? 3 : 5;
@@ -219,8 +196,6 @@ public class TitleScene extends PixelScene {
 			btnAbout.setRect(btnBadges.right()+2, btnBadges.top(), btnRankings.width(), BTN_HEIGHT);
 			btnSettings.setRect(btnPlay.left(), btnRankings.bottom() + GAP, btnPlay.width(), BTN_HEIGHT);
 			btnChanges.setRect(btnSupport.left(), btnSettings.top(), btnSupport.width(), BTN_HEIGHT);
-			btnFeedback.setRect(btnPlay.left(), btnChanges.bottom() + GAP, btnPlay.width(), BTN_HEIGHT);
-			btnBugReport.setRect(btnSupport.left(), btnFeedback.top(), btnPlay.width(), BTN_HEIGHT);
 		} else {
 			btnPlay.setRect(btnAreaLeft, topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
 			align(btnPlay);
@@ -230,8 +205,6 @@ public class TitleScene extends PixelScene {
 			btnAbout.setRect(btnRankings.left(), btnRankings.bottom()+ GAP, btnRankings.width(), BTN_HEIGHT);
 			btnChanges.setRect(btnAbout.right()+2, btnAbout.top(), btnAbout.width(), BTN_HEIGHT);
 			btnSettings.setRect(btnAbout.left(), btnAbout.bottom()+GAP, buttonAreaWidth, BTN_HEIGHT);
-			btnFeedback.setRect(btnSettings.left(), btnSettings.bottom()+GAP, btnAbout.width(), BTN_HEIGHT);
-			btnBugReport.setRect(btnChanges.left(), btnFeedback.top(), btnFeedback.width(), BTN_HEIGHT);
 		}
 
 		if (DeviceCompat.isDesktop()) {
@@ -256,46 +229,6 @@ public class TitleScene extends PixelScene {
 
 		align(fb);
 		add( fb );
-	}
-
-	private static class NewsButton extends StyledButton {
-
-		public NewsButton(Chrome.Type type, String label ){
-			super(type, label);
-			if (SPDSettings.news()) News.checkForNews();
-		}
-
-		int unreadCount = -1;
-
-		@Override
-		public void update() {
-			super.update();
-
-			if (unreadCount == -1 && News.articlesAvailable()){
-				long lastRead = SPDSettings.newsLastRead();
-				if (lastRead == 0){
-					if (News.articles().get(0) != null) {
-						SPDSettings.newsLastRead(News.articles().get(0).date.getTime());
-					}
-				} else {
-					unreadCount = News.unreadArticles(new Date(SPDSettings.newsLastRead()));
-					if (unreadCount > 0) {
-						unreadCount = Math.min(unreadCount, 9);
-						text(text() + "(" + unreadCount + ")");
-					}
-				}
-			}
-
-			if (unreadCount > 0){
-				textColor(ColorMath.interpolate( 0xFFFFFF, Window.SHPX_COLOR, 0.5f + (float)Math.sin(Game.timeTotal*5)/2f));
-			}
-		}
-
-		@Override
-		protected void onClick() {
-			super.onClick();
-			ShatteredPixelDungeon.switchNoFade( NewsScene.class );
-		}
 	}
 
 	private static class ChangesButton extends StyledButton {

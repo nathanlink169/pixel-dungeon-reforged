@@ -503,7 +503,7 @@ public class Belongings implements Iterable<Item> {
 		do {
 			toReturn = Random.element(backpack.items);
 			validSteal = toReturn != null && !toReturn.unique && toReturn.level() < 1;
-		} while (validSteal && ++attempts < 100 );
+		} while (!validSteal && ++attempts < 100 );
 		if (!validSteal) {
 			return null;
 		}

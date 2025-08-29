@@ -171,8 +171,8 @@ public class Swarm extends Mob {
 
 	@Override
 	public float GetLootChance(int slot) {
-		float lootChance = 1f/(6 * (generation+1) );
-		return super.GetLootChance(slot) * ((5f - Dungeon.LimitedDrops.SWARM_HP.count) / 5f) * lootChance;
+		float lootChance = (5f - Dungeon.LimitedDrops.SWARM_HP.count) / 5f;
+		return super.GetLootChance(slot) * lootChance;
 	}
 	
 	@Override

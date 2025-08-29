@@ -32,7 +32,6 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.services.news.News;
 import com.shatteredpixel.shatteredpixeldungeon.services.updates.Updates;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.CheckBox;
@@ -69,6 +68,7 @@ public class WndSettings extends WndTabbed {
 	private UITab       ui;
 	private InputTab    input;
 	private AudioTab    audio;
+	private DataTab     data;
 
 	public static int last_index = 0;
 
@@ -125,6 +125,22 @@ public class WndSettings extends WndTabbed {
 					super.select(value);
 					input.visible = input.active = value;
 					if (value) last_index = 2;
+				}
+			});
+		}
+
+		if (Updates.supportsUpdates() && Updates.supportsUpdatePrompts()) {
+			data = new DataTab();
+			data.setSize(width, 0);
+			height = Math.max(height, data.height());
+			add(data);
+
+			add(new IconTab(Icons.get(Icons.DATA)) {
+				@Override
+				protected void select(boolean value) {
+					super.select(value);
+					data.visible = data.active = value;
+					if (value) last_index = 3;
 				}
 			});
 		}
@@ -785,7 +801,6 @@ public class WndSettings extends WndTabbed {
 
 		RenderedTextBlock title;
 		ColorBlock sep1;
-		CheckBox chkNews;
 		CheckBox chkUpdates;
 		CheckBox chkBetas;
 		CheckBox chkWifi;
@@ -798,17 +813,6 @@ public class WndSettings extends WndTabbed {
 
 			sep1 = new ColorBlock(1, 1, 0xFF000000);
 			add(sep1);
-
-			chkNews = new CheckBox(Messages.get(this, "news")){
-				@Override
-				protected void onClick() {
-					super.onClick();
-					SPDSettings.news(checked());
-					News.clearArticles();
-				}
-			};
-			chkNews.checked(SPDSettings.news());
-			add(chkNews);
 
 			if (Updates.supportsUpdates() && Updates.supportsUpdatePrompts()) {
 				chkUpdates = new CheckBox(Messages.get(this, "updates")) {
@@ -855,18 +859,14 @@ public class WndSettings extends WndTabbed {
 			sep1.size(width, 1);
 			sep1.y = title.bottom() + 3*GAP;
 
-			float pos;
-			if (width > 200 && chkUpdates != null){
-				chkNews.setRect(0, sep1.y + 1 + GAP, width/2-1, BTN_HEIGHT);
-				chkUpdates.setRect(chkNews.right() + GAP, chkNews.top(), width/2-1, BTN_HEIGHT);
-				pos = chkUpdates.bottom();
+			float pos = sep1.y + 1 + GAP;
+			if (chkUpdates != null) {
+				if (width > 200) {
+					chkUpdates.setRect(0, pos, width / 2 - 1, BTN_HEIGHT);
 			} else {
-				chkNews.setRect(0, sep1.y + 1 + GAP, width, BTN_HEIGHT);
-				pos = chkNews.bottom();
-				if (chkUpdates != null) {
-					chkUpdates.setRect(0, chkNews.bottom() + GAP, width, BTN_HEIGHT);
-					pos = chkUpdates.bottom();
+					chkUpdates.setRect(0, pos, width, BTN_HEIGHT);
 				}
+					pos = chkUpdates.bottom();
 			}
 
 			if (chkBetas != null){

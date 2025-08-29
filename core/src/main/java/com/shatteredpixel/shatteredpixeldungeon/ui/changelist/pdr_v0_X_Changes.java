@@ -57,6 +57,7 @@ public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+		add_v0_1_3_Changes(changeInfos);
 		add_v0_1_2_Changes(changeInfos);
 		add_v0_1_1_Changes(changeInfos);
 		add_v0_1_Changes(changeInfos);
@@ -100,6 +101,66 @@ public class pdr_v0_X_Changes {
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
 	}
 
+	public static void add_v0_1_3_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.1.3", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Developer Commentary",
+				"_-_ Released August 28th, 2025\n" +
+						"\n" +
+						"Thank you to everyone for reporting issues and sticking through the buggy releases!\n" +
+						"\n" +
+						"The next update, barring any silly mistakes, should be v0.2.0. Here are the plans for that specific version:\n" +
+						"**-**Constructor rework: While I don't dislike the current constructor, the current talents of \"number go up\" isn't terribly interesting. I want to rework these talents to make the construct itself more interesting to upgrade.\n" +
+						"**-**New run flow redesign: The current UI doesn't fully work for where I want to take the game, as it will start getting very crowded soon. Between character appearance customization, difficulty selection, challenges (soon renamed to \"modifiers\"), seed, etc. the current layout struggles a bit.\n" +
+						"**-**Likely another challenge (modifier) or two, some ones that may make the game a bit easier, but are a bit of fun to play around with. One that I have in mind is the ability for the pickaxe to work on every level."));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.GUN), "Railgun",
+				"Another Railgun buff!\n\n" +
+						"**-** Railgun reload time: 4 turns -> 6 turns (the only nerf, I promise)\n" +
+						"**-** Homemade Railgun no longer destroys items on the ground\n" +
+						"**-** Homemade Railgun damage increased:\n" +
+						"   **-** Base damage: 4-8 -> 4-8\n" +
+						"   **-** +1 damage: 6-13 -> 8-16\n" +
+						"   **-** +2 damage: 8-18 -> 12-24\n" +
+						"   **-** +3 damage: 10-23 -> 16-32\n" +
+						"   **-** +4 damage: 12-28 -> 20-40\n" +
+						"   **-** +5 damage: 14-33 -> 24-48\n"));
+
+		changes.addButton( new ChangeButton(Icons.CHANGES.get(), "Auto Updater",
+				"Now, the game should automatically tell you when the game has an update, rather than me posting in Discord and Reddit."));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.RATION), "Food Changes",
+				"A few small food changes:\n" +
+						"**-** Quick Callibration now works with Horn of Plenty\n" +
+						"**-** One more ration spawns per region\n" +
+						"**-** On Diet now has food be 40% as effective (previously 33%)"));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+						"**Items:**\n" +
+						"**-** Homemade Railgun not affecting tiles that had water on them\n" +
+						"**-** Homemade Railgun crashing the game when aiming outside of level bounds\n" +
+						"**-** Leeching Curse taking too much health\n" +
+						"**-** Trinket Madness spawning with both Mossy Blump and Trap Mechanism",
+
+				"**Mobs:**\n" +
+						"**-** Elementals spawning 3,600 HP\n" +
+						"**-** NPC unable to be interacted with\n" +
+						"**-** Rot Lashers not dropping seeds\n" +
+						"**-** Many enemies don't drop items they're supposed to\n" +
+						"**-** Tengu spawning with full HP in second phase\n" +
+						"**-** Bees appears and using the stats of bats\n" +
+						"**-** Rats giving 0xp\n" +
+						"**-** Monks not dropping food rations\n" +
+						"**-** Newborn Fire Elemental crashing the game on attacks\n" +
+						"**-** Thieves not stealing items\n" +
+						"**-** Flies not dropping potions\n" +
+						"**-** Demon goos unable to be killed\n" +
+						"**-** Wraiths unable to be sneak attacked"));
+	}
 	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
 
 		ChangeInfo changes = new ChangeInfo("v0.1.2", true, "");

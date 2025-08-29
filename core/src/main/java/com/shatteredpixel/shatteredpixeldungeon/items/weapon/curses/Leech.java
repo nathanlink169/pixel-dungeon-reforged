@@ -39,6 +39,9 @@ public class Leech extends Weapon.Enchantment implements Hero.Doom {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
+	private static final int TURNS_TO_ACTIVATE = 50;
+	private static final int DAMAGE_INTERVAL = 20;
+
 	private static float turnsWithoutDamage = 0.0f;
 
 	@Override
@@ -52,11 +55,11 @@ public class Leech extends Weapon.Enchantment implements Hero.Doom {
 	public void triggerDamage( Char owner, float time ) {
 		turnsWithoutDamage += time;
 		int intTurns = (int)(turnsWithoutDamage);
-		if (intTurns < 20 || (intTurns - 20) % 5 != 0) {
+		if (intTurns < TURNS_TO_ACTIVATE || (intTurns - TURNS_TO_ACTIVATE) % DAMAGE_INTERVAL != 0) {
 			return;
 		}
 
-		int damage = (int) Math.pow(2, (intTurns - 20) / 5.0f);
+		int damage = (int) Math.pow(2, (intTurns - TURNS_TO_ACTIVATE) / (float)DAMAGE_INTERVAL);
 		owner.damage(damage, this);
 	}
 

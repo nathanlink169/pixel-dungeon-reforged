@@ -95,7 +95,7 @@ public class Wraith extends Mob {
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
+	protected int GetDefenseSkillInternal() {
 		return attackSkill(null) * 5;
 	}
 

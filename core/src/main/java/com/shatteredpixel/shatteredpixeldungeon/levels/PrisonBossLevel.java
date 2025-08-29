@@ -501,6 +501,7 @@ public class PrisonBossLevel extends Level {
 				GameScene.add(tengu);
 				tengu.timeToNow();
 				tengu.notice();
+				tengu.HP = tengu.GetMaxHP() / 2;
 
 				CellEmitter.get( tengu.pos ).burst( Speck.factory( Speck.WOOL ), 6 );
 				

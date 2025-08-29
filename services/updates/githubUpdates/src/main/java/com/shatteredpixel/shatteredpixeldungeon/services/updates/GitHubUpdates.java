@@ -54,6 +54,14 @@ public class GitHubUpdates extends UpdateService {
 		return true;
 	}
 
+	private int GetVersionNumberFromCode(String versionCode) {
+		String[] parts = versionCode.split("\\.");
+		int majorVersion = Integer.parseInt(parts[0].replace("v","")) * 1000000;
+		int minorVersion = Integer.parseInt(parts[1]) * 1000;
+		int patchVersion = Integer.parseInt(parts[2].replace("-INDEV",""));
+		return majorVersion + minorVersion + patchVersion;
+	}
+
 	@Override
 	public void checkForUpdate(boolean useMetered, boolean includeBetas, UpdateResultCallback callback) {
 
@@ -63,7 +71,7 @@ public class GitHubUpdates extends UpdateService {
 		}
 
 		Net.HttpRequest httpGet = new Net.HttpRequest(Net.HttpMethods.GET);
-		httpGet.setUrl("https://api.github.com/repos/00-Evan/shattered-pixel-dungeon/releases");
+		httpGet.setUrl("https://api.github.com/repos/nathanlink169/pixel-dungeon-reforged/releases");
 		httpGet.setHeader("Accept", "application/vnd.github.v3+json");
 
 		Gdx.net.sendHttpRequest(httpGet, new Net.HttpResponseListener() {
@@ -71,17 +79,13 @@ public class GitHubUpdates extends UpdateService {
 			public void handleHttpResponse(Net.HttpResponse httpResponse) {
 				try {
 					Bundle latestRelease = null;
-					int latestVersionCode = Game.versionCode;
+					int latestVersionCode = GetVersionNumberFromCode(Game.version);
 
 					for (Bundle b : Bundle.read( httpResponse.getResultAsStream() ).getBundleArray()){
-						Matcher m = versionCodePattern.matcher(b.getString("body"));
-
-						if (m.find()){
-							int releaseVersion = Integer.parseInt(m.group(1));
-
+						String m = b.getString("tag_name");
 
 							//skip release that aren't the latest update (or an update at all)
-							if (releaseVersion <= latestVersionCode) {
+						if (GetVersionNumberFromCode(m) <= latestVersionCode) {
 								continue;
 
 							// or that are betas when we haven't opted in
@@ -102,9 +106,7 @@ public class GitHubUpdates extends UpdateService {
 							}
 
 							latestRelease = b;
-							latestVersionCode = releaseVersion;
-						}
-
+						latestVersionCode = GetVersionNumberFromCode(m);
 					}
 
 					if (latestRelease == null){
@@ -115,9 +117,7 @@ public class GitHubUpdates extends UpdateService {
 
 						update.versionName = latestRelease.getString("name");
 						update.versionCode = latestVersionCode;
-						Matcher m = descPattern.matcher(latestRelease.getString("body"));
-						m.find();
-						update.desc = m.group(1);
+						update.desc = latestRelease.getString("body");
 						update.URL = latestRelease.getString("html_url");
 
 						callback.onUpdateAvailable(update);

@@ -474,7 +474,7 @@ public abstract class Elemental extends Mob {
 		@Override
 		public int damageRoll(AttackType type, boolean isMaxDamage) {
 			if (!summonedALly) {
-				return damageRoll(AttackType.MELEE, false);
+				return super.damageRoll(AttackType.MELEE, isMaxDamage);
 			} else {
 				return super.damageRoll(type, isMaxDamage);
 			}

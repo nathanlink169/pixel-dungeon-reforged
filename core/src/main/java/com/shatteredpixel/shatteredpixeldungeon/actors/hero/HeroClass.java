@@ -154,10 +154,16 @@ public enum HeroClass {
 			trinkets[0] = (Trinket) Generator.random(Generator.Category.TRINKET);
 			do {
 				trinkets[1] = (Trinket) Generator.random(Generator.Category.TRINKET);
-			} while (trinkets[0] == trinkets[1]);
+			} while (trinkets[0] == trinkets[1] ||
+					(trinkets[0] instanceof MossyClump && trinkets[1] instanceof TrapMechanism) ||
+					(trinkets[0] instanceof TrapMechanism && trinkets[1] instanceof MossyClump));
 			do {
 				trinkets[2] = (Trinket) Generator.random(Generator.Category.TRINKET);
-			} while (trinkets[0] == trinkets[2] || trinkets[1] == trinkets[2]);
+			} while (trinkets[0] == trinkets[2] || trinkets[1] == trinkets[2] ||
+					(trinkets[0] instanceof MossyClump && trinkets[2] instanceof TrapMechanism) ||
+					(trinkets[0] instanceof TrapMechanism && trinkets[2] instanceof MossyClump) ||
+					(trinkets[1] instanceof MossyClump && trinkets[2] instanceof TrapMechanism) ||
+					(trinkets[1] instanceof TrapMechanism && trinkets[2] instanceof MossyClump));
 
 			for (int j = 0; j < 3; ++j) {
 				trinkets[j].upgrade(3).collect();
