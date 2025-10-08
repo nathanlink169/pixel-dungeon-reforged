@@ -154,7 +154,7 @@ public class Rapier extends MeleeWeapon {
 
 							wep.beforeAbilityUsed(hero, enemy);
 							AttackIndicator.target(enemy);
-							if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING)) {
+							if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING, Char.AttackType.MELEE)) {
 								Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 								if (!enemy.isAlive()) {
 									wep.onAbilityKill(hero, enemy);

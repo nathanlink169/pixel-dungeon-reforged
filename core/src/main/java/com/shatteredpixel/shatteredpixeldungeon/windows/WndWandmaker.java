@@ -68,7 +68,7 @@ public class WndWandmaker extends Window {
 			msg = Messages.get(this, "dust");
 		} else if (item instanceof Embers){
 			msg = Messages.get(this, "ember");
-		} else if (item instanceof Rotberry.Seed){
+		} else if (item instanceof Rotberry.RotberrySeed){
 			msg = Messages.get(this, "berry");
 		}
 

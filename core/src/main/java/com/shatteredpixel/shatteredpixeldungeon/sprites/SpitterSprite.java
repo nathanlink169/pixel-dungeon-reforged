@@ -78,7 +78,7 @@ public class SpitterSprite extends MobSprite{
                     reset( this, cellToAttack, new SpitterSprite.SpitterShot(), new Callback() {
                         @Override
                         public void call() {
-                            ch.onAttackComplete();
+                            ch.onAttackComplete(Char.AttackType.RANGED_PHYSICAL);
                         }
                     } );
         } else {

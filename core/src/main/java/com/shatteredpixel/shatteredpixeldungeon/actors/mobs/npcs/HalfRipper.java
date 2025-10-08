@@ -505,6 +505,7 @@ public class HalfRipper extends NPC {
 
         public static void reset() {
             given = false;
+            started = false;
             spawned = false;
             failed = false;
             completed = false;

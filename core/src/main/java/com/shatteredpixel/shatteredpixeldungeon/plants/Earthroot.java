@@ -42,7 +42,7 @@ public class Earthroot extends Plant {
 	
 	{
 		image = 8;
-		seedClass = Seed.class;
+		seedClass = EarthrootSeed.class;
 	}
 	
 	@Override
@@ -62,7 +62,7 @@ public class Earthroot extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class EarthrootSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_EARTHROOT;
 

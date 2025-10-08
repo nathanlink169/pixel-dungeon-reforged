@@ -265,7 +265,9 @@ public class Badges {
 		if (bundle == null) return badges;
 
 		String[] names = bundle.getStringArray( BADGES );
-		if (names == null) return badges;
+		if (names == null) {
+            return badges;
+        }
 
         for (String name : names) {
             try {
@@ -1081,6 +1083,10 @@ public class Badges {
 	}
 
 	public static void validateHighScore( int score ){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		if (score >= 5000) {
 			badge = Badge.HIGH_SCORE_1;
@@ -1145,7 +1151,7 @@ public class Badges {
 	
 	private static void displayBadge( Badge badge ) {
 
-		if (badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
+		if (!SPDSettings.creative() || badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
 			return;
 		}
 		
@@ -1171,7 +1177,7 @@ public class Badges {
 	}
 	
 	public static void unlock( Badge badge ){
-		if (!isUnlocked(badge) && (badge.type == BadgeType.JOURNAL || Dungeon.customSeedText.isEmpty())){
+		if (!SPDSettings.creative() && !isUnlocked(badge) && (badge.type == BadgeType.JOURNAL || Dungeon.customSeedText.isEmpty())){
 			global.add( badge );
 			saveNeeded = true;
 		}

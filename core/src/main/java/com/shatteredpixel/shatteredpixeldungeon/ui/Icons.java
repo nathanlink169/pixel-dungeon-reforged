@@ -63,6 +63,14 @@ public enum Icons {
 	SCROLL_GREY,
 	SEED,
 	DIFFICULTY,
+	EASY,
+	MEDIUM,
+	HARD,
+	IMPOSSIBLE,
+	EASYCREATIVE,
+	MEDIUMCREATIVE,
+	HARDCREATIVE,
+	IMPOSSIBLECREATIVE,
 	LEFTARROW,
 	RIGHTARROW,
 	CALENDAR,
@@ -92,6 +100,7 @@ public enum Icons {
 	ALCHEMY,
 	GRASS,
 	RANDOMIZER,
+	CREATIVE,
 
 	STAIRS,
 	STAIRS_CHASM,
@@ -277,6 +286,30 @@ public enum Icons {
 			case DIFFICULTY:
 				icon.frame( icon.texture.uvRectBySize(208, 32, 14, 14));
 				break;
+			case EASY:
+				icon.frame( icon.texture.uvRectBySize(224, 32, 16, 14));
+				break;
+			case MEDIUM:
+				icon.frame( icon.texture.uvRectBySize(240, 32, 16, 14));
+				break;
+			case HARD:
+				icon.frame( icon.texture.uvRectBySize(256, 32, 16, 14));
+				break;
+			case IMPOSSIBLE:
+				icon.frame( icon.texture.uvRectBySize(272, 32, 16, 14));
+				break;
+			case EASYCREATIVE:
+				icon.frame( icon.texture.uvRectBySize(224, 48, 16, 14));
+				break;
+			case MEDIUMCREATIVE:
+				icon.frame( icon.texture.uvRectBySize(240, 48, 16, 14));
+				break;
+			case HARDCREATIVE:
+				icon.frame( icon.texture.uvRectBySize(256, 48, 16, 14));
+				break;
+			case IMPOSSIBLECREATIVE:
+				icon.frame( icon.texture.uvRectBySize(272, 48, 16, 14));
+				break;
 			case BACKPACK_LRG:
 				icon.frame( icon.texture.uvRectBySize( 0, 48, 16, 16 ) );
 				break;
@@ -303,6 +336,9 @@ public enum Icons {
 				break;
 			case RANDOMIZER:
 				icon.frame( icon.texture.uvRectBySize( 128, 48, 16, 16 ) );
+				break;
+			case CREATIVE:
+				icon.frame( icon.texture.uvRectBySize( 144, 48, 14, 14 ) );
 				break;
 
 			case STAIRS:

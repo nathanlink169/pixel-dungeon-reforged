@@ -376,13 +376,13 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					@Override
 					public void call() {
 						AttackIndicator.target(enemy);
-						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING);
+						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE);
 
 						if (enemy.isAlive()){
 							hero.sprite.attack(enemy.pos, new Callback() {
 								@Override
 								public void call() {
-									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING);
+									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE);
 									Invisibility.dispel();
 									hero.next();
 									tracker.detach();
@@ -568,7 +568,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 						boolean empowered = Buff.affect(hero, MonkEnergy.class).abilitiesEmpowered(hero);
 
 						int oldPos = enemy.pos;
-						if (hero.attack(enemy, empowered ? 9f : 6f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING)){
+						if (hero.attack(enemy, empowered ? 9f : 6f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE)){
 							Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 						}
 

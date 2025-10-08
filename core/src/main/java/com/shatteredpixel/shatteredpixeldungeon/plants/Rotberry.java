@@ -41,7 +41,7 @@ public class Rotberry extends Plant {
 
 	{
 		image = 0;
-		seedClass = Seed.class;
+		seedClass = RotberrySeed.class;
 	}
 
 	@Override
@@ -62,10 +62,10 @@ public class Rotberry extends Plant {
 		}
 
 		//seed always drops, no lotus benefit
-		Dungeon.level.drop( new Seed(), pos ).sprite.drop();
+		Dungeon.level.drop( new RotberrySeed(), pos ).sprite.drop();
 	}
 
-	public static class Seed extends Plant.Seed {
+	public static class RotberrySeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_ROTBERRY;
 

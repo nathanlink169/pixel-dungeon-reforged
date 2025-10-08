@@ -57,6 +57,16 @@ public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+		ChangeInfo changes2 = new ChangeInfo("v0.2", true, "");
+		changes2.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes2);
+		add_v0_2_1_Changes(changeInfos);
+		add_v0_2_0_Changes(changeInfos);
+
+		ChangeInfo changes1 = new ChangeInfo("v0.1", true, "");
+		changes1.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes1);
+		add_v0_1_4_Changes(changeInfos);
 		add_v0_1_3_Changes(changeInfos);
 		add_v0_1_2_Changes(changeInfos);
 		add_v0_1_1_Changes(changeInfos);
@@ -65,7 +75,7 @@ public class pdr_v0_X_Changes {
 
 	public static void add_Coming_Soon( ArrayList<ChangeInfo> changeInfos ) {
 
-		ChangeInfo changes = new ChangeInfo("What's next?", true, "");
+		ChangeInfo changes = new ChangeInfo("Coming Soon", true, "");
 		changes.hardlight(0xCCCCCC);
 		changeInfos.add(changes);
 
@@ -88,12 +98,6 @@ public class pdr_v0_X_Changes {
 		changes.addButton( new ChangeButton(Icons.get(Icons.JOURNAL), "Journal Upgrade",
 				"The current journal is alright, but I'd like to upgrade it a little bit. Every time you kill an enemy, they will have a chance to drop a journal page which has much more detailed information, including their damage range, damage reduction, accuracy and evasion, etc."));
 
-		changes.addButton( new ChangeButton(Icons.get(Icons.CHANGES), "New Run Revamp",
-				"Given that I am trying to add a few new features and ways to play, I want to create a completely new UI for the start of a run. This is partly to accommodate all the new features, and it is partly to accommodate that I cannot make splash art for the life of me."));
-
-		changes.addButton(new ChangeButton(Icons.get(Icons.KEYBOARD), "Creative Mode",
-				"I don't want to add a whole dungeon editor to the game, but a sandbox mode were you can spawn creatures, give yourself items, set your own stats, etc. so you can test strategies (and so I can test the game) would be nice."));
-
 		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.SPIRIT_BOW), "Thrown Weapons Rework",
 				"Version 3.2 of Shattered Pixel Dungeon made a change to thrown weapons. I have my own way I'd like to take it, with every character having a melee weapon and a ranged weapon, and being able to find each as they go through the dungeon. In addition, most thrown weapons will be transferred into ammunition for these ranged weapons, with a quiver slot available."));
 
@@ -101,9 +105,121 @@ public class pdr_v0_X_Changes {
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
 	}
 
+	public static void add_v0_2_1_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.2.1", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.KEYBOARD.get(), "Creative Mode",
+				"When selecting difficulty, you can now select creative mode. This allows you to change things on the fly in game.\n" +
+						"**-** Give yourself any item.\n" +
+						"**-** Infinite gold and energy.\n" +
+						"**-** Edit your experience, health, shielding, and strength.\n" +
+						"**-** Remove any status from yourself or other creatures.\n" +
+						"**-** Spawn any non-boss enemy on the fly.\n\n" +
+						"There are four areas to find the creative mode icon. In the hero window to edit stats, in the backpack to give yourself items, in the status info window to remove a status effect, and in the pause menu to spawn an enemy.\n\n" +
+						"Your score will automatically set as 0 at the end of a creative mode run. You cannot unlock modifiers using creative mode."));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+
+						"**-** Ballista would not consume ammo upon shooting\n" +
+						"**-** Enemies with physical projectiles would not deal any damage\n" +
+						"**-** Demon Halls quest would not reset properly between runs\n" +
+						"**-** Demon goo would drop items too often\n" +
+						"**-** Elixir of Might could be duplicated by Volatile Salvage\n" +
+						"**-** Modifier rooms would not spawn sometimes\n" +
+						"**-** Some modifier rooms were sometimes impossible to complete due to level generation\n" +
+						"**-** Construct would always have the cripple ability regardless of the Construct Lethality talent level"));
+	}
+
+	public static void add_v0_2_0_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.2.0", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Developer Commentary",
+				"_-_ Released September 20th, 2025\n" +
+						"\n" +
+						"Here's the next update, with some technical modernizations, a constructor rework, new run flow redesign, a new challenge unlock system, and a new challenge!\n" +
+						"\n" +
+						"I wanted to put off the library update as long as possible, but unfortunately the game wouldn't build without the update, so I couldn't put it off any longer. Please let me know if there are any weird changes as a consequence of these updates. Changing libraries is easily my least-favourite task of game development because the errors tend to be little more than \"I just do not _vibe_ with this update\" so I may have missed some things."));
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "What's Next?",
+				"After this update (and the usual round of bugfixes,) I plan to implement the Hero Visual Customization, and maybe also the Creative Mode."));
+
+		changes.addButton( new ChangeButton(Icons.DISPLAY_PORT.get(), "Mobile Layout Changes",
+				"**-** Much like Shattered Pixel Dungeon, Pixel Dungeon Reforged now renders in true edge-to-edge fullscreen on Android 9+!\n" +
+						  "**-** All in-game interfaces should have been adjusted to better handle true mobile fullscreen and insets. Please let me know if you run into any issues on your device.\n" +
+						  "**-** Pixel Dungeon reforged now requires Android 5.0+, up from 4.0+.\n" +
+						  "**-** Updated various Google Play libraries."));
+
+		changes.addButton( new ChangeButton(new Image(Assets.Sprites.CONSTRUCT, 0, 0, 16, 16), "Constructor Rework",
+				"While the constructor wasn't bad, lots of their talents were just \"look at the number go up\". These upgrades should be a little more interesting.\n\n" +
+						"**-** Construct Hardening has been changed to Construct Vision.\n" +
+						"  **-** Previously, Construct Hardening would upgrade the Constructs Max Health from 15% of your Max Health to 25%, 35%, then 50% per point. Now, the _Constructs Max Health is always 50%._\n" +
+						"  **-** Previously, Construct Hardening would upgrade the Constructs Defense Skill from 15% of your Defense Skill to 25%, 35%, then 50% per point. Now, the _Constructs Defense Skill is always 50%._\n" +
+						"  **-** Previously, Construct Hardening would upgrade the Constructs Damage Reduction from 15% of your Damage Reduction to 25%, 35%, then 50% per point. Now, the _Constructs Damage Reduction is always 80%._\n" +
+						"  **-** Construct Vision Range has decreased from _8 -> 6._\n" +
+						"  **-** The first point of Construct Vision allows you to _always see the Constructs vision range_ (in the same way you can see a wards vision or the spirit hawks vision.) The second and third points increase the vision range by _2 each._",
+						"**-** Construct Mobility has been left unchanged, as I think speed and flying is interesting enough on its own.\n" +
+						"**-** Construct Lethality has been adjusted.\n" +
+						"  **-** The Constructs passive healing has been decreased from 1 hp every 1 turn to _1 hp every 5 turns._\n" +
+						"  **-** The first point of Construct Lethality had its damage increase as if it was a Tier 3 weapon (instead of a Tier 2 weapon.) It still does this, but now it also gives a chance to _cripple_ the target.\n" +
+						"  **-** The second point of Construct Lethality had its damage increase as if it was a Tier 4 weapon. It still does this, but now it also increases the Constructs passive healing from 1 hp every 5 turns to _1 hp every 2 turns._\n" +
+						"  **-** The third point of Construct Lethality had its damage increase as if it was a Tier 5 weapon. It still does this, but now it also _reflects 20% of all melee damage_, and _explodes upon death, dealing damage to all nearby enemies._",
+						"**-** Also sneaking in a small Armorer buff too, shh. Point 2 of infinite falling now _reduces 50% of fall damage_ (instead of 33%), and Point 3 _reduces it by 90%_ (instead of 75%.)"));
+
+		changes.addButton( new ChangeButton(new Image(Icons.get(Icons.CHALLENGE_COLOR)), "Modifiers!",
+				"Challenges have been renamed to Modifiers! This lets me make Modifiers that are more just... fun, rather than simply harder. I already experimented a little with this with Trinket Madness, but now we're going all in!\n" +
+						"**-** Modifiers are no longer unlocked by finishing a run.\n" +
+						"**-** Every modifier will now have to be unlocked individually.\n" +
+						"  **-** You have a chance of finding a special room every run that requires you to complete a challenge. At the end of this challenge is a _Modifier Cup!_ Each Modifier Cup will unlock a random Modifier that you can apply to your next run.\n" +
+						"  **-** Just finding the room isn't enough. The rooms themselves are meant to drain some of your resources as well, so make sure you can actually get them!\n" +
+						"  **-** There are four different rooms that could unlock a Modifier. More will likely be on the way.\n" +
+						"  **-** _The Randomizer_ has been moved to be a Modifier, rather than its own separate feature.",
+						"**-** _New Modifier: Adaptive!_ Every time an enemy dies, all of your equipment is replaced with something of the same type. Your weapon, your armour, your throwables, your potions, your scrolls, etc. Anything unique (spirit bow, homemade railgun, waterskin, potions of strength, etc.) will not be replaced."));
+
+		changes.addButton( new ChangeButton(new Image(Icons.get(Icons.STAIRS)), "New Run Flow",
+				"Given my previously mentioned artistic deficit, as well as some of the new features I'm cramming in, the old UI for a new run doesn't make too much sense anymore. To be clear, the Shattered Pixel Dungeon new run UI is definitely better for Shattered Pixel Dungeon, given that Shattered has proper artists, and a specific amount of features that the UI is designed around.\n\n" +
+						"This new UI gives me room to let each feature breathe, and also be obvious to players used to Shattered who may not dig through menus to find new stuff. Please let me know what you think, and if you have any suggestions!"));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+
+						"**Mobs:**\n" +
+						"**-** Construct not being orderable when reloading a save\n" +
+						"**-** Statues could not be sneak attacked\n\n" +
+						"**Items:**\n" +
+						"**-** Barrels of water don't create a water tile when destroyed with the railgun"));
+	}
+
+	public static void add_v0_1_4_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.1.4", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.CHANGES.get(), "Update Checker Improvement",
+				"Update Checker now checks for hotfixes."));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+
+						"**Mobs:**\n" +
+						"**-** Scorpios crashing the game on desktop\n" +
+						"**-** Ballista sprites not disappearing after death\n" +
+						"**-** Piranhas not dropping meat\n" +
+						"**-** Mimics immune to sneak attacks\n" +
+						"**-** Rare issue where game crashes when loading a save on a dark level\n" +
+						"**-** Rotting fist dying but not disappearing"));
+	}
+
 	public static void add_v0_1_3_Changes(ArrayList<ChangeInfo> changeInfos) {
 
-		ChangeInfo changes = new ChangeInfo("v0.1.3", true, "");
+		ChangeInfo changes = new ChangeInfo("v0.1.3", false, "");
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
@@ -163,7 +279,7 @@ public class pdr_v0_X_Changes {
 	}
 	public static void add_v0_1_2_Changes(ArrayList<ChangeInfo> changeInfos) {
 
-		ChangeInfo changes = new ChangeInfo("v0.1.2", true, "");
+		ChangeInfo changes = new ChangeInfo("v0.1.2", false, "");
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
@@ -198,7 +314,7 @@ public class pdr_v0_X_Changes {
 	}
 	public static void add_v0_1_1_Changes(ArrayList<ChangeInfo> changeInfos) {
 
-		ChangeInfo changes = new ChangeInfo("v0.1.1", true, "");
+		ChangeInfo changes = new ChangeInfo("v0.1.1", false, "");
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
@@ -249,7 +365,7 @@ public class pdr_v0_X_Changes {
 
 	public static void add_v0_1_Changes(ArrayList<ChangeInfo> changeInfos ) {
 
-		ChangeInfo changes = new ChangeInfo("v0.1", true, "");
+		ChangeInfo changes = new ChangeInfo("Initial Release", true, "");
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 

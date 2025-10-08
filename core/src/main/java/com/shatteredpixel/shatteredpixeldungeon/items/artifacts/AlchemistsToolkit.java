@@ -93,10 +93,10 @@ public class AlchemistsToolkit extends Artifact {
 		} else if (action.equals(AC_ENERGIZE)){
 			if (!isEquipped(hero))              GLog.i( Messages.get(this, "need_to_equip") );
 			else if (cursed)                    GLog.w( Messages.get(this, "cursed") );
-			else if (Dungeon.energy < 6)        GLog.w( Messages.get(this, "need_energy") );
+			else if (Dungeon.GetEnergy() < 6)        GLog.w( Messages.get(this, "need_energy") );
 			else {
 
-				final int maxLevels = Math.min(levelCap - level(), Dungeon.energy/6);
+				final int maxLevels = Math.min(levelCap - level(), Dungeon.GetEnergy()/6);
 
 				String[] options;
 				if (maxLevels > 1){
@@ -114,14 +114,14 @@ public class AlchemistsToolkit extends Artifact {
 						super.onSelect(index);
 
 						if (index == 0){
-							Dungeon.energy -= 6;
+							Dungeon.AdjustEnergy(-6);
 							Sample.INSTANCE.play(Assets.Sounds.DRINK);
 							Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
 							Dungeon.hero.sprite.operate(Dungeon.hero.pos);
 							upgrade();
 							Catalog.countUse(AlchemistsToolkit.class);
 						} else if (index == 1){
-							Dungeon.energy -= 6*maxLevels;
+							Dungeon.AdjustEnergy(-6*maxLevels);
 							Sample.INSTANCE.play(Assets.Sounds.DRINK);
 							Sample.INSTANCE.playDelayed(Assets.Sounds.PUFF, 0.5f);
 							Dungeon.hero.sprite.operate(Dungeon.hero.pos);

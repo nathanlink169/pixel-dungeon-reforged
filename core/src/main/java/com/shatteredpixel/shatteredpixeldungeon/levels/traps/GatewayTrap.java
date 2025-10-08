@@ -151,6 +151,10 @@ public class GatewayTrap extends Trap {
 
 	}
 
+	public void SetDestination(int pos) {
+		telePos = pos;
+	}
+
 	private static final String TELE_POS = "tele_pos";
 
 	@Override

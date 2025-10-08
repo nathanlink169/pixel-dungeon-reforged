@@ -115,7 +115,7 @@ public class PlantsRoom extends StandardRoom {
 		Plant.Seed result;
 		do {
 			result = (Plant.Seed) Generator.randomUsingDefaults(Generator.Category.SEED);
-		} while (result instanceof Firebloom.Seed);
+		} while (result instanceof Firebloom.FirebloomSeed);
 		return result;
 	}
 }

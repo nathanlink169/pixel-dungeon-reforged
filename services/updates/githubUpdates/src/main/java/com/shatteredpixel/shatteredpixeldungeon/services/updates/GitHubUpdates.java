@@ -57,9 +57,13 @@ public class GitHubUpdates extends UpdateService {
 	private int GetVersionNumberFromCode(String versionCode) {
 		String[] parts = versionCode.split("\\.");
 		int majorVersion = Integer.parseInt(parts[0].replace("v","")) * 1000000;
-		int minorVersion = Integer.parseInt(parts[1]) * 1000;
-		int patchVersion = Integer.parseInt(parts[2].replace("-INDEV",""));
-		return majorVersion + minorVersion + patchVersion;
+		int minorVersion = Integer.parseInt(parts[1]) * 10000;
+		int patchVersion = Integer.parseInt(parts[2].replace("-INDEV","")) * 100;
+		int hotfixVersion = 0;
+		if (parts.length == 4) {
+			hotfixVersion = Integer.parseInt(parts[3].replace("-INDEV",""));
+		}
+		return majorVersion + minorVersion + patchVersion + hotfixVersion;
 	}
 
 	@Override

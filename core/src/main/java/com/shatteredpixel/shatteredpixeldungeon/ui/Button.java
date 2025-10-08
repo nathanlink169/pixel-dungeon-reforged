@@ -224,5 +224,13 @@ public class Button extends Component {
 	public void givePointerPriority(){
 		hotArea.givePointerPriority();
 	}
-	
+
+	public boolean onClick ( float x, float y ) {
+		if (inside( x, y )) {
+			onClick();
+			return true;
+		} else {
+			return false;
+		}
+	}
 }

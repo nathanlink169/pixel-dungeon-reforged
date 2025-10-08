@@ -62,7 +62,7 @@ import com.watabou.utils.Bundle;
 
 import java.util.ArrayList;
 
-public class MeleeWeapon extends Weapon {
+public abstract class MeleeWeapon extends Weapon {
 
 	public static String AC_ABILITY = "ABILITY";
 

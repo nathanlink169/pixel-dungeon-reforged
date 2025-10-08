@@ -112,6 +112,10 @@ public class ElixirOfMight extends Elixir {
 				detach();
 			}
 		}
+
+		public void onLevelDown(){
+			++left;
+		}
 		
 		@Override
 		public int icon() {

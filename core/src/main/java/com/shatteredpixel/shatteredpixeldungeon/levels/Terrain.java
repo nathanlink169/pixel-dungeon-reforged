@@ -39,6 +39,8 @@ public class Terrain {
 	public static final int EMBERS			= 9;
 	public static final int LOCKED_DOOR		= 10;
 	public static final int CRYSTAL_DOOR	= 31;
+	public static final int LOCKED_GATE		= 38;
+	public static final int UNLOCKED_GATE	= 39;
 	public static final int PEDESTAL		= 11;
 	public static final int WALL_DECO		= 12;
 	public static final int BARRICADE		= 13;
@@ -119,6 +121,9 @@ public class Terrain {
 		flags[CUSTOM_DECO] = SOLID;
 		flags[STATUE] = SOLID;
 		flags[STATUE_SP] = flags[STATUE];
+
+		flags[LOCKED_GATE] = SOLID;
+		flags[UNLOCKED_GATE] = PASSABLE;
 
 		flags[REGION_DECO] = flags[STATUE];
 		flags[REGION_DECO_ALT] = flags[STATUE_SP];

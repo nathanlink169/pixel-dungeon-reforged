@@ -53,24 +53,6 @@ public class WndVictoryCongrats extends Window {
 
 		height = (int)text.bottom() + 6;
 
-		Image chalImg = Icons.CHALLENGE_COLOR.get();
-		chalImg.y = height;
-		chalImg.x = (16-chalImg.width())/2f;
-		PixelScene.align(chalImg);
-		add(chalImg);
-
-		RenderedTextBlock chalTxt = PixelScene.renderTextBlock(Messages.get(this, "challenges"), 6);
-		chalTxt.maxWidth(width - 16);
-		chalTxt.setPos(16, height);
-		add(chalTxt);
-
-		if (chalTxt.height() > chalImg.height()){
-			chalImg.y = chalImg.y + (chalTxt.height() - chalImg.height())/2f;
-			PixelScene.align(chalImg);
-		}
-
-		height += Math.max(chalImg.height(), chalTxt.height()) + 6;
-
 		Image seedImg = new ItemSprite(ItemSpriteSheet.SEED_SUNGRASS);
 		seedImg.y = height;
 		seedImg.x = (16-seedImg.width())/2f;

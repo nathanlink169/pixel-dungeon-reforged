@@ -157,10 +157,10 @@ public class Chasm implements Hero.Doom {
 
 		float damageMultiplier = 1.0f;
 		if (hero.pointsInTalent(Talent.ARMOR_MOD_INFINITE_FALLING) == 2) {
-			damageMultiplier = 2.0f / 3.0f;
+			damageMultiplier = 0.5f;
 		}
 		else if (hero.pointsInTalent(Talent.ARMOR_MOD_INFINITE_FALLING) == 3) {
-			damageMultiplier = 0.25f;
+			damageMultiplier = 0.01f;
 		}
 		hero.damage((int)(Math.max(hero.HP / 2, Random.NormalIntRange(hero.HP / 2, hero.GetMaxHP() / 4)) * damageMultiplier), new Chasm());
 	}

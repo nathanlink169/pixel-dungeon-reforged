@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels.painters;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.modifierunlocks.ModifierUnlockRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.ChasmBridgeRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.FissureRoom;
@@ -67,7 +68,7 @@ public class PrisonPainter extends RegularPainter {
 		}
 
 		for (Room r : rooms){
-			if (r instanceof SpecialRoom){
+			if (r instanceof SpecialRoom || r instanceof ModifierUnlockRoom){
 				continue;
 			}
 			int chance = 15; //1/15 by default, some rooms can be more common though

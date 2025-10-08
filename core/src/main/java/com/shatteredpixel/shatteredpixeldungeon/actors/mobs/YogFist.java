@@ -364,9 +364,14 @@ public abstract class YogFist extends Mob {
 			//ensures toxic gas acts at the appropriate time when added
 			GameScene.add(Blob.seed(pos, 0, ToxicGas.class));
 
+			// Temp fix for issue with GetMaxLevel instead of GetMaxHP bug in the following if statement
+			if (HP <= 0) {
+				die(Dungeon.hero);
+			}
+
 			if (Dungeon.level.water[pos] && HP < GetMaxHP()) {
 				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(GetMaxHP()/50), FloatingText.HEALING);
-				HP = Math.min(GetMaxLevel(), HP + GetMaxHP()/50);
+				HP = Math.min(GetMaxHP(), HP + GetMaxHP()/50);
 			}
 
 			return super.act();

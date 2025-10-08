@@ -39,7 +39,7 @@ public class Starflower extends Plant {
 
 	{
 		image = 9;
-		seedClass = Seed.class;
+		seedClass = StarflowerSeed.class;
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class Starflower extends Plant {
 
 	}
 
-	public static class Seed extends Plant.Seed{
+	public static class StarflowerSeed extends Plant.Seed{
 
 		{
 			image = ItemSpriteSheet.SEED_STARFLOWER;

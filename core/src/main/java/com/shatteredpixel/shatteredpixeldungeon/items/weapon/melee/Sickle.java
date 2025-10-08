@@ -113,7 +113,7 @@ public class Sickle extends MeleeWeapon {
 				AttackIndicator.target(enemy);
 
 				Buff.affect(enemy, HarvestBleedTracker.class, 0);
-				if (hero.attack(enemy, bleedMulti, bleedBoost, Char.INFINITE_ACCURACY, DamageType.SLASHING)){
+				if (hero.attack(enemy, bleedMulti, bleedBoost, Char.INFINITE_ACCURACY, DamageType.SLASHING, Char.AttackType.MELEE)){
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
 

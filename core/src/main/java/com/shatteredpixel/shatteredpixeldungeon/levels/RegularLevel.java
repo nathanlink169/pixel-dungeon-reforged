@@ -62,6 +62,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.builders.FigureEightBuild
 import com.shatteredpixel.shatteredpixeldungeon.levels.builders.LoopBuilder;
 import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.modifierunlocks.ModifierUnlockRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.PitRoom;
@@ -69,6 +70,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SacrificeRo
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ShopRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.StatueRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.AquariumRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.StandardRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.entrance.EntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.standard.exit.ExitRoom;
@@ -164,6 +166,10 @@ public abstract class RegularLevel extends Level {
 		if (feeling == Feeling.SECRETS) secrets++;
 		for (int i = 0; i < secrets; i++) {
 			initRooms.add(SecretRoom.createRoom());
+		}
+
+		if (ModifierUnlockRoom.GetDepth() == Dungeon.depth) {
+			initRooms.add(ModifierUnlockRoom.createRoom());
 		}
 		
 		return initRooms;

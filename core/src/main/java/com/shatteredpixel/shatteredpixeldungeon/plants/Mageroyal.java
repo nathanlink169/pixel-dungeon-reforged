@@ -38,7 +38,7 @@ public class Mageroyal extends Plant {
 
 	{
 		image = 7;
-		seedClass = Seed.class;
+		seedClass = MageroyalSeed.class;
 	}
 
 	@Override
@@ -57,7 +57,7 @@ public class Mageroyal extends Plant {
 		}
 	}
 
-	public static class Seed extends Plant.Seed {
+	public static class MageroyalSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_MAGEROYAL;
 

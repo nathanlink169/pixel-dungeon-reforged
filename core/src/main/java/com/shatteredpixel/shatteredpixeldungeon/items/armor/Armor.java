@@ -94,7 +94,7 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class Armor extends EquipableItem {
+public abstract class Armor extends EquipableItem {
 
 	protected static final String AC_DETACH       = "DETACH";
 	

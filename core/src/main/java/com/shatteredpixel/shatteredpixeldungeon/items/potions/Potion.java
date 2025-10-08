@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.ItemStatusHandler;
 import com.shatteredpixel.shatteredpixeldungeon.items.Recipe;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.brews.AquaBrew;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfHoneyedHealing;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMight;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCorrosiveGas;
@@ -81,7 +82,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
-public class Potion extends Item {
+public abstract class Potion extends Item {
 
 	public static final String AC_DRINK = "DRINK";
 	
@@ -289,7 +290,7 @@ public class Potion extends Item {
 	
 	protected void drink( Hero hero ) {
 
-		if (hero.hasTalent(Talent.VOLATILE_SALVAGE) && !(this instanceof PotionOfStrength)) {
+		if (hero.hasTalent(Talent.VOLATILE_SALVAGE) && !(this instanceof PotionOfStrength) && !(this instanceof ElixirOfMight)) {
 			int rand = Random.Int(1, 20);
 			int chance;
 			if (hero.pointsInTalent(Talent.VOLATILE_SALVAGE) == 1) {
@@ -488,18 +489,18 @@ public class Potion extends Item {
 		
 		public static HashMap<Class<?extends Plant.Seed>, Class<?extends Potion>> types = new HashMap<>();
 		static {
-			types.put(Blindweed.Seed.class,     PotionOfInvisibility.class);
-			types.put(Mageroyal.Seed.class,     PotionOfPurity.class);
-			types.put(Earthroot.Seed.class,     PotionOfParalyticGas.class);
-			types.put(Fadeleaf.Seed.class,      PotionOfMindVision.class);
-			types.put(Firebloom.Seed.class,     PotionOfLiquidFlame.class);
-			types.put(Icecap.Seed.class,        PotionOfFrost.class);
-			types.put(Rotberry.Seed.class,      PotionOfStrength.class);
-			types.put(Sorrowmoss.Seed.class,    PotionOfToxicGas.class);
-			types.put(Starflower.Seed.class,    PotionOfExperience.class);
-			types.put(Stormvine.Seed.class,     PotionOfLevitation.class);
-			types.put(Sungrass.Seed.class,      PotionOfHealing.class);
-			types.put(Swiftthistle.Seed.class,  PotionOfHaste.class);
+			types.put(Blindweed.BlindweedSeed.class,     PotionOfInvisibility.class);
+			types.put(Mageroyal.MageroyalSeed.class,     PotionOfPurity.class);
+			types.put(Earthroot.EarthrootSeed.class,     PotionOfParalyticGas.class);
+			types.put(Fadeleaf.FadeleafSeed.class,      PotionOfMindVision.class);
+			types.put(Firebloom.FirebloomSeed.class,     PotionOfLiquidFlame.class);
+			types.put(Icecap.IcecapSeed.class,        PotionOfFrost.class);
+			types.put(Rotberry.RotberrySeed.class,      PotionOfStrength.class);
+			types.put(Sorrowmoss.SorrowmossSeed.class,    PotionOfToxicGas.class);
+			types.put(Starflower.StarflowerSeed.class,    PotionOfExperience.class);
+			types.put(Stormvine.StormvineSeed.class,     PotionOfLevitation.class);
+			types.put(Sungrass.SungrassSeed.class,      PotionOfHealing.class);
+			types.put(Swiftthistle.SwiftthistleSeed.class,  PotionOfHaste.class);
 		}
 		
 		@Override

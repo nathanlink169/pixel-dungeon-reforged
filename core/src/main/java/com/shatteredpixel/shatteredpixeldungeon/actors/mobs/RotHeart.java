@@ -34,10 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RotHeartSprite;
 import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
 
 public class RotHeart extends Mob {
 
@@ -104,7 +101,7 @@ public class RotHeart extends Mob {
 	@Override
 	public void die(Object cause) {
 		super.die(cause);
-		Dungeon.level.drop( new Rotberry.Seed(), pos ).sprite.drop();
+		Dungeon.level.drop( new Rotberry.RotberrySeed(), pos ).sprite.drop();
 		//assign score here as player may choose to keep the rotberry seed
 		Statistics.questScores[1] += 2000;
 	}

@@ -97,6 +97,10 @@ public class DungeonTerrainTilemap extends DungeonTilemap {
 				return DungeonTileSheet.getVisualWithAlts(
 						DungeonTileSheet.RAISED_FURROWED_GRASS,
 						pos);
+			} else if (tile == Terrain.LOCKED_GATE) {
+				return DungeonTileSheet.RAISED_DOOR_LOCKED_GATE;
+			} else if (tile == Terrain.UNLOCKED_GATE) {
+				return DungeonTileSheet.RAISED_DOOR_UNLOCKED_GATE;
 			} else {
 				return DungeonTileSheet.NULL_TILE;
 			}

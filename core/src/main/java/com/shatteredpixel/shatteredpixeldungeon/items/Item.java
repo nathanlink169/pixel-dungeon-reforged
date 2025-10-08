@@ -71,6 +71,7 @@ public class Item implements Bundlable {
 	
 	public static final String AC_DROP		= "DROP";
 	public static final String AC_THROW		= "THROW";
+	public static final String AC_CREATIVE	= "CREATIVE";
 	
 	protected String defaultAction;
 	public boolean GetUsesTargetting() { return false; }
@@ -380,6 +381,10 @@ public class Item implements Bundlable {
 	//returns the persistant level of the item, only affected by modifiers which are persistent (e.g. curse infusion)
 	public int level(){
 		return level;
+	}
+
+	public void setLevel(int level) {
+		this.level = level;
 	}
 	
 	//returns the level of the item, after it may have been modified by temporary boosts/reductions

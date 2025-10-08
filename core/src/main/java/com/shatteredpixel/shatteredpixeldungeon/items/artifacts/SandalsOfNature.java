@@ -91,34 +91,34 @@ public class SandalsOfNature extends Artifact {
 
 	private static final HashMap<Class<? extends Plant.Seed>, Integer> seedColors = new HashMap<>();
 	static {
-		seedColors.put(Rotberry.Seed.class,     0xCC0022);
-		seedColors.put(Firebloom.Seed.class,    0xFF7F00);
-		seedColors.put(Swiftthistle.Seed.class, 0xCCBB00);
-		seedColors.put(Sungrass.Seed.class,     0x2EE62E);
-		seedColors.put(Icecap.Seed.class,       0x66B3FF);
-		seedColors.put(Stormvine.Seed.class,    0x195D80);
-		seedColors.put(Sorrowmoss.Seed.class,   0xA15CE5);
-		seedColors.put(Mageroyal.Seed.class,    0xFF4CD2);
-		seedColors.put(Earthroot.Seed.class,    0x67583D);
-		seedColors.put(Starflower.Seed.class,   0x404040);
-		seedColors.put(Fadeleaf.Seed.class,     0x919999);
-		seedColors.put(Blindweed.Seed.class,    0XD9D9D9);
+		seedColors.put(Rotberry.RotberrySeed.class,     0xCC0022);
+		seedColors.put(Firebloom.FirebloomSeed.class,    0xFF7F00);
+		seedColors.put(Swiftthistle.SwiftthistleSeed.class, 0xCCBB00);
+		seedColors.put(Sungrass.SungrassSeed.class,     0x2EE62E);
+		seedColors.put(Icecap.IcecapSeed.class,       0x66B3FF);
+		seedColors.put(Stormvine.StormvineSeed.class,    0x195D80);
+		seedColors.put(Sorrowmoss.SorrowmossSeed.class,   0xA15CE5);
+		seedColors.put(Mageroyal.MageroyalSeed.class,    0xFF4CD2);
+		seedColors.put(Earthroot.EarthrootSeed.class,    0x67583D);
+		seedColors.put(Starflower.StarflowerSeed.class,   0x404040);
+		seedColors.put(Fadeleaf.FadeleafSeed.class,     0x919999);
+		seedColors.put(Blindweed.BlindweedSeed.class,    0XD9D9D9);
 	}
 
 	private static final HashMap<Class<? extends Plant.Seed>, Integer> seedChargeReqs = new HashMap<>();
 	static {
-		seedChargeReqs.put(Rotberry.Seed.class,     8);
-		seedChargeReqs.put(Firebloom.Seed.class,    20);
-		seedChargeReqs.put(Swiftthistle.Seed.class, 20);
-		seedChargeReqs.put(Sungrass.Seed.class,     80);
-		seedChargeReqs.put(Icecap.Seed.class,       20);
-		seedChargeReqs.put(Stormvine.Seed.class,    20);
-		seedChargeReqs.put(Sorrowmoss.Seed.class,   20);
-		seedChargeReqs.put(Mageroyal.Seed.class,    12);
-		seedChargeReqs.put(Earthroot.Seed.class,    40);
-		seedChargeReqs.put(Starflower.Seed.class,   40);
-		seedChargeReqs.put(Fadeleaf.Seed.class,     12);
-		seedChargeReqs.put(Blindweed.Seed.class,    12);
+		seedChargeReqs.put(Rotberry.RotberrySeed.class,     8);
+		seedChargeReqs.put(Firebloom.FirebloomSeed.class,    20);
+		seedChargeReqs.put(Swiftthistle.SwiftthistleSeed.class, 20);
+		seedChargeReqs.put(Sungrass.SungrassSeed.class,     80);
+		seedChargeReqs.put(Icecap.IcecapSeed.class,       20);
+		seedChargeReqs.put(Stormvine.StormvineSeed.class,    20);
+		seedChargeReqs.put(Sorrowmoss.SorrowmossSeed.class,   20);
+		seedChargeReqs.put(Mageroyal.MageroyalSeed.class,    12);
+		seedChargeReqs.put(Earthroot.EarthrootSeed.class,    40);
+		seedChargeReqs.put(Starflower.StarflowerSeed.class,   40);
+		seedChargeReqs.put(Fadeleaf.FadeleafSeed.class,     12);
+		seedChargeReqs.put(Blindweed.BlindweedSeed.class,    12);
 	}
 
 	@Override

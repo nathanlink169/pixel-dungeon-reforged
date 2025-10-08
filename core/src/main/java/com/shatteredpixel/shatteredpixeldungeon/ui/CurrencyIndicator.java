@@ -101,9 +101,9 @@ public class CurrencyIndicator extends Component {
 
 		}
 
-		if (Dungeon.gold != lastGold) {
+		if (Dungeon.GetGold() != lastGold) {
 			
-			lastGold = Dungeon.gold;
+			lastGold = Dungeon.GetGold();
 			
 			gold.text( Integer.toString(lastGold) );
 			gold.measure();
@@ -114,8 +114,8 @@ public class CurrencyIndicator extends Component {
 			layout();
 		}
 
-		if (Dungeon.energy != lastEnergy) {
-			lastEnergy = Dungeon.energy;
+		if (Dungeon.GetEnergy() != lastEnergy) {
+			lastEnergy = Dungeon.GetEnergy();
 
 			energy.text( Integer.toString(lastEnergy) );
 			energy.measure();

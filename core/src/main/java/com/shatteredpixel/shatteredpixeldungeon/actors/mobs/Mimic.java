@@ -176,8 +176,8 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public void onAttackComplete() {
-		super.onAttackComplete();
+	public void onAttackComplete(AttackType attackType) {
+		super.onAttackComplete(attackType);
 		if (alignment == Alignment.NEUTRAL){
 			alignment = Alignment.ENEMY;
 			Dungeon.hero.spendAndNext(1f);
@@ -270,7 +270,7 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public int defenseSkill( Char enemy ) {
+	protected int GetDefenseSkillInternal() {
 		return 2 + level / 2;
 	}
 	

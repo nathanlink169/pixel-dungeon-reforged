@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
@@ -40,6 +41,12 @@ public class SummoningTrap extends Trap {
 
 	private static final float DELAY = 2f;
 
+	private int m_MobCountOverride = -1;
+	public SummoningTrap OverrideMobCount(int count) {
+		m_MobCountOverride = count;
+		return this;
+	}
+
 	{
 		color = TEAL;
 		shape = WAVES;
@@ -48,12 +55,18 @@ public class SummoningTrap extends Trap {
 	@Override
 	public void activate() {
 
-		int nMobs = 1;
-		if (Random.Int( 2 ) == 0) {
-			nMobs++;
-			if (Random.Int( 2 ) == 0) {
+		int nMobs;
+		if (m_MobCountOverride == -1) {
+			nMobs = 1;
+			if (Random.Int(2) == 0) {
 				nMobs++;
+				if (Random.Int(2) == 0) {
+					nMobs++;
+				}
 			}
+		}
+		else {
+			nMobs = m_MobCountOverride;
 		}
 
 		ArrayList<Integer> candidates = new ArrayList<>();
@@ -106,5 +119,23 @@ public class SummoningTrap extends Trap {
 			Dungeon.level.occupyCell(mob);
 		}
 
+	}
+
+	private static final String MOB_COUNT_OVERRIDE_TAG = "mob_count_override";
+
+	@Override
+	public void restoreFromBundle( Bundle bundle ) {
+		super.restoreFromBundle(bundle);
+		if (bundle.contains(MOB_COUNT_OVERRIDE_TAG)) {
+			m_MobCountOverride = bundle.getInt(MOB_COUNT_OVERRIDE_TAG);
+		}
+	}
+
+	@Override
+	public void storeInBundle( Bundle bundle ) {
+		super.storeInBundle(bundle);
+		if (m_MobCountOverride != -1) {
+			bundle.put(MOB_COUNT_OVERRIDE_TAG, m_MobCountOverride);
+		}
 	}
 }

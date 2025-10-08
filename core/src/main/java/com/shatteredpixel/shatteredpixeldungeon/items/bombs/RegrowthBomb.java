@@ -111,7 +111,7 @@ public class RegrowthBomb extends Bomb {
 					plant = new WandOfRegrowth.Seedpod.Seed();
 					break;
 				case 3:
-					plant = new Starflower.Seed();
+					plant = new Starflower.StarflowerSeed();
 					break;
 			}
 			Dungeon.level.plant( plant, plantPos);

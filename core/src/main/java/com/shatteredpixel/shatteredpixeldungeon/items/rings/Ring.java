@@ -52,7 +52,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 
-public class Ring extends KindofMisc {
+public abstract class Ring extends KindofMisc {
 	
 	protected Buff buff;
 	protected Class<? extends RingBuff> buffClass;

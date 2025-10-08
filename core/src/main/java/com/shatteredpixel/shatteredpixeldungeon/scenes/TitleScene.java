@@ -48,12 +48,16 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndSettings;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndVictoryCongrats;
 import com.watabou.glwrap.Blending;
+import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Camera;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Music;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.DeviceCompat;
+import com.watabou.utils.RectF;
+
+import java.util.Date;
 
 public class TitleScene extends PixelScene {
 	
@@ -72,17 +76,22 @@ public class TitleScene extends PixelScene {
 		int w = Camera.main.width;
 		int h = Camera.main.height;
 		
+		RectF insets = getCommonInsets();
+
 		Archs archs = new Archs();
 		archs.setSize( w, h );
 		add( archs );
+
+		w -= insets.left + insets.right;
+		h -= insets.top + insets.bottom;
 
 		Image title = BannerSprites.get( landscape() ? BannerSprites.Type.TITLE_LAND : BannerSprites.Type.TITLE_PORT);
 		add( title );
 
 		float topRegion = Math.max(title.height - 6, h*0.45f);
 
-		title.x = (w - title.width()) / 2f;
-		title.y = 2 + (topRegion - title.height()) / 2f;
+		title.x = insets.left + (w - title.width()) / 2f;
+		title.y = insets.top + 2 + (topRegion - title.height()) / 2f;
 
 		align(title);
 
@@ -179,16 +188,16 @@ public class TitleScene extends PixelScene {
 
 		StyledButton btnSettings = new SettingsButton(GREY_TR, Messages.get(this, "settings"));
 		add(btnSettings);
-
+		
 		final int BTN_HEIGHT = 20;
 		int GAP = (int)(h - topRegion - (landscape() ? 3 : 4)*BTN_HEIGHT)/3;
 		GAP /= landscape() ? 3 : 5;
 		GAP = Math.max(GAP, 2);
 
 		float buttonAreaWidth = landscape() ? PixelScene.MIN_WIDTH_L-6 : PixelScene.MIN_WIDTH_P-2;
-		float btnAreaLeft = (Camera.main.width - buttonAreaWidth) / 2f;
+		float btnAreaLeft = insets.left + (w - buttonAreaWidth) / 2f;
 		if (landscape()) {
-			btnPlay.setRect(btnAreaLeft, topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
+			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, (buttonAreaWidth/2)-1, BTN_HEIGHT);
 			align(btnPlay);
 			btnSupport.setRect(btnPlay.right()+2, btnPlay.top(), btnPlay.width(), BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, (float) (Math.floor(buttonAreaWidth/3f)-1), BTN_HEIGHT);
@@ -197,7 +206,7 @@ public class TitleScene extends PixelScene {
 			btnSettings.setRect(btnPlay.left(), btnRankings.bottom() + GAP, btnPlay.width(), BTN_HEIGHT);
 			btnChanges.setRect(btnSupport.left(), btnSettings.top(), btnSupport.width(), BTN_HEIGHT);
 		} else {
-			btnPlay.setRect(btnAreaLeft, topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
+			btnPlay.setRect(btnAreaLeft, insets.top + topRegion+GAP, buttonAreaWidth, BTN_HEIGHT);
 			align(btnPlay);
 			btnSupport.setRect(btnPlay.left(), btnPlay.bottom()+ GAP, btnPlay.width(), BTN_HEIGHT);
 			btnRankings.setRect(btnPlay.left(), btnSupport.bottom()+ GAP, (btnPlay.width()/2)-1, BTN_HEIGHT);

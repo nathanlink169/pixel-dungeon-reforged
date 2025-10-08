@@ -50,6 +50,45 @@ public class ShatteredPixelDungeon extends Game {
 	public ShatteredPixelDungeon( PlatformSupport platform ) {
 		super( sceneClass == null ? WelcomeScene.class : sceneClass, platform );
 
+		// pre-PDR v 0.2.1
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed.BlindweedSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Earthroot.EarthrootSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Earthroot$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf.FadeleafSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Firebloom.FirebloomSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Firebloom$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Icecap.IcecapSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Icecap$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Mageroyal.MageroyalSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Mageroyal$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry.RotberrySeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Sorrowmoss.SorrowmossSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Sorrowmoss$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Starflower.StarflowerSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Starflower$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Stormvine.StormvineSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Stormvine$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass.SungrassSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass$Seed" );
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle.SwiftthistleSeed.class,
+				"com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle$Seed" );
+
+
 		//pre-v2.5.3
 		com.watabou.utils.Bundle.addAlias(
 				com.shatteredpixel.shatteredpixeldungeon.items.stones.StoneOfDetectMagic.class,

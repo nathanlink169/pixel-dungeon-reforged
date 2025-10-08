@@ -119,7 +119,7 @@ public class Mace extends MeleeWeapon {
 			public void call() {
 				wep.beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, finalDmgMulti, finalDmgBoost, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING)) {
+				if (hero.attack(enemy, finalDmgMulti, finalDmgBoost, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE)) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 					if (enemy.isAlive()){
 						Buff.affect(enemy, Daze.class, Daze.DURATION);

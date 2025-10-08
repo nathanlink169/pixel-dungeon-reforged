@@ -43,7 +43,7 @@ public class Firebloom extends Plant {
 	
 	{
 		image = 1;
-		seedClass = Seed.class;
+		seedClass = FirebloomSeed.class;
 	}
 	
 	@Override
@@ -64,7 +64,7 @@ public class Firebloom extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class FirebloomSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_FIREBLOOM;
 

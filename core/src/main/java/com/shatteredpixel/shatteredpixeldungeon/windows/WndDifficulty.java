@@ -5,6 +5,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.HeroSelectScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.CheckBox;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
@@ -21,14 +22,18 @@ public class WndDifficulty extends Window {
     private static final int BTN_HEIGHT = 16;
     private static final int GAP        = 1;
 
+    private HeroSelectScene m_HeroSelectScene;
+
     private final boolean editable;
     private final ArrayList<CheckBox> boxes;
+    private CheckBox creativeCheckbox;
 
-    public WndDifficulty( int currentDifficulty, boolean randomizerEnabled, boolean editable ) {
+    public WndDifficulty(int currentDifficulty, boolean editable, HeroSelectScene scene) {
 
         super();
 
         this.editable = editable;
+        m_HeroSelectScene = scene;
 
         RenderedTextBlock title = PixelScene.renderTextBlock( Messages.get(this, "difficulty"), 12 );
         title.hardlight( TITLE_COLOR );
@@ -180,36 +185,27 @@ public class WndDifficulty extends Window {
         pos = impossibleCb.bottom();
         // End Impossible
 
-        // Randomizer
-        if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()) {
-            CheckBox randomizerButton = new CheckBox(Messages.get(WndDifficulty.class, "randomize.name")) {
-                @Override
-                protected void onClick() {
-                    super.onClick();
-                    Dungeon.randomizerEnabled = checked();
-                    SPDSettings.randomizerEnabled(checked());
-                }
-            };
-            randomizerButton.checked( randomizerEnabled );
-            randomizerButton.active = editable;
-            pos += GAP;
-            randomizerButton.setRect( 0, pos, WIDTH-16, BTN_HEIGHT );
-            add( randomizerButton );
+        // Creative
+        creativeCheckbox = new CheckBox( Messages.get(WndDifficulty.class,"creative.name") );
+        creativeCheckbox.checked( SPDSettings.creative() );
+        impossibleCb.active = editable;
+        pos += GAP;
+        creativeCheckbox.setRect( 0, pos, WIDTH-16, BTN_HEIGHT );
+        add( creativeCheckbox );
 
-            IconButton randomizeInfo = new IconButton(Icons.get(Icons.INFO)){
-                @Override
-                protected void onClick() {
-                    super.onClick();
-                    ShatteredPixelDungeon.scene().add(
-                            new WndMessage(Messages.get(WndDifficulty.class, "randomize.desc"))
-                    );
-                }
-            };
-            randomizeInfo.setRect(impossibleCb.right(), pos, 16, BTN_HEIGHT);
-            add(randomizeInfo);
-            pos = randomizerButton.bottom();
-        }
-        // End Randomizer
+        IconButton creativeInfo = new IconButton(Icons.get(Icons.INFO)){
+            @Override
+            protected void onClick() {
+                super.onClick();
+                ShatteredPixelDungeon.scene().add(
+                        new WndMessage(Messages.get(WndDifficulty.class, "creative.desc"))
+                );
+            }
+        };
+        creativeInfo.setRect(impossibleCb.right(), pos, 16, BTN_HEIGHT);
+        add(creativeInfo);
+        pos = creativeCheckbox.bottom();
+        // End Creative
 
         resize( WIDTH, (int)pos );
     }
@@ -231,8 +227,13 @@ public class WndDifficulty extends Window {
                     SPDSettings.difficulty(i + 1);
                 }
             }
+
+            SPDSettings.creative(creativeCheckbox.checked());
         }
 
+        if (m_HeroSelectScene != null) {
+            m_HeroSelectScene.UpdateAfterWindowClose();
+        }
         super.onBackPressed();
     }
 }

@@ -42,7 +42,7 @@ public class Blindweed extends Plant {
 	
 	{
 		image = 11;
-		seedClass = Seed.class;
+		seedClass = BlindweedSeed.class;
 	}
 	
 	@Override
@@ -67,7 +67,7 @@ public class Blindweed extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class BlindweedSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_BLINDWEED;
 

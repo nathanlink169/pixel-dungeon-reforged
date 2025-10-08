@@ -46,7 +46,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesi
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfMight;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf;
@@ -223,8 +222,8 @@ public class SpiritForm extends ClericSpell {
 
 		} else if (effect instanceof SandalsOfNature){
 			((SandalsOfNature) effect).curSeedEffect = Random.oneOf(
-					Blindweed.Seed.class, Fadeleaf.Seed.class, Firebloom.Seed.class,
-					Icecap.Seed.class, Sorrowmoss.Seed.class, Stormvine.Seed.class
+					Blindweed.BlindweedSeed.class, Fadeleaf.FadeleafSeed.class, Firebloom.FirebloomSeed.class,
+					Icecap.IcecapSeed.class, Sorrowmoss.SorrowmossSeed.class, Stormvine.StormvineSeed.class
 			);
 
 			GameScene.selectCell(((SandalsOfNature) effect).cellSelector);

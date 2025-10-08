@@ -85,7 +85,7 @@ public class Scorpio extends Mob {
 	}
 	@Override
 	protected boolean act() {
-		if (enemy != null && fieldOfView[enemy.pos]) {
+		if (enemy != null && fieldOfView != null && fieldOfView[enemy.pos]) {
 			lastEnemyPosition = enemy.pos;
 		}
 		return super.act();

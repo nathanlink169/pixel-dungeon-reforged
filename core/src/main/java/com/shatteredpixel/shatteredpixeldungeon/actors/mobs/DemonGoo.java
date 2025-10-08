@@ -36,6 +36,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -111,6 +112,18 @@ public class DemonGoo extends Mob {
 		}
 
 		return damage;
+	}
+
+	@Override
+	public float GetLootChance(int slot) {
+		float lootChance = (5f - Dungeon.LimitedDrops.DEMON_GOO.count) / 5f;
+		return super.GetLootChance(slot) * lootChance;
+	}
+
+	@Override
+	public Item createLoot(int itemSlot){
+		Dungeon.LimitedDrops.DEMON_GOO.count++;
+		return super.createLoot(itemSlot);
 	}
 
 	private DemonGoo split() {

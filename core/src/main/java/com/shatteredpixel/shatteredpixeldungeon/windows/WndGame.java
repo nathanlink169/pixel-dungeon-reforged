@@ -115,6 +115,18 @@ public class WndGame extends Window {
 		curBtn.icon(Icons.get(Icons.DISPLAY));
 		if (SPDSettings.intro()) curBtn.enable(false);
 
+		// Spawn Enemy
+		if (Dungeon.hero != null && Dungeon.hero.isAlive() && SPDSettings.creative()) {
+			addButton(curBtn = new RedButton(Messages.get(this, "spawnmob")) {
+				@Override
+				protected void onClick() {
+					GameScene.show(new WndCreativeSpawnMob());
+					WndGame.this.hide();
+				}
+			});
+			curBtn.icon(Icons.get(Icons.CREATIVE));
+		}
+
 		resize( WIDTH, pos );
 	}
 	

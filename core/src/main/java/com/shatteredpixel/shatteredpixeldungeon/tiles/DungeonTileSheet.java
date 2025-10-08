@@ -117,6 +117,8 @@ public class DungeonTileSheet {
 		chasmStitcheable.put( Terrain.LOCKED_DOOR,  CHASM_WALL );
 		chasmStitcheable.put( Terrain.SECRET_DOOR,  CHASM_WALL );
 		chasmStitcheable.put( Terrain.WALL_DECO,    CHASM_WALL );
+		chasmStitcheable.put( Terrain.LOCKED_GATE,  CHASM_WALL );
+		chasmStitcheable.put( Terrain.UNLOCKED_GATE, CHASM_WALL);
 
 		//water
 		chasmStitcheable.put( Terrain.WATER,        CHASM_WATER );
@@ -145,7 +147,7 @@ public class DungeonTileSheet {
 	public static HashSet<Integer> waterStitcheable = new HashSet<>(Arrays.asList(
 			Terrain.EMPTY, Terrain.GRASS, Terrain.EMPTY_WELL,
 			Terrain.ENTRANCE, Terrain.EXIT, Terrain.EMBERS,
-			Terrain.BARRICADE, Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.SECRET_TRAP,
+			Terrain.BARRICADE, Terrain.HIGH_GRASS, Terrain.FURROWED_GRASS, Terrain.SECRET_TRAP, Terrain.LOCKED_GATE, Terrain.UNLOCKED_GATE,
 			Terrain.TRAP, Terrain.INACTIVE_TRAP, Terrain.EMPTY_DECO,
 			Terrain.CUSTOM_DECO, Terrain.WELL, Terrain.STATUE, Terrain.REGION_DECO, Terrain.ALCHEMY,
 			Terrain.CUSTOM_DECO_EMPTY, Terrain.MINE_CRYSTAL, Terrain.MINE_BOULDER,
@@ -195,6 +197,8 @@ public class DungeonTileSheet {
 	public static final int FLAT_DOOR_CRYSTAL   = FLAT_WALLS+11;
 	public static final int UNLOCKED_EXIT       = FLAT_WALLS+12;
 	public static final int LOCKED_EXIT         = FLAT_WALLS+13;
+	public static final int FLAT_LOCKED_GATE	= FLAT_WALLS+14;
+	public static final int FLAT_UNLOCKED_GATE	= FLAT_WALLS+15;
 
 	public static final int FLAT_OTHER          =                           xy(1, 5);   //16 slots
 	public static final int FLAT_ALCHEMY_POT    = FLAT_OTHER+0;
@@ -274,6 +278,9 @@ public class DungeonTileSheet {
 	//floor tile that appears on a top/bottom doorway
 	public static final int RAISED_DOOR_SIDEWAYS    = RAISED_DOORS+4;
 
+	public static final int RAISED_DOOR_LOCKED_GATE	= RAISED_DOORS+5;
+	public static final int RAISED_DOOR_UNLOCKED_GATE	= RAISED_DOORS+6;
+
 
 	public static int getRaisedDoorTile(int tile, int below){
 		if (wallStitcheable(below))             return RAISED_DOOR_SIDEWAYS;
@@ -288,7 +295,7 @@ public class DungeonTileSheet {
 			Terrain.DOOR, Terrain.LOCKED_DOOR, Terrain.CRYSTAL_DOOR, Terrain.OPEN_DOOR
 	};
 
-	public static boolean doorTile(int tile){
+	public static boolean doorTile(int tile) {
 		for (int i : doorTiles)
 			if (tile == i)
 				return true;
@@ -445,6 +452,8 @@ public class DungeonTileSheet {
 		directFlatVisuals.put(Terrain.OPEN_DOOR,        FLAT_DOOR_OPEN);
 		directFlatVisuals.put(Terrain.LOCKED_DOOR,      FLAT_DOOR_LOCKED);
 		directFlatVisuals.put(Terrain.CRYSTAL_DOOR,     FLAT_DOOR_CRYSTAL);
+		directFlatVisuals.put(Terrain.LOCKED_GATE, 		FLAT_LOCKED_GATE);
+		directFlatVisuals.put(Terrain.UNLOCKED_GATE, 	FLAT_UNLOCKED_GATE);
 		directFlatVisuals.put(Terrain.WALL_DECO,        FLAT_WALL_DECO);
 		directFlatVisuals.put(Terrain.BOOKSHELF,        FLAT_BOOKSHELF);
 		directFlatVisuals.put(Terrain.ALCHEMY,          FLAT_ALCHEMY_POT);

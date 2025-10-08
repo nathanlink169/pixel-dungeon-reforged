@@ -149,7 +149,7 @@ public class GamesInProgress {
 		info.depth = Dungeon.depth;
 		info.challenges = Dungeon.challenges;
 		info.difficulty = Dungeon.difficulty;
-		info.randomized = Dungeon.randomizerEnabled;
+		info.creative = Dungeon.creative;
 
 		info.seed = Dungeon.seed;
 		info.customSeed = Dungeon.customSeedText;
@@ -188,7 +188,7 @@ public class GamesInProgress {
 		public int version;
 		public int challenges;
 		public int difficulty;
-		public boolean randomized;
+		public boolean creative;
 
 		public long seed;
 		public String customSeed;

@@ -42,6 +42,9 @@ import com.watabou.utils.Random;
 import java.util.HashSet;
 
 public class Ballista extends Mob {
+	{
+		HUNTING = new Hunting();
+	}
 
 	private int ammo = ammoCapacity();
 
@@ -66,24 +69,14 @@ public class Ballista extends Mob {
 	}
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
+	public void onAttackComplete(AttackType attackType) {
 		--ammo;
 		if (Random.Int( 4 ) == 0) {
 			int oppositeAdjacent = enemy.pos + (enemy.pos - pos);
 			Ballistica trajectory = new Ballistica(enemy.pos, oppositeAdjacent, Ballistica.MAGIC_BOLT);
 			WandOfBlastWave.throwChar(enemy, trajectory, 2, false, false, this);
 		}
-		return damage;
-	}
-
-	@Override
-	protected boolean getCloser( int target ) {
-		if (ammo <= 0) {
-			reload();
-			return true;
-		}
-		return true;
+		super.onAttackComplete(attackType);
 	}
 
 	protected int ammoCapacity() {
@@ -104,6 +97,19 @@ public class Ballista extends Mob {
 		if (ch == null || fieldOfView == null
 				|| fieldOfView.length != Dungeon.level.length() || fieldOfView[ch.pos]) {
 			super.aggro(ch);
+		}
+	}
+
+	private class Hunting extends Mob.Hunting {
+
+		@Override
+		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
+			if (ammo <= 0) {
+				reload();
+				spend( attackDelay() );
+				return true;
+			}
+			return super.act(enemyInFOV, justAlerted);
 		}
 	}
 

@@ -40,6 +40,7 @@ import com.watabou.noosa.Group;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.PointerArea;
 import com.watabou.noosa.ui.Component;
+import com.watabou.utils.RectF;
 
 public class AboutScene extends PixelScene {
 
@@ -47,11 +48,13 @@ public class AboutScene extends PixelScene {
 	public void create() {
 		super.create();
 
-		final float colWidth = 120;
+		RectF insets = getCommonInsets();
+
+		final float colWidth = 120 - (insets.left + insets.right);
 		final float fullWidth = colWidth * (landscape() ? 2 : 1);
 
-		int w = Camera.main.width;
-		int h = Camera.main.height;
+		int w = (int) (Camera.main.width - (insets.left + insets.right));
+		int h = (int) (Camera.main.height - (insets.top + insets.bottom));
 
 		Archs archs = new Archs();
 		archs.setSize( w, h );
@@ -74,9 +77,9 @@ public class AboutScene extends PixelScene {
 				"Github",
 				"https://github.com/nathanlink169");
 		if (landscape()){
-			pdr.setRect((w - fullWidth)/2f - 6, 10, colWidth, 0);
+			pdr.setRect((w - fullWidth)/2f - 6 + insets.left, 10 + insets.top, colWidth, 0);
 		} else {
-			pdr.setRect((w - fullWidth)/2f, 6, colWidth, 0);
+			pdr.setRect((w - fullWidth)/2f + insets.left, 6 + insets.top, colWidth, 0);
 		}
 		content.add(pdr);
 
@@ -263,13 +266,14 @@ public class AboutScene extends PixelScene {
 		freesound.setRect(transifex.left()-10, transifex.bottom() + 8, colWidth+20, 0);
 		content.add(freesound);
 
-		content.setSize( fullWidth, freesound.bottom()+10 );
+		content.setSize( fullWidth, freesound.bottom()+10 + insets.bottom );
 
 		list.setRect( 0, 0, w, h );
 		list.scrollTo(0, 0);
 
 		ExitButton btnExit = new ExitButton();
-		btnExit.setPos( Camera.main.width - btnExit.width(), 0 );
+		int ofs = PixelScene.landscape() ? 0 : 4;
+		btnExit.setPos( Camera.main.width - btnExit.width() - ofs, ofs );
 		add( btnExit );
 
 		//fadeIn();

@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -138,6 +139,10 @@ public class WndHero extends WndTabbed {
 		buffs.layout();
 	}
 
+	public void Reset() {
+		buffs.Reset();
+	}
+
 	private class StatsTab extends Group {
 		
 		private static final int GAP = 6;
@@ -187,6 +192,29 @@ public class WndHero extends WndTabbed {
 			infoButton.setRect(title.right(), 0, 16, 16);
 			add(infoButton);
 
+			if (SPDSettings.creative()) {
+				IconButton creativeButton = new IconButton(Icons.get(Icons.CREATIVE)) {
+					@Override
+					protected void onClick() {
+						super.onClick();
+						if (ShatteredPixelDungeon.scene() instanceof GameScene){
+							GameScene.show(new WndHeroCreative());
+							WndHero.this.hide();
+						} else {
+							ShatteredPixelDungeon.scene().addToFront(new WndHeroCreative());
+							WndHero.this.hide();
+						}
+					}
+
+					@Override
+					protected String hoverText() {
+						return Messages.titleCase(Messages.get(WndKeyBindings.class, "creative"));
+					}
+				};
+				creativeButton.setRect(infoButton.left(), infoButton.bottom() + infoButton.height() / 4, 16, 16);
+				add(creativeButton);
+			}
+
 			pos = title.bottom() + 2*GAP;
 
 			int strBonus = hero.STR() - hero.STR;
@@ -222,7 +250,10 @@ public class WndHero extends WndTabbed {
 			txt.setPos(0, pos);
 			add( txt );
 			
-			txt = PixelScene.renderTextBlock( value, 8 );
+			int size = 8;
+			if (value.length() >= 14) size -=2;
+			if (value.length() >= 18) size -=1;
+			txt = PixelScene.renderTextBlock( value, size );
 			txt.setPos(WIDTH * 0.55f, pos);
 			PixelScene.align(txt);
 			add( txt );
@@ -290,9 +321,19 @@ public class WndHero extends WndTabbed {
 			super.layout();
 			buffList.setRect(0, 0, width, height);
 		}
+
+		public void Reset() {
+			setupList();
+		}
 		
 		private void setupList() {
 			Component content = buffList.content();
+			for (BuffSlot b: slots) {
+				content.remove(b);
+			}
+			slots.clear();
+			pos = 0;
+
 			for (Buff buff : Dungeon.hero.buffs()) {
 				if (buff.icon() != BuffIndicator.NONE) {
 					BuffSlot slot = new BuffSlot(buff);
@@ -345,7 +386,7 @@ public class WndHero extends WndTabbed {
 			
 			protected boolean onClick ( float x, float y ) {
 				if (inside( x, y )) {
-					GameScene.show(new WndInfoBuff(buff));
+					GameScene.show(new WndInfoBuff(buff, WndHero.this));
 					return true;
 				} else {
 					return false;

@@ -63,6 +63,7 @@ public class SentryRoom extends SpecialRoom {
 
 	@Override
 	public int minWidth() { return 7; }
+	@Override
 	public int minHeight() { return 7; }
 
 	@Override

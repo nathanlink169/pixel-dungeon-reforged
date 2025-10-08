@@ -101,8 +101,11 @@ public class WndGameInProgress extends Window {
 		else                statSlot( Messages.get(this, "health"), (info.hp) + "/" + info.ht );
 		statSlot( Messages.get(this, "exp"), info.exp + "/" + Hero.maxExp(info.level) );
 		statSlot( Messages.get(this, "difficulty"), Messages.get(this, "difficulty" + info.difficulty));
-		if (Badges.isUnlocked(Badges.Badge.VICTORY) || DeviceCompat.isDebug()) {
-			statSlot( "Randomized", info.randomized ? "Yes" : "No" );
+		if (info.creative) {
+			RenderedTextBlock txt = PixelScene.renderTextBlock( Messages.get(this, "creative"), 8 );
+			txt.setPos(WIDTH * 0.55f, pos);
+			add( txt );
+			pos += GAP + txt.height();
 		}
 		
 		pos += GAP;

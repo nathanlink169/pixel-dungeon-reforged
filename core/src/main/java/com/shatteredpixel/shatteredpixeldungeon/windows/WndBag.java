@@ -26,6 +26,8 @@ package com.shatteredpixel.shatteredpixeldungeon.windows;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDAction;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
+import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -39,6 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.InventorySlot;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
@@ -172,14 +175,14 @@ public class WndBag extends WndTabbed {
 	protected void placeTitle( Bag bag, int width ){
 
 		float titleWidth;
-		if (Dungeon.energy == 0) {
+		if (Dungeon.GetEnergy() == 0) {
 			ItemSprite gold = new ItemSprite(ItemSpriteSheet.GOLD, null);
 			gold.x = width - gold.width();
 			gold.y = (TITLE_HEIGHT - gold.height()) / 2f;
 			PixelScene.align(gold);
 			add(gold);
 
-			BitmapText amt = new BitmapText(Integer.toString(Dungeon.gold), PixelScene.pixelFont);
+			BitmapText amt = new BitmapText(Integer.toString(Dungeon.GetGold()), PixelScene.pixelFont);
 			amt.hardlight(TITLE_COLOR);
 			amt.measure();
 			amt.x = width - gold.width() - amt.width() - 1;
@@ -196,7 +199,7 @@ public class WndBag extends WndTabbed {
 			PixelScene.align(gold);
 			add(gold);
 
-			BitmapText amt = new BitmapText(Integer.toString(Dungeon.gold), PixelScene.pixelFont);
+			BitmapText amt = new BitmapText(Integer.toString(Dungeon.GetGold()), PixelScene.pixelFont);
 			amt.hardlight(TITLE_COLOR);
 			amt.measure();
 			amt.x = width - gold.width() - amt.width() - 2f;
@@ -212,7 +215,7 @@ public class WndBag extends WndTabbed {
 			PixelScene.align(energy);
 			add(energy);
 
-			amt = new BitmapText(Integer.toString(Dungeon.energy), PixelScene.pixelFont);
+			amt = new BitmapText(Integer.toString(Dungeon.GetEnergy()), PixelScene.pixelFont);
 			amt.hardlight(0x44CCFF);
 			amt.measure();
 			amt.x = width - energy.width() - amt.width() - 1;
@@ -234,6 +237,25 @@ public class WndBag extends WndTabbed {
 		);
 		PixelScene.align(txtTitle);
 		add( txtTitle );
+
+		if (SPDSettings.creative()) {
+			IconButton creativeButton = new IconButton(Icons.get(Icons.CREATIVE)) {
+				@Override
+				protected void onClick() {
+					super.onClick();
+					GameScene.show(new WndCreativeInventory());
+					WndBag.this.hide();
+				}
+
+				@Override
+				protected String hoverText() {
+					return Messages.titleCase(Messages.get(WndKeyBindings.class, "creative"));
+				}
+			};
+			int windowWidth = slotWidth * nCols + SLOT_MARGIN * (nCols - 1);
+			creativeButton.setRect(windowWidth / 2 - 8, -2, 16, 16);
+			add(creativeButton);
+		}
 	}
 	
 	protected void placeItems( Bag container ) {

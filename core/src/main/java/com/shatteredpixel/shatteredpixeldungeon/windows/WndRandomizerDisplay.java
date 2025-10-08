@@ -73,7 +73,7 @@ public class WndRandomizerDisplay extends Window {
 	}
 
 	public static String getRandomizerDescriptionForRegion(int region) {
-		if (!Dungeon.randomizerEnabled) return "";
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return "";
 
 		if (Dungeon.isChallenged(Challenges.MONSTER_UNKNOWN)) {
 			return Messages.get(Randomizer.class, "unknown.creaturename") + " — " + Messages.get(Randomizer.class, "unknown.buff.name") + " — " + Messages.get(Randomizer.class, "unknown.buff.desc") + "\n\n" +

@@ -65,6 +65,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Skeleton;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wyrm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.WindParticle;
@@ -1469,6 +1470,7 @@ public abstract class Level implements Bundlable {
 				if (m instanceof WandOfWarding.Ward
 						|| m instanceof WandOfRegrowth.Lotus
 						|| m instanceof SpiritHawk.HawkAlly
+						|| (m instanceof ConstructHero && Dungeon.hero.hasTalent(Talent.CONSTRUCT_VISION))
 						|| m.buff(PowerOfMany.PowerBuff.class) != null){
 					if (m.fieldOfView == null || m.fieldOfView.length != length()){
 						m.fieldOfView = new boolean[length()];
@@ -1584,6 +1586,10 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "locked_door_name");
 			case Terrain.CRYSTAL_DOOR:
 				return Messages.get(Level.class, "crystal_door_name");
+			case Terrain.LOCKED_GATE:
+				return Messages.get(Level.class, "locked_gate_name");
+			case Terrain.UNLOCKED_GATE:
+				return Messages.get(Level.class, "unlocked_gate_name");
 			case Terrain.PEDESTAL:
 				return Messages.get(Level.class, "pedestal_name");
 			case Terrain.BARRICADE:
@@ -1634,6 +1640,10 @@ public abstract class Level implements Bundlable {
 				return Messages.get(Level.class, "locked_door_desc");
 			case Terrain.CRYSTAL_DOOR:
 				return Messages.get(Level.class, "crystal_door_desc");
+			case Terrain.LOCKED_GATE:
+				return Messages.get(Level.class, "locked_gate_desc");
+			case Terrain.UNLOCKED_GATE:
+				return Messages.get(Level.class, "unlocked_gate_desc");
 			case Terrain.LOCKED_EXIT:
 				return Messages.get(Level.class, "locked_exit_desc");
 			case Terrain.BARRICADE:

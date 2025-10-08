@@ -53,8 +53,7 @@ public class SPDSettings extends GameSettings {
 	//Display
 	
 	public static final String KEY_FULLSCREEN	= "fullscreen";
-	public static final String KEY_LANDSCAPE	= "landscape";
-	public static final String KEY_POWER_SAVER 	= "power_saver";
+	public static final String KEY_LANDSCAPE	= "force_landscape";
 	public static final String KEY_ZOOM			= "zoom";
 	public static final String KEY_BRIGHTNESS	= "brightness";
 	public static final String KEY_GRID 	    = "visual_grid";
@@ -68,7 +67,7 @@ public class SPDSettings extends GameSettings {
 	}
 	
 	public static boolean fullscreen() {
-		return getBoolean( KEY_FULLSCREEN, DeviceCompat.isDesktop() );
+		return getBoolean( KEY_FULLSCREEN, true );
 	}
 	
 	public static void landscape( boolean value ){
@@ -76,23 +75,8 @@ public class SPDSettings extends GameSettings {
 		((ShatteredPixelDungeon)ShatteredPixelDungeon.instance).updateDisplaySize();
 	}
 	
-	//can return null because we need to directly handle the case of landscape not being set
-	// as there are different defaults for different devices
-	public static Boolean landscape(){
-		if (contains(KEY_LANDSCAPE)){
+	public static boolean landscape(){
 			return getBoolean(KEY_LANDSCAPE, false);
-		} else {
-			return null;
-		}
-	}
-	
-	public static void powerSaver( boolean value ){
-		put( KEY_POWER_SAVER, value );
-		((ShatteredPixelDungeon)ShatteredPixelDungeon.instance).updateDisplaySize();
-	}
-	
-	public static boolean powerSaver(){
-		return getBoolean( KEY_POWER_SAVER, false );
 	}
 	
 	public static void zoom( int value ) {
@@ -242,8 +226,7 @@ public class SPDSettings extends GameSettings {
 	public static final String KEY_LAST_DAILY	= "last_daily";
 	public static final String KEY_INTRO		= "intro";
 	public static final String KEY_DIFFICULTY   = "difficulty";
-
-	public static final String KEY_RANDOMIZER_ENABLED = "randomizer_enabled";
+	public static final String KEY_CREATIVE		= "creative";
 
 	public static final String KEY_SUPPORT_NAGGED= "support_nagged";
 	public static final String KEY_VICTORY_NAGGED= "victory_nagged";
@@ -261,7 +244,7 @@ public class SPDSettings extends GameSettings {
 	}
 	
 	public static int lastClass() {
-		return getInt( KEY_LAST_CLASS, 0, 0, 3 );
+		return getInt( KEY_LAST_CLASS, 0, 0, 6 );
 	}
 	
 	public static void challenges( int value ) {
@@ -275,9 +258,8 @@ public class SPDSettings extends GameSettings {
 	// 1 easy, 2 medium, 3 hard, 4 impossible
 	public static void difficulty( int value) { put (KEY_DIFFICULTY, value); }
 	public static int difficulty() {return getInt(KEY_DIFFICULTY, 2, 1, 4);}
-
-	public static void randomizerEnabled( boolean value ) { put( KEY_RANDOMIZER_ENABLED, value);}
-	public static boolean randomizerEnabled() { return getBoolean(KEY_RANDOMIZER_ENABLED, false);}
+	public static void creative(boolean value) { put (KEY_CREATIVE, value); }
+	public static boolean creative() { return getBoolean(KEY_CREATIVE, false); }
 
 	public static void customSeed( String value ){
 		put( KEY_CUSTOM_SEED, value );
@@ -440,7 +422,7 @@ public class SPDSettings extends GameSettings {
 	public static void language(Languages lang) {
 		put( KEY_LANG, lang.code());
 	}
-	
+
 	// Just English as the stuff I'm adding is not translated. I don't want a frustrating half-translated experience.
 	public static Languages language() {
 		return Languages.ENGLISH;

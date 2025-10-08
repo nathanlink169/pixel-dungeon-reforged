@@ -36,6 +36,8 @@ public class WndTitledMessage extends Window {
 	protected static final int WIDTH_MAX    = 220;
 	protected static final int GAP	= 2;
 
+	protected Component m_Titlebar;
+
 	public WndTitledMessage( Image icon, String title, String message ) {
 		
 		this( new IconTitle( icon, title ), message );
@@ -45,6 +47,8 @@ public class WndTitledMessage extends Window {
 	public WndTitledMessage( Component titlebar, String message ) {
 
 		super();
+
+		m_Titlebar = titlebar;
 
 		int width = WIDTH_MIN;
 

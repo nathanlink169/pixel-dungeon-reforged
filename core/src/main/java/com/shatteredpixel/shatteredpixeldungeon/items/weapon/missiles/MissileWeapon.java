@@ -76,7 +76,9 @@ abstract public class MissileWeapon extends Weapon {
 	
 	public static final float MAX_DURABILITY = 100;
 	protected float durability = MAX_DURABILITY;
+	public float GetDurability() {return durability;}
 	protected float baseUses = 10;
+	public float GetBaseUses() {return baseUses;}
 	
 	public boolean holster;
 	
@@ -336,6 +338,10 @@ abstract public class MissileWeapon extends Weapon {
 		return durability;
 	}
 
+	public void SetDurability(float d) {
+		durability = d;
+	}
+
 	public void repair( float amount ){
 		durability += amount;
 		durability = Math.min(durability, MAX_DURABILITY);
@@ -401,7 +407,7 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public int damageRoll(Char owner, boolean isMaxDamage) {
-		if (((Hero)owner).hasTalent(EFFECTIVE_SHOT) && ((Hero)owner).heroClass != HeroClass.ARTIFICER) {
+		if (owner instanceof Hero && ((Hero)owner).hasTalent(EFFECTIVE_SHOT) && ((Hero)owner).heroClass != HeroClass.ARTIFICER) {
 			if (owner.buff(EffectiveShotCooldown.class) == null) {
 				isMaxDamage = true;
 				Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));

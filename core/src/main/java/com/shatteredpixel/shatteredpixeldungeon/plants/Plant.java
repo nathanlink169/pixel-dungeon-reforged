@@ -99,7 +99,7 @@ public abstract class Plant implements Bundlable {
 		}
 
 		if (Random.Float() < seedChance){
-			if (seedClass != null && seedClass != Rotberry.Seed.class) {
+			if (seedClass != null && seedClass != Rotberry.RotberrySeed.class) {
 				Dungeon.level.drop(Reflection.newInstance(seedClass), pos).sprite.drop();
 			}
 		}
@@ -130,7 +130,7 @@ public abstract class Plant implements Bundlable {
 		return desc;
 	}
 	
-	public static class Seed extends Item {
+	public abstract static class Seed extends Item {
 
 		public static final String AC_PLANT	= "PLANT";
 		

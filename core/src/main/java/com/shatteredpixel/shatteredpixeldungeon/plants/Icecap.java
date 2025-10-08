@@ -41,7 +41,7 @@ public class Icecap extends Plant {
 	
 	{
 		image = 4;
-		seedClass = Seed.class;
+		seedClass = IcecapSeed.class;
 	}
 	
 	@Override
@@ -61,7 +61,7 @@ public class Icecap extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class IcecapSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_ICECAP;
 

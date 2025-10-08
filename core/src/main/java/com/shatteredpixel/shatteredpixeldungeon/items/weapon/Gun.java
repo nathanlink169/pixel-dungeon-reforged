@@ -339,7 +339,14 @@ public class Gun extends Weapon {
                     Dungeon.level.map[p] == Terrain.FURROWED_GRASS ||
                     Dungeon.level.flamable[p]) {
                 Dungeon.level.destroy(p);
-                Level.set(p, Terrain.EMBERS);
+                if (Dungeon.level.map[p] == Terrain.EMPTY ||
+                        Dungeon.level.map[p] == Terrain.EMPTY_DECO ||
+                        Dungeon.level.map[p] == Terrain.OPEN_DOOR ||
+                        Dungeon.level.map[p] == Terrain.GRASS ||
+                        Dungeon.level.map[p] == Terrain.FURROWED_GRASS ||
+                        Dungeon.level.flamable[p]) {
+                    Level.set(p, Terrain.EMBERS);
+                }
                 GameScene.updateMap( p );
             }
 

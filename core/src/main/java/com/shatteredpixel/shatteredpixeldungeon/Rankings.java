@@ -155,7 +155,7 @@ public enum Rankings {
 			size = records.size();
 		}
 
-		if (rec.customSeed.isEmpty()) {
+		if (rec.customSeed.isEmpty() && !SPDSettings.creative()) {
 			totalNumber++;
 			if (win) {
 				wonNumber++;
@@ -168,11 +168,17 @@ public enum Rankings {
 	}
 
 	private int score( boolean win ) {
+		if (SPDSettings.creative()) {
+			return 0;
+		}
 		return (Statistics.goldCollected + Dungeon.hero.lvl * (win ? 26 : Dungeon.depth ) * 100) * (win ? 2 : 1);
 	}
 
 	//assumes a ranking is loaded, or game is ending
 	public int calculateScore(){
+		if (SPDSettings.creative()) {
+			return 0;
+		}
 
 		if (Dungeon.initialVersion > ShatteredPixelDungeon.v1_2_3){
 			Statistics.progressScore = Dungeon.hero.lvl * Statistics.deepestFloor * 65;

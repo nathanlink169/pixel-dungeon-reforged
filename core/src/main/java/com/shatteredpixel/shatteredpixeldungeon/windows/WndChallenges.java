@@ -24,6 +24,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import static com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene.defaultZoom;
+
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -33,52 +35,96 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.CheckBox;
 import com.shatteredpixel.shatteredpixeldungeon.ui.IconButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Icons;
 import com.shatteredpixel.shatteredpixeldungeon.ui.RenderedTextBlock;
+import com.shatteredpixel.shatteredpixeldungeon.ui.ScrollPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
+import com.watabou.noosa.Camera;
+import com.watabou.noosa.Game;
+import com.watabou.noosa.ui.Component;
+import com.watabou.utils.DeviceCompat;
+import com.watabou.utils.PlatformSupport;
+import com.watabou.utils.RectF;
 
 import java.util.ArrayList;
 
 public class WndChallenges extends Window {
-
-	private static final int WIDTH		= 120;
-	private static final int TTL_HEIGHT = 16;
 	private static final int BTN_HEIGHT = 16;
 	private static final int GAP        = 1;
 
 	private boolean editable;
 	private ArrayList<CheckBox> boxes;
+	private ArrayList<IconButton> infoButtons;
 
 	public WndChallenges( int checked, boolean editable ) {
 
 		super();
 
+		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK).scale(1f/defaultZoom);
+		float w = (Camera.main.width - insets.left - insets.right) * 0.9f;
+		float h = (Camera.main.height - insets.top - insets.bottom) * 0.8f;
+
+		resize((int) w, (int) h);
+
 		this.editable = editable;
 
-		RenderedTextBlock title = PixelScene.renderTextBlock( Messages.get(this, "title"), 12 );
-		title.hardlight( TITLE_COLOR );
-		title.setPos(
-				(WIDTH - title.width()) / 2,
-				(TTL_HEIGHT - title.height()) / 2
-		);
-		PixelScene.align(title);
-		add( title );
-
 		boxes = new ArrayList<>();
+		infoButtons = new ArrayList<>();
 
-		float pos = TTL_HEIGHT;
+		ScrollPane pane = new ScrollPane( new Component() ){
+			@Override
+			public void onClick( float x, float y ) {
+				if (WndChallenges.this.editable) {
+					for (int i = 0; i < boxes.size(); i++) {
+						if (boxes.get(i).onClick(x, y)) {
+							break;
+						}
+					}
+				}
+				for (int i = 0; i < infoButtons.size(); i++) {
+					if (infoButtons.get(i).onClick(x, y)) {
+						break;
+					}
+				}
+			}
+		};
+		add(pane);
+		pane.setRect(0, 0, w, h);
+
+		Component content = pane.content();
+		IconTitle title = new IconTitle(Icons.CHALLENGE_COLOR.get(), Messages.get(this, "title"));
+		title.setRect(0, 0, w, 0);
+		title.setPos(0, 0);
+		content.add(title);
+
+		int lockedCount = 0;
+
+		float pos = (int)title.bottom() + GAP * 3;
 		for (int i=0; i < Challenges.NAME_IDS.length; i++) {
+			boolean isLocked = !Challenges.IsChallengeUnlocked(Challenges.MASKS[i]);// && !DeviceCompat.isDebug();
+			if (isLocked) {
+				++lockedCount;
+				continue;
+			}
 
-			final String challenge = Challenges.NAME_IDS[i];
+			final String challenge = isLocked ? "locked" : Challenges.NAME_IDS[i];
 			
-			CheckBox cb = new CheckBox( Messages.titleCase(Messages.get(Challenges.class, challenge)) );
+			CheckBox cb = new CheckBox( Messages.titleCase(Messages.get(Challenges.class, challenge)) ) {
+				@Override
+				protected void onClick() {
+					if (!isLocked) {
+						super.onClick();
+					}
+
+				}
+			};
 			cb.checked( (checked & Challenges.MASKS[i]) != 0 );
-			cb.active = editable;
+			cb.active = false;
 
 			if (i > 0) {
 				pos += GAP;
 			}
-			cb.setRect( 0, pos, WIDTH-16, BTN_HEIGHT );
+			cb.setRect( 0, pos, w-16, BTN_HEIGHT );
 
-			add( cb );
+			pane.content().add( cb );
 			boxes.add( cb );
 			
 			IconButton info = new IconButton(Icons.get(Icons.INFO)){
@@ -91,12 +137,26 @@ public class WndChallenges extends Window {
 				}
 			};
 			info.setRect(cb.right(), pos, 16, BTN_HEIGHT);
-			add(info);
+			info.active = false;
+			infoButtons.add(info);
+			pane.content().add(info);
 			
 			pos = cb.bottom();
 		}
 
-		resize( WIDTH, (int)pos );
+		if (lockedCount > 0) {
+			pos += GAP * 2;
+			RenderedTextBlock info = PixelScene.renderTextBlock(Messages.get(this, "locked", lockedCount), 6);
+			info.setRect( 0, pos, w, BTN_HEIGHT );
+			info.maxWidth((int) w);
+			add(info);
+			pos = info.bottom() + GAP;
+		}
+
+		resize((int) w, (int) Math.min(h, pos));
+
+		content.setRect(0, 0, w, pos);
+		pane.setRect(insets.left, insets.top, w, h);
 	}
 
 	@Override

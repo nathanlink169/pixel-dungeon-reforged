@@ -213,7 +213,7 @@ public class GooSprite extends MobSprite {
 			triggerEmitters();
 
 			idle();
-			ch.onAttackComplete();
+			ch.onAttackComplete(Char.AttackType.MELEE);
 		} else if (anim == die) {
 			if (spray != null) {
 				spray.killAndErase();

@@ -115,7 +115,7 @@ public class Randomizer {
 	public static void initialize() {
 		Dungeon.randomizer = 0;
 
-		if (!Dungeon.randomizerEnabled) return;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return;
 
 		setRandomCreaturesForRegion(1);
 		setRandomCreaturesForRegion(2);
@@ -125,7 +125,7 @@ public class Randomizer {
 	}
 
 	public static void showRandomizerWindowIfRequired() {
-		if (!Dungeon.randomizerEnabled) return;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return;
 
 		int region = 1;
 		if (Dungeon.depth >= 6) region = 2;
@@ -143,7 +143,7 @@ public class Randomizer {
 	}
 
 	public static int getCreatureBuff(Class<? extends Char> creature) {
-		if (!Dungeon.randomizerEnabled) return 0;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return 0;
 
 		int region = m_creatureData.get(creature).region;
 		int bitForRegion = (-12 * region) + 72;
@@ -155,7 +155,7 @@ public class Randomizer {
 	}
 
 	public static int getCreatureNerf(Class<? extends Char> creature) {
-		if (!Dungeon.randomizerEnabled) return 0;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return 0;
 
 		int region = m_creatureData.get(creature).region;
 		int bitForRegion = (-12 * region) + 72;
@@ -167,7 +167,7 @@ public class Randomizer {
 	}
 
 	public static Class<? extends Char> getBuffedCreature(int region) {
-		if (!Dungeon.randomizerEnabled) return null;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return null;
 
 		int bitForRegion = (-12 * region) + 72;
 		int buffedCreatureId = getBits(bitForRegion, 4);
@@ -184,7 +184,7 @@ public class Randomizer {
 	}
 
 	public static Class<? extends Char> getNerfedCreature(int region) {
-		if (!Dungeon.randomizerEnabled) return null;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return null;
 
 		int bitForRegion = (-12 * region) + 72;
 		int nerfedCreatureId = getBits(bitForRegion - 4, 4);
@@ -201,7 +201,7 @@ public class Randomizer {
 	}
 
 	private static void setRandomCreaturesForRegion(int region) {
-		if (!Dungeon.randomizerEnabled) return;
+		if (!Dungeon.isChallenged(Challenges.RANDOMIZER)) return;
 
 		List<CreatureData> regionCreatures = m_creatureData.values().stream()
 				.filter(data -> data.region == region)

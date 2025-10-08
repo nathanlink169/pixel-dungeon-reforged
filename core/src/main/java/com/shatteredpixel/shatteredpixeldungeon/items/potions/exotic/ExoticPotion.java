@@ -44,7 +44,7 @@ import com.watabou.utils.Reflection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-public class ExoticPotion extends Potion {
+public abstract class ExoticPotion extends Potion {
 	
 	{
 		//sprite = equivalent potion sprite but one row down

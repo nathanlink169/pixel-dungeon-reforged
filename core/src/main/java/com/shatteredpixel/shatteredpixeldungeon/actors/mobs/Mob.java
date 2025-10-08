@@ -572,7 +572,7 @@ public abstract class Mob extends Char {
 
 	protected boolean getCloser( int target ) {
 		
-		if (rooted || target == pos) {
+		if (rooted || target == pos || properties.contains(Property.IMMOVABLE)) {
 			return false;
 		}
 
@@ -695,7 +695,7 @@ public abstract class Mob extends Char {
 	}
 	
 	protected boolean getFurther( int target ) {
-		if (rooted || target == pos) {
+		if (rooted || target == pos || properties.contains(Property.IMMOVABLE)) {
 			return false;
 		}
 		
@@ -759,7 +759,7 @@ public abstract class Mob extends Char {
 			return false;
 			
 		} else {
-			attack( enemy );
+			attack( enemy, AttackType.MELEE);
 			Invisibility.dispel(this);
 			spend( attackDelay() );
 			return true;
@@ -767,11 +767,11 @@ public abstract class Mob extends Char {
 	}
 	
 	@Override
-	public void onAttackComplete() {
-		attack( enemy );
+	public void onAttackComplete(AttackType attackType) {
+		attack( enemy, attackType);
 		Invisibility.dispel(this);
 		spend( attackDelay() );
-		super.onAttackComplete();
+		super.onAttackComplete(attackType);
 	}
 	
 	@Override
@@ -1013,6 +1013,9 @@ public abstract class Mob extends Char {
 				}
 			}
 
+			if (Dungeon.isChallenged(Challenges.ADAPTIVE)) {
+				Dungeon.hero.belongings.TriggerAdaptive();
+			}
 		}
 
 		if (Dungeon.hero.isAlive() && !Dungeon.level.heroFOV[pos]) {

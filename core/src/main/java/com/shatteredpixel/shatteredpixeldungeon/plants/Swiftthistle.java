@@ -47,7 +47,7 @@ public class Swiftthistle extends Plant {
 	
 	{
 		image = 2;
-		seedClass = Seed.class;
+		seedClass = SwiftthistleSeed.class;
 	}
 	
 	@Override
@@ -60,7 +60,7 @@ public class Swiftthistle extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class SwiftthistleSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_SWIFTTHISTLE;
 			

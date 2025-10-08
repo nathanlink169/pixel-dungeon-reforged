@@ -44,11 +44,11 @@ public class GardenRoom extends SpecialRoom {
 
 		int bushes = Random.Int(3);
 		if (bushes == 0) {
-			level.plant(new Sungrass.Seed(), plantPos( level ));
+			level.plant(new Sungrass.SungrassSeed(), plantPos( level ));
 		} else if (bushes == 1) {
 			level.plant(new BlandfruitBush.Seed(), plantPos( level ));
 		} else if (Random.Int(5) == 0) {
-			level.plant(new Sungrass.Seed(), plantPos( level ));
+			level.plant(new Sungrass.SungrassSeed(), plantPos( level ));
 			level.plant(new BlandfruitBush.Seed(), plantPos( level ));
 		}
 		

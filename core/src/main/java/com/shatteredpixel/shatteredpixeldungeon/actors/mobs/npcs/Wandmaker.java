@@ -51,8 +51,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.quest.RotGardenRoom
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.WandmakerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndWandmaker;
 import com.watabou.noosa.Game;
@@ -121,7 +119,7 @@ public class Wandmaker extends NPC {
 					item = Dungeon.hero.belongings.getItem(Embers.class);
 					break;
 				case 3:
-					item = Dungeon.hero.belongings.getItem(Rotberry.Seed.class);
+					item = Dungeon.hero.belongings.getItem(Rotberry.RotberrySeed.class);
 					break;
 			}
 

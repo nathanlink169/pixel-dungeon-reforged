@@ -41,7 +41,7 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Artifact extends KindofMisc {
+public abstract class Artifact extends KindofMisc {
 
 	protected Buff passiveBuff;
 	protected Buff activeBuff;

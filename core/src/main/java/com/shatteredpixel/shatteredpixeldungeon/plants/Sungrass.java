@@ -43,7 +43,7 @@ public class Sungrass extends Plant {
 	
 	{
 		image = 3;
-		seedClass = Seed.class;
+		seedClass = SungrassSeed.class;
 	}
 	
 	@Override
@@ -62,7 +62,7 @@ public class Sungrass extends Plant {
 		}
 	}
 	
-	public static class Seed extends Plant.Seed {
+	public static class SungrassSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_SUNGRASS;
 

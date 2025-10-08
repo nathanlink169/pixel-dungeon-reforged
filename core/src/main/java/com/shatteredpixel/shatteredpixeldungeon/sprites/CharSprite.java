@@ -830,7 +830,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 			if (anim == attack) {
 				
 				idle();
-				ch.onAttackComplete();
+				ch.onAttackComplete(Char.AttackType.MELEE);
 				
 			} else if (anim == operate) {
 				

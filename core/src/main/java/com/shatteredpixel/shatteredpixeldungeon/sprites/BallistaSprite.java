@@ -26,13 +26,10 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Ballista;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Shaman;
-import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.watabou.noosa.TextureFilm;
-import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
 public class BallistaSprite extends MobSprite {
@@ -86,12 +83,13 @@ public class BallistaSprite extends MobSprite {
                     reset( this, cellToAttack, new BallistaShot(), new Callback() {
                         @Override
                         public void call() {
-                            ch.onAttackComplete();
+                            ch.onAttackComplete(Char.AttackType.RANGED_PHYSICAL);
                         }
                     } );
         } else if (anim == die) {
             emitter().burst(ElmoParticle.FACTORY, 4);
-        }else {
+            super.onComplete( anim );
+        } else {
             super.onComplete( anim );
         }
     }

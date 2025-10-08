@@ -371,18 +371,18 @@ public abstract class Char extends Actor {
 	}
 
 	final public boolean attack( Char enemy, int damageType) {
-		return attack(enemy, 1f, 0f, 1f, damageType);
+		return attack(enemy, 1f, 0f, 1f, damageType, AttackType.MELEE);
 	}
 
-	final public boolean attack( Char enemy ){
-		return attack(enemy, 1f, 0f, 1f, DamageType.NONE);
+	final public boolean attack(Char enemy, AttackType attackType){
+		return attack(enemy, 1f, 0f, 1f, DamageType.NONE, attackType);
 	}
 
 	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
-		return attack(enemy, dmgMulti, dmgBonus, accMulti, DamageType.NONE);
+		return attack(enemy, dmgMulti, dmgBonus, accMulti, DamageType.NONE, AttackType.MELEE);
 	}
 	
-	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti, int damageType ) {
+	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti, int damageType, AttackType attackType) {
 
 		if (enemy == null) return false;
 		
@@ -437,7 +437,7 @@ public abstract class Char extends Actor {
 					Buff.affect(Dungeon.hero, Talent.BountyHunterTracker.class, 0.0f);
 				}
 			} else {
-				dmg = damageRoll(AttackType.MELEE, isMaxDamage);
+				dmg = damageRoll(attackType, isMaxDamage);
 			}
 
 			dmg = dmg*dmgMulti;
@@ -1342,7 +1342,7 @@ public abstract class Char extends Actor {
 		// so calling next() here isn't necessary (see Actor.process)
 	}
 	
-	public void onAttackComplete() {
+	public void onAttackComplete(AttackType attackType) {
 		next();
 	}
 	

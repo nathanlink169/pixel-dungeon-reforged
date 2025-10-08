@@ -26,6 +26,12 @@ package com.shatteredpixel.shatteredpixeldungeon;
 
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.watabou.utils.Bundle;
+import com.watabou.utils.FileUtils;
+import com.watabou.utils.Random;
+
+import java.io.IOException;
+import java.util.HashSet;
 
 public class Challenges {
 
@@ -42,8 +48,10 @@ public class Challenges {
 	public static final int HORDE				= 1 << 9;
 	public static final int MONSTER_UNKNOWN		= 1 << 10;
 	public static final int TRINKET_MADNESS		= 1 << 11;
+	public static final int RANDOMIZER			= 1 << 12;
+	public static final int ADAPTIVE			= 1 << 13;
 
-	public static final int MAX_VALUE           = 1 << 12;
+	public static final int MAX_VALUE           = 1 << 14;
 
 	public static final String[] NAME_IDS = {
 			"champion_enemies",
@@ -57,11 +65,26 @@ public class Challenges {
 			"no_scrolls",
 			"horde",
 			"monster_unknown",
-			"trinket_madness"
+			"trinket_madness",
+			"randomizer",
+			"adaptive"
 	};
 
 	public static final int[] MASKS = {
-			CHAMPION_ENEMIES, STRONGER_BOSSES, NO_FOOD, NO_ARMOR, NO_HEALING, NO_HERBALISM, SWARM_INTELLIGENCE, DARKNESS, NO_SCROLLS, HORDE, MONSTER_UNKNOWN, TRINKET_MADNESS
+			CHAMPION_ENEMIES,
+			STRONGER_BOSSES,
+			NO_FOOD,
+			NO_ARMOR,
+			NO_HEALING,
+			NO_HERBALISM,
+			SWARM_INTELLIGENCE,
+			DARKNESS,
+			NO_SCROLLS,
+			HORDE,
+			MONSTER_UNKNOWN,
+			TRINKET_MADNESS,
+			RANDOMIZER,
+			ADAPTIVE
 	};
 
 	public static int activeChallenges(){
@@ -82,6 +105,63 @@ public class Challenges {
 
 	}
 
-	public static float NoFoodMultiplier() {return 0.4f;}
+	public static float NoFoodMultiplier() { return 0.4f; }
 
+	public static boolean HasAnyChallengesToUnlock() {
+		load();
+		int fullIndex = 0;
+		for (int ch : Challenges.MASKS){
+			fullIndex |= ch;
+		}
+		return fullIndex != m_UnlockedChallenges;
+	}
+
+	private static int m_UnlockedChallenges = 0;
+	public static int UnlockRandomChallenge() {
+		if (SPDSettings.creative())
+			return -1;
+		boolean valid = false;
+		int toUnlock = -1;
+		int index = -1;
+		do {
+			index = Random.Int(MASKS.length);
+			toUnlock = MASKS[index];
+			valid = !IsChallengeUnlocked(toUnlock);
+		} while (!valid);
+		m_UnlockedChallenges |= toUnlock;
+		Save();
+		return index;
+	}
+
+	public static boolean IsChallengeUnlocked(int mask) {
+		return (m_UnlockedChallenges & mask) != 0;
+	}
+
+	public static final String UNLOCKED_CHALLENGES_KEY = "unlocked_challenges_key";
+	public static final String CHALLENGES_FILE	= "challenges.dat";
+
+	public static void Save() {
+		Bundle bundle = new Bundle();
+		store( bundle );
+
+		try {
+			FileUtils.bundleToFile(CHALLENGES_FILE, bundle);
+		} catch (IOException e) {
+			ShatteredPixelDungeon.reportException(e);
+		}
+	}
+
+	public static void store( Bundle bundle ) {
+		bundle.put( UNLOCKED_CHALLENGES_KEY, m_UnlockedChallenges );
+	}
+
+	public static void load() {
+		try {
+			Bundle bundle = FileUtils.bundleFromFile( CHALLENGES_FILE );
+			m_UnlockedChallenges = bundle.getInt(UNLOCKED_CHALLENGES_KEY);
+
+		} catch (IOException e) {
+			m_UnlockedChallenges = 0;
+		}
+	}
 }

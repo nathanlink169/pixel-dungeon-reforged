@@ -213,7 +213,7 @@ public enum Talent {
 	//Artificer T3
 	MECHANICAL_GOGGLES(201, 3), EFFECTIVE_SHOT(202, 3),
 	//Constructor T3
-	CONSTRUCT_HARDENING(203, 3), CONSTRUCT_MOBILITY(204, 3), CONSTRUCT_LETHALITY(205, 3),
+	CONSTRUCT_VISION(203, 3), CONSTRUCT_MOBILITY(204, 3), CONSTRUCT_LETHALITY(205, 3),
 	//Armorer T3
 	ARMOR_MOD_LIGHT(206, 3), ARMOR_MOD_INFINITE_FALLING(207, 3), ARMOR_MOD_EMERGENCY_DEFENSE(208, 3),
 	//Quickdraw T4
@@ -566,7 +566,7 @@ public enum Talent {
 			}
 		}
 
-		if (talent == HEIGHTENED_SENSES || talent == FARSIGHT || talent == DIVINE_SENSE){
+		if (talent == HEIGHTENED_SENSES || talent == FARSIGHT || talent == DIVINE_SENSE || talent == CONSTRUCT_VISION){
 			Dungeon.observe();
 		}
 
@@ -599,17 +599,6 @@ public enum Talent {
 		if (talent == PATTERN_RECOGNITION) {
 			for (Potion p : hero.belongings.getAllItems(Potion.class)) {
 				p.identify(false);
-			}
-		}
-
-		if (talent == CONSTRUCT_HARDENING) {
-			for (Mob m : Dungeon.level.mobs) {
-				if (m instanceof ConstructHero) {
-					ConstructHero ch = (ConstructHero)m;
-					int hpDiff = ch.GetMaxHP() - ch.GetMaxHPGivenTalentLevel(Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_HARDENING) - 1);
-					ch.HP += hpDiff;
-					break;
-				}
 			}
 		}
 	}
@@ -706,7 +695,7 @@ public enum Talent {
 					}
 				}
 			} else {
-				Dungeon.energy += hero.pointsInTalent(TINKERERS_MEAL);
+				Dungeon.AdjustEnergy(hero.pointsInTalent(TINKERERS_MEAL));
 			}
 		}
 		if (hero.hasTalent(QUICK_CALIBRATION)){
@@ -1252,7 +1241,7 @@ public enum Talent {
 				Collections.addAll(tierTalents, LAY_ON_HANDS, AURA_OF_PROTECTION, WALL_OF_LIGHT);
 				break;
 			case CONSTRUCTOR:
-				Collections.addAll(tierTalents, CONSTRUCT_HARDENING, CONSTRUCT_MOBILITY, CONSTRUCT_LETHALITY);
+				Collections.addAll(tierTalents, CONSTRUCT_VISION, CONSTRUCT_MOBILITY, CONSTRUCT_LETHALITY);
 				break;
 			case ARMORER:
 				Collections.addAll(tierTalents, ARMOR_MOD_LIGHT, ARMOR_MOD_INFINITE_FALLING, ARMOR_MOD_EMERGENCY_DEFENSE);

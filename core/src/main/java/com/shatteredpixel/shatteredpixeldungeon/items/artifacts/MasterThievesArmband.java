@@ -270,8 +270,8 @@ public class MasterThievesArmband extends Artifact {
 
 		@Override
 		public boolean act() {
-			if (cursed && Dungeon.gold > 0 && Random.Int(5) == 0){
-				Dungeon.gold--;
+			if (cursed && Dungeon.GetGold() > 0 && Random.Int(5) == 0){
+				Dungeon.AdjustGold(-1);
 				updateQuickslot();
 			}
 

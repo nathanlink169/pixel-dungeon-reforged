@@ -149,6 +149,7 @@ public class BuffIndicator extends Component {
 	private LinkedHashMap<Buff, BuffButton> buffButtons = new LinkedHashMap<>();
 	private boolean needsRefresh;
 	private Char ch;
+	private Window m_SourceWindow = null;
 
 	private boolean large = false;
 	
@@ -157,6 +158,17 @@ public class BuffIndicator extends Component {
 		
 		this.ch = ch;
 		this.large = large;
+		if (ch == Dungeon.hero) {
+			heroInstance = this;
+		}
+	}
+
+	public BuffIndicator( Char ch, boolean large, Window sourceWindow ) {
+		super();
+
+		this.ch = ch;
+		this.large = large;
+		m_SourceWindow = sourceWindow;
 		if (ch == Dungeon.hero) {
 			heroInstance = this;
 		}
@@ -224,6 +236,7 @@ public class BuffIndicator extends Component {
 		for (Buff buff : newBuffs) {
 			if (!buffButtons.containsKey(buff)) {
 				BuffButton icon = new BuffButton(buff, large);
+				icon.sourceWindow = m_SourceWindow;
 				add(icon);
 				buffButtons.put( buff, icon );
 			}
@@ -283,6 +296,8 @@ public class BuffIndicator extends Component {
 
 		public Image grey; //only for small
 		public BitmapText text; //only for large
+
+		public Window sourceWindow = null;
 
 		public BuffButton( Buff buff, boolean large ){
 			super( new BuffIcon(buff, large));
@@ -345,7 +360,7 @@ public class BuffIndicator extends Component {
 
 		@Override
 		protected void onClick() {
-			if (buff.icon() != NONE) GameScene.show(new WndInfoBuff(buff));
+			if (buff.icon() != NONE) GameScene.show(new WndInfoBuff(buff, sourceWindow));
 		}
 
 		@Override
@@ -379,5 +394,9 @@ public class BuffIndicator extends Component {
 
 	public static void setBossInstance(BuffIndicator boss){
 		bossInstance = boss;
+	}
+
+	public static boolean hasBossInstance() {
+		return bossInstance != null;
 	}
 }

@@ -90,6 +90,9 @@ public abstract class ShieldBuff extends Buff {
 
 	public void decShield( int amt ){
 		shielding -= amt;
+		if (shielding <= 0 && detachesAtZero){
+			detach();
+		}
 		if (target != null) target.needsShieldUpdate = true;
 	}
 	

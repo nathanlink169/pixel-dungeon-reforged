@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMappi
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PressurePlateTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -87,7 +88,7 @@ public class ReclaimTrap extends TargetedSpell {
 		if (storedTrap == null) {
 			quantity++; //storing a trap doesn't consume the spell
 			Trap t = Dungeon.level.traps.get(bolt.collisionPos);
-			if (t != null && t.active && t.visible) {
+			if (t != null && t.active && t.visible && !(t instanceof PressurePlateTrap)) {
 				t.disarm(); //even disarms traps that normally wouldn't be
 				
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);

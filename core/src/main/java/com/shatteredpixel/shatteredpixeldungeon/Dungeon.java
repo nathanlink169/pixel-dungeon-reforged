@@ -45,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Slime;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
@@ -79,6 +80,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossGooLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerBossUsurperLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.LevelTransition;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.modifierunlocks.ModifierUnlockRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SpecialRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -125,6 +127,7 @@ public class Dungeon {
 		NECRO_HP,
 		BAT_HP,
 		WARLOCK_HP,
+		DEMON_GOO,
 		//Demon spawners are already limited in their spawnrate, no need to limit their health drops
 		//alchemy
 		COOKING_HP,
@@ -189,7 +192,7 @@ public class Dungeon {
 
 	public static int challenges;
 	public static int difficulty;
-	public static boolean randomizerEnabled;
+	public static boolean creative;
 	public static long randomizer;
 	public static int mobsToChampion;
 
@@ -212,8 +215,38 @@ public class Dungeon {
 	//keeps track of what levels the game should try to load instead of creating fresh
 	public static ArrayList<Integer> generatedLevels = new ArrayList<>();
 
-	public static int gold;
-	public static int energy;
+	private static int m_Gold;
+	private static int m_Energy;
+
+	public static int GetGold() {
+		if (SPDSettings.creative()) {
+			return 9999;
+		}
+		return m_Gold;
+	}
+
+	public static void SetGold(int gold) {
+		m_Gold = gold;
+	}
+
+	public static void AdjustGold(int delta) {
+		m_Gold += delta;
+	}
+
+	public static int GetEnergy() {
+		if (SPDSettings.creative()) {
+			return 9999;
+		}
+		return m_Energy;
+	}
+
+	public static void SetEnergy(int energy) {
+		m_Energy = energy;
+	}
+
+	public static void AdjustEnergy(int delta) {
+		m_Energy += delta;
+	}
 	
 	public static HashSet<Integer> chapters;
 
@@ -251,7 +284,7 @@ public class Dungeon {
 		initialVersion = version = Game.versionCode;
 		challenges = SPDSettings.challenges();
 		difficulty = SPDSettings.difficulty();
-		randomizerEnabled = SPDSettings.randomizerEnabled();
+		creative = SPDSettings.creative();
 		Randomizer.initialize();
 		mobsToChampion = -1;
 
@@ -267,6 +300,9 @@ public class Dungeon {
 
 			SpecialRoom.initForRun();
 			SecretRoom.initForRun();
+			if (Challenges.HasAnyChallengesToUnlock()) {
+				ModifierUnlockRoom.initForRun();
+			}
 
 			Generator.fullReset();
 
@@ -294,8 +330,8 @@ public class Dungeon {
 		Boss3Version = 1;
 		Boss4Version = 1;
 
-		gold = 0;
-		energy = 0;
+		m_Gold = 0;
+		m_Energy = 0;
 
 		droppedItems = new SparseArray<>();
 
@@ -656,8 +692,8 @@ public class Dungeon {
 	private static final String LAST_PLAYED = "last_played";
 	private static final String CHALLENGES	= "challenges";
 	private static final String DIFFICULTY  = "difficulty";
+	private static final String CREATIVE	= "creative";
 	private static final String RANDOMIZER  = "randomizer";
-	private static final String RANDOMIZER_ENABLED = "randomizer_enabled";
 	private static final String MOBS_TO_CHAMPION	= "mobs_to_champion";
 	private static final String HERO		= "hero";
 	private static final String DEPTH		= "depth";
@@ -690,8 +726,8 @@ public class Dungeon {
 			bundle.put( LAST_PLAYED, lastPlayed = Game.realTime);
 			bundle.put( CHALLENGES, challenges );
 			bundle.put( DIFFICULTY, difficulty);
+			bundle.put( CREATIVE, creative);
 			bundle.put( RANDOMIZER, randomizer);
-			bundle.put( RANDOMIZER_ENABLED, randomizerEnabled );
 			bundle.put( MOBS_TO_CHAMPION, mobsToChampion );
 			bundle.put( HERO, hero );
 			bundle.put( DEPTH, depth );
@@ -702,8 +738,8 @@ public class Dungeon {
 			bundle.put( BOSS_3_VERSION, Boss3Version);
 			bundle.put( BOSS_4_VERSION, Boss4Version);
 
-			bundle.put( GOLD, gold );
-			bundle.put( ENERGY, energy );
+			bundle.put( GOLD, m_Gold );
+			bundle.put( ENERGY, m_Energy );
 
 			for (int d : droppedItems.keyArray()) {
 				bundle.put(Messages.format(DROPPED, d), droppedItems.get(d));
@@ -732,6 +768,7 @@ public class Dungeon {
 			
 			SpecialRoom.storeRoomsInBundle( bundle );
 			SecretRoom.storeRoomsInBundle( bundle );
+			ModifierUnlockRoom.storeRoomsInBundle( bundle );
 			
 			Statistics.storeInBundle( bundle );
 			Notes.storeInBundle( bundle );
@@ -806,8 +843,8 @@ public class Dungeon {
 
 		Dungeon.challenges = bundle.getInt( CHALLENGES );
 		Dungeon.difficulty = bundle.getInt( DIFFICULTY );
+		Dungeon.creative = bundle.getBoolean(CREATIVE);
 		Dungeon.randomizer = bundle.getLong( RANDOMIZER );
-		Dungeon.randomizerEnabled = bundle.getBoolean( RANDOMIZER_ENABLED );
 		Dungeon.mobsToChampion = bundle.getInt( MOBS_TO_CHAMPION );
 		
 		Dungeon.level = null;
@@ -848,6 +885,7 @@ public class Dungeon {
 			
 			SpecialRoom.restoreRoomsFromBundle(bundle);
 			SecretRoom.restoreRoomsFromBundle(bundle);
+			ModifierUnlockRoom.restoreRoomsFromBundle(bundle);
 
 			generatedLevels.clear();
 			for (int i : bundle.getIntArray(GENERATED_LEVELS)){
@@ -885,8 +923,8 @@ public class Dungeon {
 		depth = bundle.getInt( DEPTH );
 		branch = bundle.getInt( BRANCH );
 
-		gold = bundle.getInt( GOLD );
-		energy = bundle.getInt( ENERGY );
+		m_Gold = bundle.getInt( GOLD );
+		m_Energy = bundle.getInt( ENERGY );
 
 		Boss1Version = bundle.getInt( BOSS_1_VERSION );
 		Boss2Version = bundle.getInt( BOSS_2_VERSION );
@@ -936,6 +974,7 @@ public class Dungeon {
 		info.version = bundle.getInt( VERSION );
 		info.challenges = bundle.getInt( CHALLENGES );
 		info.difficulty = bundle.getInt( DIFFICULTY );
+		info.creative = bundle.getBoolean( CREATIVE );
 		info.seed = bundle.getLong( SEED );
 		info.customSeed = bundle.getString( CUSTOM_SEED );
 		info.daily = bundle.getBoolean( DAILY );
@@ -1076,6 +1115,7 @@ public class Dungeon {
 			if (ch instanceof WandOfWarding.Ward
 					|| ch instanceof WandOfRegrowth.Lotus
 					|| ch instanceof SpiritHawk.HawkAlly
+					|| (ch instanceof ConstructHero && hero.hasTalent(Talent.CONSTRUCT_VISION))
 					|| ch.buff(PowerOfMany.PowerBuff.class) != null){
 				x = ch.pos % level.width();
 				y = ch.pos / level.width();

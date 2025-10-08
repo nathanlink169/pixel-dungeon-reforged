@@ -55,15 +55,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.Sh
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.KingsCrown;
+import com.shatteredpixel.shatteredpixeldungeon.items.TengusMask;
 import com.shatteredpixel.shatteredpixeldungeon.items.Waterskin;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClothArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.AlchemistsToolkit;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Ringbox;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfInvisibility;
@@ -71,7 +72,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfLiquidFlam
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfMindVision;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfPurity;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollKillAll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfIdentify;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfLullaby;
@@ -82,6 +82,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurs
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollTeleportToStaircase;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MossyClump;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrapMechanism;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
@@ -111,6 +113,8 @@ public enum HeroClass {
 	CLERIC( HeroSubClass.PRIEST, HeroSubClass.PALADIN ),
 	ARTIFICER( HeroSubClass.CONSTRUCTOR, HeroSubClass.ARMORER );
 
+	public static final int TOTAL_COUNT = 7;
+
 	private HeroSubClass[] subClasses;
 
 	HeroClass( HeroSubClass...subClasses ) {
@@ -131,7 +135,7 @@ public enum HeroClass {
 		new VelvetPouch().collect();
 		Dungeon.LimitedDrops.VELVET_POUCH.drop();
 
-		Starflower.Seed seed = new Starflower.Seed();
+		Starflower.StarflowerSeed seed = new Starflower.StarflowerSeed();
 		seed.collect();
 
 		Waterskin waterskin = new Waterskin();
@@ -145,7 +149,18 @@ public enum HeroClass {
 			for (int j = 0; j < 30; ++j) {
 				new ScrollOfMagicMapping().collect();
 				new ScrollOfTransmutation().collect();
+				new PotionOfStrength().collect();
+				new PotionOfPurity().collect();
 			}
+			WarHammer w = (WarHammer) new WarHammer().upgrade(20);
+			w.collect();
+			PlateArmor a = (PlateArmor) new PlateArmor().upgrade(20);
+			a.glyph = new AntiMagic();
+			a.collect();
+
+			new TengusMask().collect();
+			new KingsCrown().collect();
+
 			Dungeon.hero.belongings.identify();
 		}
 
@@ -431,4 +446,15 @@ public enum HeroClass {
 		return shortDesc() + "\n\n" + Messages.get(HeroClass.class, name()+"_unlock");
 	}
 
+	public static HeroClass Get(int i) {
+		switch (i) {
+			case 1: return MAGE;
+			case 2: return ROGUE;
+			case 3: return HUNTRESS;
+			case 4: return DUELIST;
+			case 5: return CLERIC;
+			case 6: return ARTIFICER;
+		}
+		return WARRIOR;
+	}
 }

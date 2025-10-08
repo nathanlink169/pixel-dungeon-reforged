@@ -25,53 +25,54 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
+import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
-import com.shatteredpixel.shatteredpixeldungeon.items.Stylus;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Artifact;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfHoneyedHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfMight;
+import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.ExoticPotion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfMastery;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.InventoryScroll;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTransmutation;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfDivination;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfEnchantment;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfForesight;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfMysticalEnergy;
-import com.shatteredpixel.shatteredpixeldungeon.items.stones.InventoryStone;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ExoticScroll;
+import com.shatteredpixel.shatteredpixeldungeon.items.spells.Spell;
+import com.shatteredpixel.shatteredpixeldungeon.items.stones.Runestone;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ShardOfOblivion;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.Trinket;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Sungrass;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
+import com.watabou.utils.Reflection;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -482,7 +483,7 @@ public class Belongings implements Iterable<Item> {
 					item instanceof PotionOfHealing ||
 					item instanceof ElixirOfHoneyedHealing ||
 					item instanceof Honeypot ||
-					item instanceof Sungrass.Seed ||
+					item instanceof Sungrass.SungrassSeed ||
 					item instanceof PotionOfExperience ||
 					item instanceof ScrollOfTransmutation) {
 					secondPriority.add(item);
@@ -585,6 +586,297 @@ public class Belongings implements Iterable<Item> {
 			default:
 				backpackIterator.remove();
 			}
+		}
+	}
+
+	public void TriggerAdaptive() {
+		ArrayList<Item> items = getAllItems(Item.class);
+
+		// detach all items first, just so that we don't drop items that don't need to
+		// be dropped because we're removing later stuff
+		for (Item item : items) {
+			if (item.unique) {
+				continue;
+			}
+
+			if (item == weapon || item == armor || item == artifact || item == ring || item == misc || item == secondWep) {
+				continue;
+			}
+
+			if (item instanceof Armor) {
+				// because of basic armour, we should only shuffle its glyph/curse
+				continue;
+			}
+
+			item.detachAll(backpack);
+		}
+
+		for (Item item : items) {
+			if (item.unique) {
+				continue;
+			}
+
+			int totalCount = item.quantity();
+			for (int i = 0; i < totalCount; ++i) {
+				if (item instanceof MeleeWeapon) {
+					ReplaceMeleeWeapon((MeleeWeapon)item);
+				} else if (item instanceof MissileWeapon) {
+					ReplaceMissile((MissileWeapon) item, i == 0);
+				} else if (item instanceof Scroll) {
+					ReplaceScroll();
+				} else if (item instanceof Potion) {
+					ReplacePotion();
+				} else if (item instanceof Food) {
+					ReplaceFood();
+				} else if (item instanceof Runestone || item instanceof Plant.Seed) {
+					ReplaceSeedsAndStones();
+				} else if (item instanceof Artifact) {
+					ReplaceArtifacts((Artifact) item);
+				} else if (item instanceof Bomb) {
+					ReplaceBomb();
+				} else if (item instanceof Ring) {
+					ReplaceRing((Ring) item);
+				} else if (item instanceof Spell) {
+					ReplaceSpell();
+				} else if (item instanceof Trinket) {
+					ReplaceTrinket();
+				} else if (item instanceof Wand) {
+					ReplaceWand((Wand) item);
+				} else if (item instanceof Armor) {
+					ShuffleArmor((Armor) item);
+				} else {
+					item.collect();
+					break;
+				}
+			}
+		}
+	}
+
+	private void ReplaceMeleeWeapon(MeleeWeapon wep) {
+		int tier = wep.tier;
+		Generator.Category c = Generator.Category.WEP_T1;
+		switch (tier) {
+			case 1:
+				//c = Generator.Category.WEP_T1;
+				break;
+			case 2:
+				c = Generator.Category.WEP_T2;
+				break;
+			case 3:
+				c = Generator.Category.WEP_T3;
+				break;
+			case 4:
+				c = Generator.Category.WEP_T4;
+				break;
+			case 5:
+				c = Generator.Category.WEP_T5;
+				break;
+		}
+		boolean enchanted = wep.hasGoodEnchant();
+		boolean cursed = wep.cursed;
+		boolean curseKnown = wep.cursedKnown;
+		boolean identified = wep.isIdentified();
+
+		MeleeWeapon w = (MeleeWeapon)Generator.random(c);
+		int equipped = 0; // 0 = not equipped, 1 primary weapon, 2 secondary weapon
+		if (wep == this.weapon()) {
+			equipped = 1;
+		} else if (wep == this.secondWep()) {
+			equipped = 2;
+		}
+		if (equipped == 1) {
+			wep.detach(backpack);
+			weapon = w;
+		} else if (equipped == 2) {
+			wep.detach(backpack);
+			secondWep = w;
+		} else {
+			if (!w.collect()) {
+				Dungeon.level.drop( w, Dungeon.hero.pos ).sprite.drop();
+			}
+		}
+
+		if (identified) {
+			w.identify();
+		}
+		if (enchanted) {
+			w.enchant();
+		}
+		else if (cursed) {
+			w.enchant(Weapon.Enchantment.randomCurse());
+			w.cursed = true;
+		}
+		else {
+			w.enchantment = null;
+			w.cursed = false;
+		}
+		if (curseKnown) {
+			w.cursedKnown = true;
+		}
+		w.setLevel(wep.level());
+	}
+
+	private void ReplaceMissile(MissileWeapon missile, boolean firstInList) {
+		MissileWeapon w = Generator.randomMissile();
+		boolean enchanted = missile.hasGoodEnchant();
+		boolean cursed = missile.cursed;
+		boolean identified = missile.isIdentified();
+		int upgrades = missile.level();
+
+		if (identified) {
+			w.identify();
+		}
+		if (enchanted) {
+			w.enchant();
+		}
+		if (cursed) {
+			w.enchant(Weapon.Enchantment.randomCurse());
+			w.cursed = true;
+		}
+		w.upgrade(upgrades);
+		w.quantity(1);
+		if (firstInList) {
+			float durabilityPercentage = missile.GetDurability()/ MissileWeapon.MAX_DURABILITY;
+			w.SetDurability(durabilityPercentage * MissileWeapon.MAX_DURABILITY);
+		}
+		if (!w.collect()) {
+			Dungeon.level.drop( w, Dungeon.hero.pos ).sprite.drop();
+		}
+	}
+
+	private void ReplacePotion() {
+		Potion p = null;
+
+		switch (Random.Int(4)) {
+			case 0: default:
+				p = (Potion) Generator.random(Generator.Category.POTION);
+				break;
+			case 1:
+				p = (Potion) Generator.random(Generator.Category.POTION);
+				if (ExoticPotion.regToExo.containsKey(p.getClass())){
+					p = Reflection.newInstance(ExoticPotion.regToExo.get(p.getClass()));
+				}
+				break;
+			case 2:
+				p = (Potion) Generator.random(Generator.Category.BREW);
+				break;
+			case 3:
+				p = (Potion) Generator.random(Generator.Category.ELIXIR);
+				break;
+		}
+		if (!p.collect()) {
+			Dungeon.level.drop( p, Dungeon.hero.pos ).sprite.drop();
+		}
+	}
+
+	private void ReplaceScroll() {
+		Scroll s = (Scroll) Generator.random(Generator.Category.SCROLL);
+
+		if (Random.Float() >= 0.5f && ExoticScroll.regToExo.containsKey(s.getClass())){
+			s = Reflection.newInstance(ExoticScroll.regToExo.get(s.getClass()));
+		}
+
+		if (!s.collect()) {
+			Dungeon.level.drop( s, Dungeon.hero.pos ).sprite.drop();
+		}
+	}
+
+	private void ReplaceFood() {
+		Food f = (Food) Generator.random(Generator.Category.ALL_FOOD);
+		if (!f.collect()) {
+			Dungeon.level.drop(f, Dungeon.hero.pos).sprite.drop();
+		}
+	}
+
+	private void ReplaceSeedsAndStones() {
+		Item i = null;
+
+		switch (Random.Int(2)) {
+			case 0: default:
+				i = Generator.random(Generator.Category.SEED);
+				break;
+			case 1:
+				i = Generator.random(Generator.Category.STONE);
+				break;
+		}
+		if (!i.collect()) {
+			Dungeon.level.drop( i, Dungeon.hero.pos ).sprite.drop();
+		}
+	}
+
+	private void ReplaceArtifacts(Artifact artifact) {
+		Artifact a = Generator.randomArtifact();
+
+		if (a == null) { // keep this artifact
+			if (!(artifact == this.artifact || artifact == this.misc)) {
+				artifact.collect();
+			}
+		}
+		else {
+			Generator.readdArtifact(artifact.getClass());
+			a.cursed = artifact.cursed;
+			a.upgrade(artifact.level());
+			a.cursedKnown = artifact.cursedKnown;
+
+			if (artifact == this.artifact) {
+				artifact.detach(backpack);
+				this.artifact = a;
+			} else if (artifact == this.misc) {
+				artifact.detach(backpack);
+				this.misc = a;
+			} else {
+				a.collect();
+			}
+		}
+	}
+
+	private void ReplaceBomb() {
+		Generator.random(Generator.Category.BOMB).collect();
+	}
+
+	private void ReplaceRing(Ring ring) {
+		Ring r = (Ring) Generator.random(Generator.Category.RING);
+		r.cursed = ring.cursed;
+		r.upgrade(ring.level());
+		r.cursedKnown = ring.cursedKnown;
+
+		if (ring == this.ring) {
+			ring.detach(backpack);
+			this.ring = r;
+		} else if (ring == this.misc) {
+			ring.detach(backpack);
+			this.misc = r;
+		} else {
+			r.collect();
+		}
+	}
+
+	private void ReplaceSpell() {
+		Generator.random(Generator.Category.SPELL).collect();
+	}
+
+	private void ReplaceTrinket() {
+		Generator.random(Generator.Category.TRINKET).collect();
+	}
+
+	private void ReplaceWand(Wand wand) {
+		Wand w = (Wand) Generator.random(Generator.Category.WAND);
+		w.cursed = wand.cursed;
+		w.cursedKnown = wand.cursedKnown;
+		w.upgrade(wand.level());
+		w.curCharges = wand.curCharges;
+		w.partialCharge = wand.partialCharge;
+		if (wand.isIdentified()) {
+			w.identify();
+		}
+	}
+
+	private void ShuffleArmor(Armor a) {
+		if (a.hasGoodGlyph()) {
+			a.inscribe();
+		}
+		if (a.hasCurseGlyph()) {
+			a.glyph = Armor.Glyph.randomCurse();
 		}
 	}
 }

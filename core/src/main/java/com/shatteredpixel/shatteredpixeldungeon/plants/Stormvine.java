@@ -38,7 +38,7 @@ public class Stormvine extends Plant {
 
 	{
 		image = 5;
-		seedClass = Seed.class;
+		seedClass = StormvineSeed.class;
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public class Stormvine extends Plant {
 		}
 	}
 
-	public static class Seed extends Plant.Seed {
+	public static class StormvineSeed extends Plant.Seed {
 		{
 			image = ItemSpriteSheet.SEED_STORMVINE;
 

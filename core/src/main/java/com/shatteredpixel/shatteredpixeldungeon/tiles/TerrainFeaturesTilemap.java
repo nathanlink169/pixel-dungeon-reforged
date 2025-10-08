@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.LastShopLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PressurePlateTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.watabou.noosa.Image;
@@ -61,6 +62,8 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 			Trap trap = traps.get(pos);
 			if (!trap.visible)
 				return -1;
+			else if (trap instanceof PressurePlateTrap)
+				return (trap.active ? PressurePlateTrap.ACTIVE_ID : PressurePlateTrap.INACTIVE_ID);
 			else
 				return (trap.active ? trap.color : Trap.BLACK) + (trap.shape * 16);
 		}
@@ -86,12 +89,28 @@ public class TerrainFeaturesTilemap extends DungeonTilemap {
 	}
 
 	public static Image getTrapVisual( Trap trap ){
+		if (trap instanceof PressurePlateTrap)
+			return getPressurePlateVisual(true);
+
 		if (instance == null) instance = new TerrainFeaturesTilemap(null, null);
 
 		RectF uv = instance.tileset.get((trap.active ? trap.color : Trap.BLACK) + (trap.shape * 16));
 		if (uv == null) return null;
 
 		Image img = new Image( instance.texture );
+		img.frame(uv);
+		return img;
+	}
+
+	// Pressure plate 53
+	// Down plate 54
+	public static Image getPressurePlateVisual(boolean active) {
+		if (instance == null) instance = new TerrainFeaturesTilemap(null, null);
+
+		RectF uv = instance.tileset.get(active ? PressurePlateTrap.ACTIVE_ID : PressurePlateTrap.INACTIVE_ID);
+		if (uv == null) return null;
+
+		Image img = new Image (instance.texture );
 		img.frame(uv);
 		return img;
 	}

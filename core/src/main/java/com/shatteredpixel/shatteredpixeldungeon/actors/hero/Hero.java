@@ -291,7 +291,13 @@ public class Hero extends Char {
 
 	@Override
 	public int GetViewDistance() {
-		int viewDistance = Math.min(super.GetViewDistance(), Dungeon.level.viewDistance);
+		int viewDistance;
+		if (Dungeon.level != null) {
+			viewDistance = Math.min(super.GetViewDistance(), Dungeon.level.viewDistance);
+		}
+		else {
+			viewDistance = super.GetViewDistance();
+		}
 		if (buff(Light.class) != null) {
 			viewDistance = Math.max(viewDistance, Light.DISTANCE);
 		}
@@ -413,6 +419,14 @@ public class Hero extends Char {
 		Talent.onTalentUpgraded(this, talent);
 	}
 
+	public void respecTalents(){
+		for (LinkedHashMap<Talent, Integer> tier : talents){
+			for (Talent f : tier.keySet()){
+				tier.put(f, 0);
+			}
+		}
+	}
+
 	public int talentPointsSpent(int tier){
 		int total = 0;
 		for (int i : talents.get(tier-1).values()){
@@ -516,7 +530,7 @@ public class Hero extends Char {
 				accuracy = 1000000.0f;
 			}
 		}
-		boolean hit = attack( enemy, 1.0f, 0.0f, accuracy, wep.damageType );
+		boolean hit = attack( enemy, 1.0f, 0.0f, accuracy, wep.damageType, AttackType.MELEE);
 		Invisibility.dispel();
 		belongings.thrownWeapon = null;
 
@@ -1001,6 +1015,8 @@ public class Hero extends Char {
 						construct.id();
 						construct.pos = Random.element(spawnPoints);
 
+						interrupt();
+
 						GameScene.add(construct, 1f);
 
 						doesConstructExist = true;
@@ -1180,9 +1196,9 @@ public class Hero extends Char {
 					if (existing != null) {
 						count = existing.quantity();
 					} else if (item instanceof Gold) {
-						count = Dungeon.gold;
+						count = Dungeon.GetGold();
 					} else if (item instanceof EnergyCrystal) {
-						count = Dungeon.energy;
+						count = Dungeon.GetEnergy();
 					}
 
 					if (item instanceof Dewdrop
@@ -2241,6 +2257,28 @@ public class Hero extends Char {
 			Badges.validateLevelReached();
 		}
 	}
+
+	public void removeExp(int exp) {
+		this.exp -= exp;
+
+		if (this.exp < 0) {
+			if (lvl == 1) {
+				this.exp = 0;
+				return;
+			}
+			--lvl;
+			this.exp += maxExp();
+			if (buff(ElixirOfMight.HTBoost.class) != null){
+				buff(ElixirOfMight.HTBoost.class).onLevelDown();
+			}
+
+			int lastHP = GetLastCalculatedHP();
+			int maxHP = GetMaxHP();
+			HP = Math.min(HP + (maxHP - lastHP), maxHP);
+			attackSkill--;
+			defenseSkill--;
+		}
+	}
 	
 	public int maxExp() {
 		return maxExp( lvl );
@@ -2474,11 +2512,11 @@ public class Hero extends Char {
 	}
 	
 	@Override
-	public void onAttackComplete() {
+	public void onAttackComplete(AttackType attackType) {
 
 		if (enemy == null){
 			curAction = null;
-			super.onAttackComplete();
+			super.onAttackComplete(attackType);
 			return;
 		}
 		
@@ -2503,7 +2541,7 @@ public class Hero extends Char {
 
 		curAction = null;
 
-		super.onAttackComplete();
+		super.onAttackComplete(attackType);
 	}
 	
 	@Override
