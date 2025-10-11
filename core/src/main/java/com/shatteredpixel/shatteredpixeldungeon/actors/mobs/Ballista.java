@@ -29,7 +29,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
@@ -69,13 +72,20 @@ public class Ballista extends Mob {
 	}
 
 	@Override
-	public void onAttackComplete(AttackType attackType) {
-		--ammo;
-		if (Random.Int( 4 ) == 0) {
+	public int attackProc( Char enemy, int damage ) {
+		damage = super.attackProc( enemy, damage );
+		if (damage > 0 && Random.Int( 2 ) == 0) {
 			int oppositeAdjacent = enemy.pos + (enemy.pos - pos);
 			Ballistica trajectory = new Ballistica(enemy.pos, oppositeAdjacent, Ballistica.MAGIC_BOLT);
 			WandOfBlastWave.throwChar(enemy, trajectory, 2, false, false, this);
 		}
+
+		return damage;
+	}
+
+	@Override
+	public void onAttackComplete(AttackType attackType) {
+		--ammo;
 		super.onAttackComplete(attackType);
 	}
 

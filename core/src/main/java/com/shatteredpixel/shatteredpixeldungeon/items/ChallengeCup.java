@@ -67,7 +67,7 @@ public class ChallengeCup extends Item {
 		Catalog.setSeen(getClass());
 		Statistics.itemTypesDiscovered.add(getClass());
 
-		if (Challenges.HasAnyChallengesToUnlock() && false) {
+		if (Challenges.HasAnyChallengesToUnlock()) {
 			int challenge = Challenges.UnlockRandomChallenge();
 			if (challenge != -1) {
 				Game.runOnRenderThread(new Callback() {

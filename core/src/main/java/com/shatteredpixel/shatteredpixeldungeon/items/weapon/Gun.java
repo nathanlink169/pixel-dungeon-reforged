@@ -258,8 +258,7 @@ public class Gun extends Weapon {
         ArrayList<Mob> mobs = new ArrayList<>();
         ArrayList<Char> alreadyDamagedMobs = new ArrayList<>();
         ArrayList<Integer> positionsToDamage = new ArrayList<Integer>();
-        final Ballistica beam = new Ballistica( curUser.pos, cell, Ballistica.WONT_STOP);
-        curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( cell )));
+        final Ballistica beam = new Ballistica( curUser.pos, cell, Ballistica.STOP_SOLID);
 
         if (user.hasTalent(ARCSHIELDING)) {
             float threshold = 0.25f;
@@ -283,8 +282,14 @@ public class Gun extends Weapon {
                         && !(Dungeon.level.mapped[c] || Dungeon.level.visited[c])){
                     //avoid harming undiscovered passive chars
                 } else {
-                    chars.add(ch);
+                    if (!(ch instanceof Mob && ((Mob) ch).alignment == Char.Alignment.ALLY)) {
+                        chars.add(ch);
+                    }
                 }
+            }
+
+            if (c == beam.collisionPos) {
+                break;
             }
         }
 
@@ -293,10 +298,16 @@ public class Gun extends Weapon {
 
             for (int o : PathFinder.NEIGHBOURS8) {
                 int position = ch.pos + o;
-                Char adjacent = Dungeon.level.findMob(position);
+                Mob adjacent = Dungeon.level.findMob(position);
                 if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
                     alreadyDamagedMobs.add(adjacent);
-                    adjacent.damage( damageRoll(user, false) / 2, this);
+                    if (adjacent.state == adjacent.PASSIVE && !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])){
+                        //avoid harming undiscovered passive chars
+                    } else {
+                        if (!(adjacent instanceof Mob && adjacent.alignment == Char.Alignment.ALLY)) {
+                            adjacent.damage( damageRoll(user, false) / 2, this);
+                        }
+                    }
                 }
 
                 positionsToDamage.add(ch.pos + o);
@@ -310,13 +321,19 @@ public class Gun extends Weapon {
             Sample.INSTANCE.play(Assets.Sounds.BLAST);
         }
 
-        positionsToDamage.add(cell);
+        positionsToDamage.add(beam.collisionPos);
         for (int o : PathFinder.NEIGHBOURS8) {
-            int position = cell + o;
-            Char adjacent = Dungeon.level.findMob(position);
+            int position = beam.collisionPos + o;
+            Mob adjacent = Dungeon.level.findMob(position);
             if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
                 alreadyDamagedMobs.add(adjacent);
-                adjacent.damage( damageRoll(user, false) / 2, this);
+                if (adjacent.state == adjacent.PASSIVE && !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])){
+                    //avoid harming undiscovered passive chars
+                } else {
+                    if (!(adjacent.alignment == Char.Alignment.ALLY)) {
+                        adjacent.damage( damageRoll(user, false) / 2, this);
+                    }
+                }
             }
             positionsToDamage.add(position);
         }
@@ -369,6 +386,10 @@ public class Gun extends Weapon {
                 }
             }
         }
+
+        Invisibility.dispel();
+
+        curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( beam.collisionPos )));
 
         Dungeon.observe();
         return mobs;
