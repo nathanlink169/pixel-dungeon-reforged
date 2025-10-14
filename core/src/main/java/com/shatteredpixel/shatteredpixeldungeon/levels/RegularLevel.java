@@ -64,6 +64,7 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.painters.Painter;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.modifierunlocks.ModifierUnlockRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.secret.SecretRoom;
+import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.sewerboss.SewerBossEntranceRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.MagicalFireRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.PitRoom;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SacrificeRoom;
@@ -769,7 +770,7 @@ public abstract class RegularLevel extends Level {
 	public int fallCell( boolean fallIntoPit ) {
 		if (fallIntoPit) {
 			for (Room room : rooms) {
-				if (room instanceof PitRoom) {
+				if (room instanceof PitRoom || room instanceof SewerBossEntranceRoom) {
 					ArrayList<Integer> candidates = new ArrayList<>();
 					for (Point p : room.getPoints()){
 						int cell = pointToCell(p);

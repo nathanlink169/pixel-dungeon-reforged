@@ -104,7 +104,8 @@ public class MineSmallRoom extends CaveRoom {
 					}
 				}
 			}
-
+		}
+		else if (Blacksmith.Quest.Type() == Blacksmith.Quest.KOBOLD) {
 			int traps = square() > 100 ? 2 : 1;
 			for (int i = 0; i < traps; ++i){
 				Point r;

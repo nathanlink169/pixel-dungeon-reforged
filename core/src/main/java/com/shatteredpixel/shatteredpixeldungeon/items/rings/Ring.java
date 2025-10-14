@@ -55,7 +55,7 @@ import java.util.LinkedHashMap;
 public abstract class Ring extends KindofMisc {
 	
 	protected Buff buff;
-	protected Class<? extends RingBuff> buffClass;
+	public Class<? extends RingBuff> buffClass;
 
 	private static final LinkedHashMap<String, Integer> gems = new LinkedHashMap<String, Integer>() {
 		{
@@ -313,7 +313,7 @@ public abstract class Ring extends KindofMisc {
 		return price;
 	}
 	
-	protected RingBuff buff() {
+	public RingBuff buff() {
 		return null;
 	}
 
@@ -365,15 +365,6 @@ public abstract class Ring extends KindofMisc {
 		for (RingBuff buff : target.buffs(type)) {
 			bonus += buff.level();
 		}
-		Ringbox.ringboxLeveling ringbox = target.buff(Ringbox.ringboxLeveling.class);
-		if (ringbox != null) {
-			for (int i = 0; i < 3; ++i) {
-				if (ringbox.getRings()[i] == null) continue;
-				if (ringbox.getRings()[i].buffClass == type) {
-					bonus += (ringbox.getRings()[i].buff().buffedLvl() * ringbox.getRingPower()[i]);
-				}
-			}
-		}
 		SpiritForm.SpiritFormBuff spiritForm = target.buff(SpiritForm.SpiritFormBuff.class);
 		if (bonus == 0
 				&& spiritForm != null
@@ -390,15 +381,6 @@ public abstract class Ring extends KindofMisc {
 		for (RingBuff buff : target.buffs(type)) {
 			bonus += buff.buffedLvl();
 		}
-		Ringbox.ringboxLeveling ringbox = target.buff(Ringbox.ringboxLeveling.class);
-		if (ringbox != null) {
-			for (int i = 0; i < 3; ++i) {
-				if (ringbox.getRings()[i] == null) continue;
-				if (ringbox.getRings()[i].buffClass == type) {
-					bonus += (ringbox.getRings()[i].buff().buffedLvl() * ringbox.getRingPower()[i]);
-				}
-			}
-		}
 		if (bonus == 0
 				&& target.buff(SpiritForm.SpiritFormBuff.class) != null
 				&& target.buff(SpiritForm.SpiritFormBuff.class).ring() != null
@@ -410,11 +392,13 @@ public abstract class Ring extends KindofMisc {
 
 	//just used for ring descriptions
 	public int soloBonus(){
+		int toReturn;
 		if (cursed){
-			return Math.min( 0, Ring.this.level()-2 );
+			toReturn = Math.min( 0, Ring.this.level()-2 );
 		} else {
-			return Ring.this.level()+1;
+			toReturn = Ring.this.level()+1;
 		}
+		return toReturn;
 	}
 
 	//just used for ring descriptions
@@ -452,6 +436,9 @@ public abstract class Ring extends KindofMisc {
 
 	public class RingBuff extends Buff {
 
+		// Allow injection of a different ring instance for scaling (used by Ringbox)
+		protected Ring ringSource = null;
+
 		@Override
 		public boolean attachTo( Char target ) {
 			if (super.attachTo( target )) {
@@ -470,11 +457,22 @@ public abstract class Ring extends KindofMisc {
 			return true;
 		}
 
+		// Allow ringbox to inject a scaled ring source
+		public void setRingSource(Ring source) {
+			this.ringSource = source;
+		}
+
 		public int level(){
+			if (ringSource != null) {
+				return ringSource.soloBonus();
+			}
 			return Ring.this.soloBonus();
 		}
 
 		public int buffedLvl(){
+			if (ringSource != null) {
+				return ringSource.soloBuffedBonus();
+			}
 			return Ring.this.soloBuffedBonus();
 		}
 	}

@@ -84,6 +84,9 @@ public class UnstableSpellbook extends Artifact {
 
 	private final ArrayList<Class> scrolls = new ArrayList<>();
 
+	// TODO: This is very hacky. When you do the great artifact rework, please fix this
+	public static boolean isUsing = false;
+
 	public UnstableSpellbook() {
 		super();
 
@@ -172,6 +175,7 @@ public class UnstableSpellbook extends Artifact {
 					Messages.get(ExoticScroll.regToExo.get(scroll.getClass()), "name")){
 				@Override
 				protected void onSelect(int index) {
+					isUsing = true;
 					handler.detach();
 					if (index == 1){
 						Scroll scroll = Reflection.newInstance(ExoticScroll.regToExo.get(fScroll.getClass()));
@@ -186,6 +190,7 @@ public class UnstableSpellbook extends Artifact {
 						fScroll.doRead();
 						Talent.onArtifactUsed(Dungeon.hero);
 					}
+					isUsing = false;
 					updateQuickslot();
 				}
 

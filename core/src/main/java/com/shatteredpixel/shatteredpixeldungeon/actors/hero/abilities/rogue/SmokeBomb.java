@@ -176,7 +176,7 @@ public class SmokeBomb extends ArmorAbility {
 		private int m_bodyReplacementPoints;
 		public NinjaLog() {
 			super();
-			m_bodyReplacementPoints = Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT);
+			m_bodyReplacementPoints = Dungeon.hero != null ? Dungeon.hero.pointsInTalent(Talent.BODY_REPLACEMENT) : 0;
 		}
 
 		@Override

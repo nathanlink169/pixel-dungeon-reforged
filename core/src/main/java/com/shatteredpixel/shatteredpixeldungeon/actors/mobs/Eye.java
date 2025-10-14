@@ -147,6 +147,32 @@ public class Eye extends Mob {
 	public void die(Object cause) {
 		flying = false;
 		super.die(cause);
+
+		//generates an average of 1 dew, 0.25 seeds, and 0.25 stones
+		Item loot;
+		switch(Random.Int(4)){
+			case 0: case 1: default:
+				loot = new Dewdrop();
+				int ofs;
+				do {
+					ofs = PathFinder.NEIGHBOURS8[Random.Int(8)];
+				} while (Dungeon.level.solid[pos + ofs] && !Dungeon.level.passable[pos + ofs]);
+				if (Dungeon.level.heaps.get(pos+ofs) == null) {
+					Dungeon.level.drop(new Dewdrop(), pos + ofs).sprite.drop(pos);
+				} else {
+					Dungeon.level.drop(new Dewdrop(), pos + ofs).sprite.drop(pos + ofs);
+				}
+				break;
+			case 2:
+				loot = Generator.randomUsingDefaults(Generator.Category.SEED);
+				break;
+			case 3:
+				loot = Generator.randomUsingDefaults(Generator.Category.STONE);
+				break;
+		}
+		if (loot != null) {
+			Dungeon.level.drop(loot, pos).sprite.drop();
+		}
 	}
 	
 	//used so resistances can differentiate between melee and magical attacks
@@ -223,33 +249,6 @@ public class Eye extends Mob {
 
 		beam = null;
 		beamTarget = -1;
-	}
-
-	//generates an average of 1 dew, 0.25 seeds, and 0.25 stones
-	@Override
-	public Item createLoot(int itemSlot) {
-		Item loot;
-		switch(Random.Int(4)){
-			case 0: case 1: default:
-				loot = new Dewdrop();
-				int ofs;
-				do {
-					ofs = PathFinder.NEIGHBOURS8[Random.Int(8)];
-				} while (Dungeon.level.solid[pos + ofs] && !Dungeon.level.passable[pos + ofs]);
-				if (Dungeon.level.heaps.get(pos+ofs) == null) {
-					Dungeon.level.drop(new Dewdrop(), pos + ofs).sprite.drop(pos);
-				} else {
-					Dungeon.level.drop(new Dewdrop(), pos + ofs).sprite.drop(pos + ofs);
-				}
-				break;
-			case 2:
-				loot = Generator.randomUsingDefaults(Generator.Category.SEED);
-				break;
-			case 3:
-				loot = Generator.randomUsingDefaults(Generator.Category.STONE);
-				break;
-		}
-		return loot;
 	}
 
 	private static final String BEAM_TARGET     = "beamTarget";

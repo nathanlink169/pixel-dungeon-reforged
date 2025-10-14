@@ -57,7 +57,7 @@ import java.util.ArrayList;
 public class Quickdraw extends ArmorAbility {
 
 	{
-		baseChargeUse = 50f;
+		baseChargeUse = 65f;
 	}
 
 	@Override
