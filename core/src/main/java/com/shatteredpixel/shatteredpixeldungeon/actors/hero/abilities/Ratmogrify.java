@@ -38,6 +38,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -45,8 +47,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -56,6 +56,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 
 public class Ratmogrify extends ArmorAbility {
@@ -213,7 +214,7 @@ public class Ratmogrify extends ArmorAbility {
 			HP = original.HP;
 			m_MaxHP = original.GetMaxHP();
 
-			m_DefenseSkill = original.defenseSkill(null);
+			m_DefenseSkill = original.defenseSkill();
 
 			m_XP = original.GetXP();
 			m_MaxLevel = original.GetMaxLevel();
@@ -256,8 +257,9 @@ public class Ratmogrify extends ArmorAbility {
 			}
 		}
 
+
 		@Override
-		protected void spend(float time) {
+        public void spend(float time) {
 			if (!allied) timeLeft -= time;
 			super.spend(time);
 		}
@@ -270,29 +272,29 @@ public class Ratmogrify extends ArmorAbility {
 			Bestiary.countEncounter(original.getClass());
 		}
 
-		public int attackSkill(Char target) {
-			return original.attackSkill(target);
+		public int attackSkill() {
+			return original.attackSkill();
 		}
 
-		public int drRoll() {
-			return original.drRoll();
+		public int drRoll(EnumSet<DamageType> damageType) {
+			return original.drRoll(damageType);
 		}
 
 		@Override
 		public int GetMaxHP() {return m_MaxHP;}
 		@Override
-		public int GetXP(){return m_XP;}
+		public int GetXP(){ return m_XP; }
 		@Override
-		public int GetMaxLevel(){return m_MaxLevel;}
+		public int GetMaxLevel(){ return m_MaxLevel; }
 
 		@Override
-		public int defenseSkill(Char enemy) {
+		public int defenseSkill() {
 			return m_DefenseSkill;
 		}
 
 		@Override
-		public int damageRoll(AttackType type, boolean isMaxDamage) {
-			int damage = original.damageRoll(AttackType.MELEE, isMaxDamage);
+		public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
+			int damage = original.damageRoll(type, isMaxDamage);
 			if (!allied && Dungeon.hero.hasTalent(Talent.RATSISTANCE)){
 				damage *= Math.pow(0.9f, Dungeon.hero.pointsInTalent(Talent.RATSISTANCE));
 			}
@@ -343,7 +345,7 @@ public class Ratmogrify extends ArmorAbility {
 			super.restoreFromBundle(bundle);
 
 			original = (Mob) bundle.get(ORIGINAL);
-			m_DefenseSkill = original.defenseSkill(null);
+			m_DefenseSkill = original.defenseSkill();
 			m_XP = original.GetXP();
 			m_MaxLevel = original.GetMaxLevel();
 

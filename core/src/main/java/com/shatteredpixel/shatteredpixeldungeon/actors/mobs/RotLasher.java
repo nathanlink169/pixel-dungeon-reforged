@@ -32,13 +32,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RotLasherSprite;
-import com.watabou.utils.Random;
 
-public class RotLasher extends Mob {
+import java.util.EnumSet;
+
+public class RotLasher extends Mob implements CombatModifier.OnDamageEffect {
 
 	{
 		state = WANDERING = new Waiting();
@@ -56,28 +58,23 @@ public class RotLasher extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (src instanceof Burning) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+		if (src instanceof Burning || damageType.contains(DamageType.FIRE)) {
+			int hp = HP;
 			destroy();
 			sprite.die();
+			return hp;
 		} else {
-			super.damage(dmg, src, damageType);
+			return super.Damage(dmg, src, damageType);
 		}
 	}
 
 	@Override
-	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+	public boolean Attack(Char enemy, AttackContext.AttackType attackType, EnumSet<DamageType> damageType) {
 		if (enemy == Dungeon.hero){
 			Statistics.questScores[1] -= 100;
 		}
-		return super.attack(enemy, dmgMulti, dmgBonus, accMulti);
-	}
-
-	@Override
-	public int attackProc(Char enemy, int damage) {
-		damage = super.attackProc( enemy, damage );
-		Buff.affect( enemy, Cripple.class, 2f );
-		return super.attackProc(enemy, damage);
+		return super.Attack(enemy, attackType, damageType);
 	}
 
 	@Override
@@ -86,7 +83,7 @@ public class RotLasher extends Mob {
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		return false;
 	}
 
@@ -94,17 +91,32 @@ public class RotLasher extends Mob {
 	protected boolean getFurther(int target) {
 		return false;
 	}
-	
+
 	{
 		immunities.add( ToxicGas.class );
 	}
 
-	private class Waiting extends Mob.Wandering{
+	@Override
+	public void onDamage(AttackContext context, int finalDamage) {
+		Buff.affect(enemy, Cripple.class, 2f);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	private static class Waiting extends Mob.Wandering {
 
 		@Override
-		protected boolean noticeEnemy() {
-			spend(TICK);
-			return super.noticeEnemy();
+		protected boolean noticeEnemy(Mob mob) {
+			mob.spend(TICK);
+			return super.noticeEnemy(mob);
 		}
 	}
 }

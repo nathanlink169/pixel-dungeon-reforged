@@ -26,6 +26,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -33,43 +35,49 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.utils.Random;
 
-public class Vampiric extends Weapon.Enchantment {
+public class Vampiric extends Weapon.Enchantment implements CombatModifier.OnDamageEffect {
 
-	private static ItemSprite.Glowing RED = new ItemSprite.Glowing( 0x660022 );
-	
+	private static ItemSprite.Glowing RED = new ItemSprite.Glowing(0x660022);
+
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-		
-		//chance to heal scales from 10%-60% based on missing HP
-		float missingPercent = (attacker.GetMaxHP() - attacker.HP) / (float)attacker.GetMaxHP();
-		float healChance = 0.05f + .25f*missingPercent;
-		healChance *= 2.0f;
+	public ItemSprite.Glowing glowing() {
+		return RED;
+	}
 
-		healChance *= procChanceMultiplier(attacker);
-		
-		if (Random.Float() < healChance
-				&& attacker.alignment != defender.alignment
-				&& (defender.alignment != Char.Alignment.NEUTRAL || defender instanceof Mimic)){
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
 
-			float powerMulti = Math.max(1f, healChance);
-			
-			//heals for 25% of damage dealt
-			int healAmt = Math.round(damage * 0.25f * powerMulti);
-			healAmt = Math.min( healAmt, attacker.GetMaxHP() - attacker.HP );
-			
-			if (healAmt > 0 && attacker.isAlive()) {
-				
-				attacker.HP += healAmt;
-				attacker.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString( healAmt ), FloatingText.HEALING );
-				
+		// lvl 0 - 6.67%
+		// lvl 1 ~ 7.69%
+		// lvl 2 ~ 8.33%
+		float procChance = (level + 2f) / (level + 30f) * procChanceMultiplier(context.attacker);
+
+		if (Random.Float() < procChance) {
+			float powerMulti = Math.max(1f, procChance);
+
+			// Heal based on damage dealt
+			int toHeal = Math.round(damageDealt * 0.5f * powerMulti);
+			toHeal = Math.min(toHeal, context.attacker.GetMaxHP() - context.attacker.HP);
+
+			if (toHeal > 0) {
+				context.attacker.HP += toHeal;
+				context.attacker.sprite.showStatusWithIcon(
+						CharSprite.POSITIVE,
+						Integer.toString(toHeal),
+						FloatingText.HEALING
+				);
 			}
 		}
-
-		return damage;
 	}
-	
+
 	@Override
-	public Glowing glowing() {
-		return RED;
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 }

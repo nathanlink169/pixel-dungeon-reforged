@@ -392,13 +392,11 @@ public abstract class Ring extends KindofMisc {
 
 	//just used for ring descriptions
 	public int soloBonus(){
-		int toReturn;
 		if (cursed){
-			toReturn = Math.min( 0, Ring.this.level()-2 );
+			return Math.min( 0, Ring.this.level()-2 );
 		} else {
-			toReturn = Ring.this.level()+1;
+			return Ring.this.level()+1;
 		}
-		return toReturn;
 	}
 
 	//just used for ring descriptions

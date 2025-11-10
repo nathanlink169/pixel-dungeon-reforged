@@ -27,11 +27,14 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
-public class Barkskin extends Buff {
+public class Barkskin extends Buff implements CombatModifier.ArmorModifier {
 	
 	{
 		type = buffType.POSITIVE;
@@ -136,5 +139,20 @@ public class Barkskin extends Buff {
 			}
 		}
 		Buff.append(ch, Barkskin.class).set(level, interval);
+	}
+
+	@Override
+	public int modifyArmor(AttackContext context, int currentArmor) {
+		return currentArmor + Random.NormalIntRange( 0 , Barkskin.currentLevel(context.defender) );
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

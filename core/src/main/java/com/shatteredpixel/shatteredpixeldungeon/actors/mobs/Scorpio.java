@@ -30,6 +30,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
@@ -37,13 +40,14 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfStrength;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
-public class Scorpio extends Mob {
+public class Scorpio extends Mob implements CombatModifier.OnDamageEffect {
 	
 	{
 		WANDERING = new Wandering();
@@ -68,25 +72,23 @@ public class Scorpio extends Mob {
 		return speed;
 	}
 
-	private int lastEnemyPosition = -1;
-
-	private static final String LAST_ENEMY_POSITION     = "last_enemy_position";
+	private BundleableProperty.Int m_LastEnemyPosition = new BundleableProperty.Int("last_enemy_position", -1);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put( LAST_ENEMY_POSITION, lastEnemyPosition);
+		m_LastEnemyPosition.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		lastEnemyPosition = bundle.getInt(LAST_ENEMY_POSITION);
+		m_LastEnemyPosition.Restore(bundle);
 	}
 	@Override
 	protected boolean act() {
 		if (enemy != null && fieldOfView != null && fieldOfView[enemy.pos]) {
-			lastEnemyPosition = enemy.pos;
+			m_LastEnemyPosition.Set(enemy.pos);
 		}
 		return super.act();
 	}
@@ -98,24 +100,14 @@ public class Scorpio extends Mob {
 	}
 	
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (Random.Int( 2 ) == 0) {
-			Buff.prolong( enemy, Cripple.class, Cripple.DURATION );
-		}
-		
-		return damage;
-	}
-	
-	@Override
-	protected boolean getCloser( int target ) {
+    public boolean getCloser(int target) {
 		if (state == HUNTING) {
-			return enemySeen && getFurther( target );
+			return m_EnemySeen.Get() && getFurther( target );
 		} else {
 			return super.getCloser( target );
 		}
 	}
-	
+
 	@Override
 	public void aggro(Char ch) {
 		//cannot be aggroed to something it can't see
@@ -126,11 +118,29 @@ public class Scorpio extends Mob {
 		}
 	}
 
-	public class Wandering extends Mob.Wandering {
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (Random.Int( 2 ) == 0) {
+			Buff.prolong( enemy, Cripple.class, Cripple.DURATION );
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	public static class Wandering extends Mob.Wandering {
 		@Override
-		protected int randomDestination() {
-			if (!getRandomizerEnabled(RandomTraits.TERRITORIAL_HUNTERS) || lastEnemyPosition == -1) {
-				return super.randomDestination();
+		protected int randomDestination(Mob mob) {
+			Scorpio s = (Scorpio) mob;
+			if (!getRandomizerEnabled(RandomTraits.TERRITORIAL_HUNTERS) || s.m_LastEnemyPosition.Get() == -1) {
+				return super.randomDestination(mob);
 			}
 
 			int len = Dungeon.level.length();
@@ -143,13 +153,13 @@ public class Scorpio extends Mob {
 			}
 
 			int destination;
-			Point lastSeenEnemyPosition = Dungeon.level.cellToPoint(lastEnemyPosition);
+			Point lastSeenEnemyPosition = Dungeon.level.cellToPoint(s.m_LastEnemyPosition.Get());
 			boolean validPath = false;
 			int tries = 0;
 			do {
-				destination = super.randomDestination();
+				destination = super.randomDestination(s);
 				validPath = true;
-				PathFinder.Path newpath = Dungeon.findPath(Scorpio.this, destination, passable, fieldOfView, true);
+				PathFinder.Path newpath = Dungeon.findPath(s, destination, passable, s.fieldOfView, true);
 				for (int step : newpath) {
 					Point currentStepPosition = Dungeon.level.cellToPoint(step);
 					if ((currentStepPosition.x - lastSeenEnemyPosition.x) * (currentStepPosition.x - lastSeenEnemyPosition.x) + (currentStepPosition.y - lastSeenEnemyPosition.y) * (currentStepPosition.y - lastSeenEnemyPosition.y) < 3) {

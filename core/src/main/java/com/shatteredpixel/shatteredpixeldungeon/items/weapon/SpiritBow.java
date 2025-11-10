@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -33,6 +34,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
@@ -49,6 +53,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Callback;
@@ -69,7 +74,7 @@ public class SpiritBow extends Weapon {
 		unique = true;
 		bones = false;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
@@ -105,39 +110,36 @@ public class SpiritBow extends Weapon {
 	};
 
 	@Override
-	public int proc(Char attacker, Char defender, int damage) {
-
-		if (attacker.buff(NaturesPower.naturesPowerTracker.class) != null && !sniperSpecial){
-
-			Actor.add(new Actor() {
-				{
-					actPriority = VFX_PRIO;
-				}
-
-				@Override
-				protected boolean act() {
-
-					if (Random.Int(12) < ((Hero)attacker).pointsInTalent(Talent.NATURES_WRATH)){
-						Plant plant = (Plant) Reflection.newInstance(Random.element(harmfulPlants));
-						plant.pos = defender.pos;
-						plant.activate( defender.isAlive() ? defender : null );
+	public void onHit(AttackContext context, int finalDamage) {
+		if (context.attacker instanceof Hero) {
+			if (context.attacker.buff(NaturesPower.naturesPowerTracker.class) != null && !sniperSpecial) {
+				Actor.add(new Actor() {
+					{
+						actPriority = VFX_PRIO;
 					}
 
-					if (!defender.isAlive()){
-						NaturesPower.naturesPowerTracker tracker = attacker.buff(NaturesPower.naturesPowerTracker.class);
-						if (tracker != null){
-							tracker.extend(((Hero) attacker).pointsInTalent(Talent.WILD_MOMENTUM));
+					@Override
+					protected boolean act() {
+
+						if (Random.Int(12) < ((Hero)context.attacker).pointsInTalent(Talent.NATURES_WRATH)){
+							Plant plant = (Plant) Reflection.newInstance(Random.element(harmfulPlants));
+							plant.pos = context.defenderPosition;
+							plant.activate( context.defender.isAlive() ? context.defender : null );
 						}
+
+						if (!context.defender.isAlive()){
+							NaturesPower.naturesPowerTracker tracker = context.attacker.buff(NaturesPower.naturesPowerTracker.class);
+							if (tracker != null){
+								tracker.extend(((Hero) context.attacker).pointsInTalent(Talent.WILD_MOMENTUM));
+							}
+						}
+
+						Actor.remove(this);
+						return true;
 					}
-
-					Actor.remove(this);
-					return true;
-				}
-			});
-
+				});
+			}
 		}
-
-		return super.proc(attacker, defender, damage);
 	}
 
 	@Override
@@ -215,11 +217,11 @@ public class SpiritBow extends Weapon {
 	private int targetPos;
 	
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		int damage = augment.damageFactor(super.damageRoll(owner, isMaxDamage));
+	public int damageRoll(boolean isMaxDamage, boolean heldByHero) {
+		int damage = super.damageRoll(isMaxDamage, heldByHero);
 		
-		if (owner instanceof Hero) {
-			int exStr = ((Hero)owner).STR() - STRReq();
+		if (heldByHero) {
+			int exStr = Dungeon.hero.STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
@@ -238,7 +240,7 @@ public class SpiritBow extends Weapon {
 				case DAMAGE:
 					//as distance increases so does damage, capping at 3x:
 					//1.20x|1.35x|1.52x|1.71x|1.92x|2.16x|2.43x|2.74x|3.00x
-					int distance = Dungeon.level.distance(owner.pos, targetPos) - 1;
+					int distance = Dungeon.level.distance(Dungeon.hero.pos, targetPos) - 1;
 					float multiplier = Math.min(3f, 1.2f * (float)Math.pow(1.125f, distance));
 					damage = Math.round(damage * multiplier);
 					break;
@@ -249,29 +251,24 @@ public class SpiritBow extends Weapon {
 	}
 	
 	@Override
-	protected float baseDelay(Char owner) {
+	public float timeToUse() {
+		float multiplier = 1.0f;
 		if (sniperSpecial){
-			switch (augment){
+			switch (augment) {
 				case NONE: default:
-					return 0f;
+					multiplier = 0.0f;
 				case SPEED:
-					return 1f;
+					multiplier = 1.0f;
 				case DAMAGE:
-					return 2f;
+					multiplier = 2.0f;
 			}
-		} else{
-			return super.baseDelay(owner);
 		}
-	}
 
-	@Override
-	protected float speedMultiplier(Char owner) {
-		float speed = super.speedMultiplier(owner);
-		if (owner.buff(NaturesPower.naturesPowerTracker.class) != null){
+		if (Dungeon.hero.buff(NaturesPower.naturesPowerTracker.class) != null){
 			// +33% speed to +50% speed, depending on talent points
-			speed += ((8 + ((Hero)owner).pointsInTalent(Talent.GROWING_POWER)) / 24f);
+			multiplier += ((8 + Dungeon.hero.pointsInTalent(Talent.GROWING_POWER)) / 24f);
 		}
-		return speed;
+		return super.timeToUse() * multiplier;
 	}
 
 	@Override
@@ -295,15 +292,15 @@ public class SpiritBow extends Weapon {
 	public SpiritArrow knockArrow(){
 		return new SpiritArrow();
 	}
-	
-	public class SpiritArrow extends MissileWeapon {
+
+	public class SpiritArrow extends MissileWeapon implements CombatModifier.AccuracyModifier {
 		
 		{
 			image = ItemSpriteSheet.SPIRIT_ARROW;
 
 			hitSound = Assets.Sounds.HIT_ARROW;
 
-			damageType = DamageType.PIERCING;
+			damageType = DamageType.of(DamageType.PIERCING);
 		}
 
 		@Override
@@ -320,32 +317,28 @@ public class SpiritBow extends Weapon {
 		}
 
 		@Override
-		public int damageRoll(Char owner, boolean isMaxDamage) {
-			return SpiritBow.this.damageRoll(owner, isMaxDamage);
+		public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+			return SpiritBow.this.damageRoll(isMaxDamage, usedByHero);
 		}
 		
 		@Override
 		public boolean hasEnchant(Class<? extends Enchantment> type, Char owner) {
 			return SpiritBow.this.hasEnchant(type, owner);
 		}
-		
+
 		@Override
-		public int proc(Char attacker, Char defender, int damage) {
-			return SpiritBow.this.proc(attacker, defender, damage);
+		public float timeToUse() {
+			return SpiritBow.this.timeToUse();
 		}
-		
+
 		@Override
-		public float delayFactor(Char user) {
-			return SpiritBow.this.delayFactor(user);
-		}
-		
-		@Override
-		public float accuracyFactor(Char owner, Char target) {
-			if (sniperSpecial && SpiritBow.this.augment == Augment.DAMAGE){
-				return Float.POSITIVE_INFINITY;
-			} else {
-				return super.accuracyFactor(owner, target);
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			if (context.attacker.getWeapon() == this) {
+				if (sniperSpecial && SpiritBow.this.augment == Augment.DAMAGE){
+					return Char.INFINITE_ACCURACY;
+				}
 			}
+			return super.modifyAccuracy(context, currentAccuracy);
 		}
 		
 		@Override

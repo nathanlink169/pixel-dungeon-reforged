@@ -72,7 +72,7 @@ public abstract class DirectableAlly extends NPC {
 		defendingPos = -1;
 		movingToDefendPos = false;
 		aggro(ch);
-		target = ch.pos;
+		m_Target.Set(ch.pos);
 	}
 
 	@Override
@@ -117,40 +117,41 @@ public abstract class DirectableAlly extends NPC {
 		movingToDefendPos = bundle.getBoolean(MOVING_TO_DEFEND);
 	}
 
-	private class Wandering extends Mob.Wandering {
+	private static class Wandering extends Mob.Wandering {
 
 		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
+			DirectableAlly da = (DirectableAlly) mob;
 			if ( enemyInFOV
-					&& attacksAutomatically
-					&& !movingToDefendPos
-					&& (defendingPos == -1 || !Dungeon.level.heroFOV[defendingPos] || canAttack(enemy))) {
+					&& da.attacksAutomatically
+					&& !da.movingToDefendPos
+					&& (da.defendingPos == -1 || !Dungeon.level.heroFOV[da.defendingPos] || da.canAttack(da.enemy))) {
 
-				enemySeen = true;
+				da.m_EnemySeen.Set(true);
 
-				notice();
-				alerted = true;
-				state = HUNTING;
-				target = enemy.pos;
+				da.notice();
+				da.alerted = true;
+				da.state = da.HUNTING;
+				da.m_Target.Set(da.enemy.pos);
 
 			} else {
 
-				enemySeen = false;
+				da.m_EnemySeen.Set(false);
 
-				int oldPos = pos;
-				target = defendingPos != -1 ? defendingPos : Dungeon.hero.pos;
+				int oldPos = da.pos;
+				da.m_Target.Set(da.defendingPos != -1 ? da.defendingPos : Dungeon.hero.pos);
 				//always move towards the hero when wandering
-				if (getCloser( target )) {
-					spend( 1 / speed() );
-					if (pos == defendingPos) movingToDefendPos = false;
-					return moveSprite( oldPos, pos );
+				if (da.getCloser( da.m_Target.Get() )) {
+					da.spend( 1 / da.speed() );
+					if (da.pos == da.defendingPos) da.movingToDefendPos = false;
+					return da.moveSprite( oldPos, da.pos );
 				} else {
 					//if it can't move closer to defending pos, then give up and defend current position
-					if (movingToDefendPos){
-						defendingPos = pos;
-						movingToDefendPos = false;
+					if (da.movingToDefendPos){
+						da.defendingPos = da.pos;
+						da.movingToDefendPos = false;
 					}
-					spend( TICK );
+					da.spend( TICK );
 				}
 
 			}
@@ -159,16 +160,17 @@ public abstract class DirectableAlly extends NPC {
 
 	}
 
-	private class Hunting extends Mob.Hunting {
+	private static class Hunting extends Mob.Hunting {
 
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (enemyInFOV && defendingPos != -1 && Dungeon.level.heroFOV[defendingPos] && !canAttack(enemy)){
-				target = defendingPos;
-				state = WANDERING;
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			DirectableAlly da = (DirectableAlly) mob;
+			if (enemyInFOV && da.defendingPos != -1 && Dungeon.level.heroFOV[da.defendingPos] && !da.canAttack(da.enemy)){
+				da.m_Target.Set(da.defendingPos);
+				da.state = da.WANDERING;
 				return true;
 			}
-			return super.act(enemyInFOV, justAlerted);
+			return super.act(mob, enemyInFOV, justAlerted);
 		}
 
 	}

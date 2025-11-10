@@ -30,7 +30,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -46,10 +51,9 @@ public class Whip extends MeleeWeapon {
 		hitSoundPitch = 1.1f;
 
 		tier = 3;
-		RCH = 3;    //lots of extra reach
 
 		// D&D 5e says this is slashing so I'm going with that
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	@Override
@@ -91,10 +95,17 @@ public class Whip extends MeleeWeapon {
 				beforeAbilityUsed(hero, finalClosest);
 				for (Char ch : targets) {
 					//ability does no extra damage
-					hero.attack(ch, 1, 0, Char.INFINITE_ACCURACY, DamageType.SLASHING, Char.AttackType.MELEE);
-					if (!ch.isAlive()){
-						onAbilityKill(hero, ch);
-					}
+					InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+					iam.attachTo(hero);
+					// Build attack context
+					AttackContext context = new AttackContext.Builder(hero, ch)
+							.attackType(AttackContext.AttackType.RANGED)
+							.damageType(DamageType.of(DamageType.SLASHING))
+							.build();
+
+					// Resolve attack - this handles EVERYTHING internally
+					/*AttackResult result = */CombatResolver.resolve(context);
+					iam.detach();
 				}
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
@@ -114,5 +125,10 @@ public class Whip extends MeleeWeapon {
 
 	public String upgradeAbilityStat(int level){
 		return augment.damageFactor(min(level)) + "-" + augment.damageFactor(max(level));
+	}
+
+	@Override
+	public int GetWeaponReach() {
+		return 3;
 	}
 }

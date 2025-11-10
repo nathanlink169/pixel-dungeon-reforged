@@ -29,39 +29,44 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class HolyDart extends TippedDart {
+public class HolyDart extends TippedDart implements CombatModifier.PostArmorDamageModifier {
 
 	{
 		image = ItemSpriteSheet.HOLY_DART;
 	}
-	
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
 
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
 		//do nothing to the hero when processing charged shot
 		if (processingChargedShot && defender == attacker){
-			return super.proc(attacker, defender, damage);
+			return;
 		}
 
 		if (attacker.alignment == defender.alignment){
 			Buff.affect(defender, Bless.class, Math.round(Bless.DURATION));
-			return 0;
+			return;
 		}
 
 		if (Char.hasProp(defender, Char.Property.UNDEAD) || Char.hasProp(defender, Char.Property.DEMONIC)){
 			defender.sprite.emitter().start( ShadowParticle.UP, 0.05f, 10+buffedLvl() );
 			Sample.INSTANCE.play(Assets.Sounds.BURNING);
-			defender.damage(Random.NormalIntRange(10 + Dungeon.scalingDepth()/3, 20 + Dungeon.scalingDepth()/3), this);
-		//also do not bless enemies if processing charged shot
+			defender.Damage(Random.NormalIntRange(10 + Dungeon.scalingDepth()/3, 20 + Dungeon.scalingDepth()/3), this, DamageType.of(DamageType.POSITIVE_ENERGY));
+			//also do not bless enemies if processing charged shot
 		} else if (!processingChargedShot){
 			Buff.affect(defender, Bless.class, Math.round(Bless.DURATION));
 		}
-		
-		return super.proc(attacker, defender, damage);
+	}
+
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		return context.attacker.alignment == context.defender.alignment ? 0 : currentDamage;
 	}
 }

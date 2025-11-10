@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.watabou.utils.Random;
 
 public class Albino extends Rat {
@@ -40,25 +41,12 @@ public class Albino extends Rat {
 	public int GetMaxHP() {
 		return (int) ((getRandomizerEnabled(RandomTraits.FRAIL_VERMIN) ? 0.4f : 1.0f) * super.GetMaxHP());
 	}
-	
+
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (damage > 0 && Random.Int( 2 ) == 0) {
-			Buff.affect( enemy, Bleeding.class ).set( damage );
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (Random.Int( 2 ) == 0) {
+			Buff.affect( enemy, Bleeding.class ).set( damageDealt );
 		}
-		if (getRandomizerEnabled(RandomTraits.TOXIC_FANGS)) {
-			if (Random.Int(3) == 0) {
-				int duration = Random.IntRange(1, 3);
-				if (Math.random() > 0.8f) {
-					++duration; // really rare chance to get 4 turns
-				}
-				//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
-				duration = Math.round(duration * (AscensionChallenge.statModifier(this) / 2f + 0.5f));
-				Buff.affect(enemy, Poison.class).set(duration);
-			}
-		}
-		
-		return damage;
+		super.onDamage(context, damageDealt);
 	}
 }

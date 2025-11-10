@@ -34,20 +34,23 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.Challenge;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
-import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhoulSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class Ghoul extends Mob {
+public class Ghoul extends Mob implements CombatModifier.OnDamageEffect {
 	{
 		SLEEPING = new Sleeping();
 		WANDERING = new Wandering();
@@ -61,34 +64,30 @@ public class Ghoul extends Mob {
 		return 0.5f;
 	}
 
-	private int timesDowned = 0;
-	protected int partnerID = -1;
-	private boolean isSolo = false;
-
-	private static final String PARTNER_ID = "partner_id";
-	private static final String TIMES_DOWNED = "times_downed";
-	private static final String IS_SOLO = "is_solo";
+	private BundleableProperty.Int m_TimesDowned = new BundleableProperty.Int("times_downed", 0);
+	protected BundleableProperty.Int m_PartnerID = new BundleableProperty.Int("partner_id", -1);
+	private BundleableProperty.Bool m_IsSolo = new BundleableProperty.Bool("is_solo", false);
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( PARTNER_ID, partnerID );
-		bundle.put( TIMES_DOWNED, timesDowned );
-		bundle.put( IS_SOLO, isSolo );
+		m_TimesDowned.Store(bundle);
+		m_PartnerID.Store(bundle);
+		m_IsSolo.Store(bundle);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		partnerID = bundle.getInt( PARTNER_ID );
-		timesDowned = bundle.getInt( TIMES_DOWNED );
-		isSolo = bundle.getBoolean( IS_SOLO );
+		m_TimesDowned.Restore(bundle);
+		m_PartnerID.Restore(bundle);
+		m_IsSolo.Restore(bundle);
 	}
 	
 	@Override
 	protected boolean act() {
 		//create a child
-		if (partnerID == -1 && !isSolo){
+		if (m_PartnerID.Get() == -1 && !m_IsSolo.Get()){
 			
 			ArrayList<Integer> candidates = new ArrayList<>();
 			
@@ -103,8 +102,8 @@ public class Ghoul extends Mob {
 			
 			if (!candidates.isEmpty()){
 				Ghoul child = new Ghoul();
-				child.partnerID = this.id();
-				this.partnerID = child.id();
+				child.m_PartnerID.Set(this.id());
+				this.m_PartnerID.Set(child.id());
 				if (state != SLEEPING) {
 					child.state = child.WANDERING;
 				}
@@ -131,34 +130,6 @@ public class Ghoul extends Mob {
 		return super.act();
 	}
 
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
-		if (getRandomizerEnabled(RandomTraits.DRAINING_CLAWS)) {
-			if (Random.Int(10) == 0) {
-				Buff.affect(enemy, Weakness.class);
-				Buff.affect(enemy, Vulnerable.class);
-			}
-		}
-
-		return damage;
-	}
-
-	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (getRandomizerEnabled(RandomTraits.SHARED_PAIN) && !(src instanceof Ghoul)) {
-			for (Mob m : Dungeon.level.mobs) {
-				if (m instanceof Ghoul) {
-					if (distance(m) < 5) {
-						m.damage(dmg / 10, this);
-					}
-				}
-			}
-		}
-		super.damage(dmg, src, damageType);
-	}
-
 	private boolean beingLifeLinked = false;
 
 	@Override
@@ -167,16 +138,16 @@ public class Ghoul extends Mob {
 			Ghoul nearby = GhoulLifeLink.searchForHost(this);
 			if (nearby != null){
 				beingLifeLinked = true;
-				timesDowned++;
+				m_TimesDowned.Increment();
 				Actor.remove(this);
 				Dungeon.level.mobs.remove( this );
 				int timeToRespawn;
 				if (getRandomizerEnabled(RandomTraits.RAPID_REVIVAL)) {
-					timeToRespawn = timesDowned * 3;
+					timeToRespawn = m_TimesDowned.Get() * 3;
 				} else if (getRandomizerEnabled(RandomTraits.SLUGGISH_REVIVAL)) {
-					timeToRespawn = timesDowned * 15;
+					timeToRespawn = m_TimesDowned.Get() * 15;
 				} else {
-					timeToRespawn = timesDowned * 5;
+					timeToRespawn = m_TimesDowned.Get() * 5;
 				}
 
 				Buff.append(nearby, GhoulLifeLink.class).set(timeToRespawn, this);
@@ -203,7 +174,7 @@ public class Ghoul extends Mob {
 		boolean previousFirstAdded = firstAdded;
 		super.onAdd();
 		if (previousFirstAdded && getRandomizerEnabled(RandomTraits.LONE_WANDERER)) {
-			isSolo = true;
+			m_IsSolo.Set(true);
 		}
 	}
 
@@ -213,7 +184,7 @@ public class Ghoul extends Mob {
 			for (Buff buff : buffs()) {
 				if (buff instanceof SacrificialFire.Marked){
 					//don't remove and postpone so marked stays on
-					Buff.prolong(this, SacrificialFire.Marked.class, timesDowned*5);
+					Buff.prolong(this, SacrificialFire.Marked.class, m_TimesDowned.Get() * 5);
 				} else if (buff.revivePersists) {
 					//don't remove
 				} else {
@@ -225,51 +196,81 @@ public class Ghoul extends Mob {
 		}
 	}
 
-	private class Sleeping extends Mob.Sleeping {
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			if (getRandomizerEnabled(RandomTraits.DRAINING_CLAWS)) {
+				if (Random.Int(10) == 0) {
+					Buff.affect(context.defender, Weakness.class);
+					Buff.affect(context.defender, Vulnerable.class);
+				}
+			}
+		}
+		else if (context.defender == this) {
+			if (getRandomizerEnabled(RandomTraits.SHARED_PAIN)) {
+				for (Mob m : Dungeon.level.mobs) {
+					if (m instanceof Ghoul) {
+						if (distance(m) < 5) {
+							m.Damage(damageDealt / 10, this, DamageType.of(DamageType.NONE));
+						}
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
+	}
+
+	private static class Sleeping extends Mob.Sleeping {
 		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
-			Ghoul partner = (Ghoul) Actor.findById( partnerID );
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
+			Ghoul partner = (Ghoul) Actor.findById( ((Ghoul)mob).m_PartnerID.Get() );
 			if (partner != null && partner.state != partner.SLEEPING){
-				state = WANDERING;
-				target = partner.pos;
+				mob.state = mob.WANDERING;
+				mob.m_Target.Set(partner.pos);
 				return true;
 			} else {
-				return super.act( enemyInFOV, justAlerted );
+				return super.act( mob, enemyInFOV, justAlerted );
 			}
 		}
 	}
 	
-	private class Wandering extends Mob.Wandering {
+	private static class Wandering extends Mob.Wandering {
 		
 		@Override
-		protected boolean continueWandering() {
-			enemySeen = false;
+		protected boolean continueWandering(Mob mob) {
+			mob.m_EnemySeen.Set(false);
 			
-			Ghoul partner = (Ghoul) Actor.findById( partnerID );
-			if (partner != null && (partner.state != partner.WANDERING || Dungeon.level.distance( pos,  partner.target) > 1)){
-				target = partner.pos;
-				int oldPos = pos;
-				if (getCloser( target )){
-					spend( 1 / speed() );
-					return moveSprite( oldPos, pos );
+			Ghoul partner = (Ghoul) Actor.findById( ((Ghoul)mob).m_PartnerID.Get() );
+			if (partner != null && (partner.state != partner.WANDERING || Dungeon.level.distance( mob.pos,  partner.m_Target.Get()) > 1)){
+				mob.m_Target.Set(partner.pos);
+				int oldPos = mob.pos;
+				if (mob.getCloser( mob.m_Target.Get() )){
+					mob.spend( 1 / mob.speed() );
+					return mob.moveSprite( oldPos, mob.pos );
 				} else {
-					spend( TICK );
+					mob.spend( TICK );
 					return true;
 				}
 			} else {
-				return super.continueWandering();
+				return super.continueWandering(mob);
 			}
 		}
 	}
 
 	public static class GhoulLifeLink extends Buff{
 
-		private Ghoul ghoul;
-		private int turnsToRevive;
-
 		@Override
 		public boolean act() {
-			if (target.alignment != ghoul.alignment){
+			if (target.alignment != m_Ghoul.Get().alignment){
 				detach();
 				return true;
 			}
@@ -279,37 +280,37 @@ public class Ghoul extends Mob {
 				Dungeon.level.updateFieldOfView( target, target.fieldOfView );
 			}
 
-			if (!target.fieldOfView[ghoul.pos] && Dungeon.level.distance(ghoul.pos, target.pos) >= 4){
+			if (!target.fieldOfView[m_Ghoul.Get().pos] && Dungeon.level.distance(m_Ghoul.Get().pos, target.pos) >= 4){
 				detach();
 				return true;
 			}
 
-			if (Dungeon.level.pit[ghoul.pos]){
+			if (Dungeon.level.pit[m_Ghoul.Get().pos]){
 				super.detach();
-				ghoul.beingLifeLinked = false;
-				ghoul.die(this);
+				m_Ghoul.Get().beingLifeLinked = false;
+				m_Ghoul.Get().die(this);
 				return true;
 			}
 
 			//have to delay this manually here are a downed ghouls can't be directly frozen otherwise
 			if (target.buff(Challenge.DuelParticipant.class) == null) {
-				turnsToRevive--;
+				m_TurnsToRevive.Decrement();
 			}
-			if (turnsToRevive <= 0){
-				if (Actor.findChar( ghoul.pos ) != null) {
+			if (m_TurnsToRevive.Get() <= 0){
+				if (Actor.findChar( m_Ghoul.Get().pos ) != null) {
 					ArrayList<Integer> candidates = new ArrayList<>();
 					for (int n : PathFinder.NEIGHBOURS8) {
-						int cell = ghoul.pos + n;
+						int cell = m_Ghoul.Get().pos + n;
 						if (Dungeon.level.passable[cell]
 								&& Actor.findChar( cell ) == null
-								&& (!Char.hasProp(ghoul, Property.LARGE) || Dungeon.level.openSpace[cell])) {
+								&& (!Char.hasProp(m_Ghoul.Get(), Property.LARGE) || Dungeon.level.openSpace[cell])) {
 							candidates.add( cell );
 						}
 					}
 					if (candidates.size() > 0) {
 						int newPos = Random.element( candidates );
-						Actor.add( new Pushing( ghoul, ghoul.pos, newPos ) );
-						ghoul.pos = newPos;
+						Actor.add( new Pushing( m_Ghoul.Get(), m_Ghoul.Get().pos, newPos ) );
+						m_Ghoul.Get().pos = newPos;
 
 					} else {
 						spend(TICK);
@@ -317,21 +318,21 @@ public class Ghoul extends Mob {
 					}
 				}
 
-				ghoul.beingLifeLinked = false;
-				Actor.add(ghoul);
-				ghoul.timeToNow();
-				Dungeon.level.mobs.add(ghoul);
-				Dungeon.level.occupyCell( ghoul );
-				ghoul.sprite.idle();
+				m_Ghoul.Get().beingLifeLinked = false;
+				Actor.add(m_Ghoul.Get());
+				m_Ghoul.Get().timeToNow();
+				Dungeon.level.mobs.add(m_Ghoul.Get());
+				Dungeon.level.occupyCell( m_Ghoul.Get() );
+				m_Ghoul.Get().sprite.idle();
 				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
-					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(ghoul.GetMaxHP()), FloatingText.HEALING);
+					m_Ghoul.Get().sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(m_Ghoul.Get().GetMaxHP()), FloatingText.HEALING);
 				} else {
-					ghoul.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(ghoul.GetMaxHP()/10f)), FloatingText.HEALING);
+					m_Ghoul.Get().sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(Math.round(m_Ghoul.Get().GetMaxHP()/10f)), FloatingText.HEALING);
 				}
 				if (getRandomizerEnabled(RandomTraits.FULL_RESURRECTION)) {
-					ghoul.HP = ghoul.GetMaxHP();
+					m_Ghoul.Get().HP = m_Ghoul.Get().GetMaxHP();
 				} else {
-					ghoul.HP = Math.round(ghoul.GetMaxHP() / 10f);
+					m_Ghoul.Get().HP = Math.round(m_Ghoul.Get().GetMaxHP() / 10f);
 				}
 				super.detach();
 				return true;
@@ -342,53 +343,53 @@ public class Ghoul extends Mob {
 		}
 
 		public void updateVisibility(){
-			if (ghoul != null && ghoul.sprite != null){
-				ghoul.sprite.visible = Dungeon.level.heroFOV[ghoul.pos];
+			if (m_Ghoul.Get() != null && m_Ghoul.Get().sprite != null){
+				m_Ghoul.Get().sprite.visible = Dungeon.level.heroFOV[m_Ghoul.Get().pos];
 			}
 		}
 
 		public void set(int turns, Ghoul ghoul){
-			this.ghoul = ghoul;
-			turnsToRevive = turns;
+			this.m_Ghoul.Set(ghoul);
+			m_TurnsToRevive.Set(turns);
 		}
 
 		@Override
 		public void fx(boolean on) {
-			if (on && ghoul != null && ghoul.sprite == null){
-				GameScene.addSprite(ghoul);
-				((GhoulSprite)ghoul.sprite).crumple();
+			if (on && m_Ghoul.Get() != null && m_Ghoul.Get().sprite == null){
+				GameScene.addSprite(m_Ghoul.Get());
+				((GhoulSprite)m_Ghoul.Get().sprite).crumple();
 			}
 		}
 
 		@Override
 		public void detach() {
 			super.detach();
-			Ghoul newHost = searchForHost(ghoul);
+			Ghoul newHost = searchForHost(m_Ghoul.Get());
 			if (newHost != null){
 				attachTo(newHost);
 				timeToNow();
 			} else {
-				ghoul.beingLifeLinked = false;
-				ghoul.die(this);
+				m_Ghoul.Get().beingLifeLinked = false;
+				m_Ghoul.Get().die(this);
 			}
 		}
 
-		private static final String GHOUL = "ghoul";
-		private static final String LEFT  = "left";
+		private BundleableProperty.Object<Ghoul> m_Ghoul = new BundleableProperty.Object<>("ghoul", null);
+		private BundleableProperty.Int m_TurnsToRevive = new BundleableProperty.Int("left", 0);
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
-			bundle.put(GHOUL, ghoul);
-			bundle.put(LEFT, turnsToRevive);
+			m_Ghoul.Store(bundle);
+			m_TurnsToRevive.Store(bundle);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
-			ghoul = (Ghoul) bundle.get(GHOUL);
-			ghoul.beingLifeLinked = true;
-			turnsToRevive = bundle.getInt(LEFT);
+			m_Ghoul.Restore(bundle);
+			m_Ghoul.Get().beingLifeLinked = true;
+			m_TurnsToRevive.Restore(bundle);
 		}
 
 		public static Ghoul searchForHost(Ghoul dieing){

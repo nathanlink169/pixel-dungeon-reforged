@@ -3,22 +3,17 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Rat;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Succubus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
@@ -30,7 +25,6 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.ConstructSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.ActionIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.watabou.noosa.Image;
@@ -42,8 +36,9 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
-public class ConstructHero extends DirectableAlly implements ActionIndicator.Action {
+public class ConstructHero extends DirectableAlly implements ActionIndicator.Action, CombatModifier.OnDamageEffect {
     {
         state = HUNTING;
     }
@@ -98,7 +93,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
     }
 
     @Override
-    public int attackSkill(Char target) {
+    public int attackSkill() {
         //same accuracy as the hero.
         return Dungeon.hero.lvl + 9;
     }
@@ -108,7 +103,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
     }
 
     @Override
-    public int damageRoll(AttackType type, boolean isMaxDamage) {
+    public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
         int tier = 2 + Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_LETHALITY);
         int min = tier + level();
         int max = 5*(tier+1) + level()*(tier+1);
@@ -117,15 +112,6 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
             return max;
         }
         return Random.NormalIntRange(min, max);
-    }
-
-    @Override
-    public int attackProc( Char enemy, int damage ) {
-        damage = super.attackProc( enemy, damage );
-        if (Dungeon.hero.hasTalent(Talent.CONSTRUCT_LETHALITY) && damage > 0 && Random.Int( 2 ) == 0) {
-            Buff.affect( enemy, Cripple.class );
-        }
-        return damage;
     }
 
     @Override
@@ -176,23 +162,40 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
 
 
     @Override
-    protected int GetDefenseSkillInternal() {
+    public int defenseSkill() {
         return (int)(Dungeon.hero.GetPureDefenseSkill() * 0.5f);
+    }
+
+    @Override
+    public void onDamage(AttackContext context, int damageDealt) {
+        if (Dungeon.hero.hasTalent(Talent.CONSTRUCT_LETHALITY) && Random.Int( 2 ) == 0) {
+            Buff.affect( enemy, Cripple.class );
+        }
+    }
+
+    @Override
+    public int priority() {
+        return Priority.NORMAL;
+    }
+
+    @Override
+    public boolean appliesTo(AttackContext context) {
+        return context.attacker == this;
     }
 
     public static class Retaliation{} // Just used to avoid loop of retaliation damage
 
     @Override
-    public void damage(int dmg, Object src, int damageType) {
+    public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
         if (Dungeon.hero.pointsInTalent(Talent.CONSTRUCT_LETHALITY) >= 3 && enemy != null && Dungeon.level.adjacent(pos, enemy.pos) && dmg >= 10) {
-            enemy.damage((int) (dmg * 0.1f), new Retaliation());
+            enemy.Damage((int) (dmg * 0.1f), new Retaliation(), damageType);
         }
-        super.damage(dmg, src, damageType);
+        return super.Damage(dmg, src, damageType);
     }
 
     @Override
-    public int drRoll() {
-        int drRoll = Dungeon.hero.drRoll();
+    public int drRoll(EnumSet<DamageType> damageType) {
+        int drRoll = Dungeon.hero.drRoll(damageType);
         return (int)(drRoll * 0.8f);
     }
 
@@ -215,7 +218,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
                 }
             }
             for (Char ch : affected){
-                ch.damage(damageRoll(AttackType.MELEE, false) * 3, this);
+                ch.Damage(damageRoll(AttackContext.AttackType.MELEE, false) * 3, this, DamageType.of(DamageType.EXPLOSIVE));
 
                 //trace a ballistica to our target (which will also extend past them
                 Ballistica trajectory = new Ballistica(pos, ch.pos, Ballistica.STOP_TARGET);

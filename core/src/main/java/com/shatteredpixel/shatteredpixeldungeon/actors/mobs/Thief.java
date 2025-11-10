@@ -27,21 +27,22 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Thief extends Mob {
-	
-	public Item item;
+public class Thief extends Mob implements CombatModifier.OnHitEffect, CombatModifier.OnDamageEffect {
 
 	{
 		WANDERING = new Wandering();
@@ -51,28 +52,34 @@ public class Thief extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.thief; }
 
-	private static final String ITEM = "item";
-	private static final String MAX_GOLD = "max_gold";
+	private BundleableProperty.Object<Item> m_Item = new BundleableProperty.Object<>("item");
+	private BundleableProperty.Int m_MaxGold = new BundleableProperty.Int("max_gold");
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( ITEM, item );
-		bundle.put( MAX_GOLD, maxGold );
+		m_Item.Store(bundle);
+		m_MaxGold.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		item = (Item)bundle.get( ITEM );
-		maxGold = bundle.getInt( MAX_GOLD );
+		m_Item.Restore(bundle);
+		m_MaxGold.Restore(bundle);
 	}
 
-	private int maxGold = 0;
+	public Item GetItem() {
+		return m_Item.Get();
+	}
+
+	public void SetItem(Item item) {
+		m_Item.Set(item);
+	}
 
 	@Override
 	public float speed() {
-		if (item != null) return (5*super.speed())/6;
+		if (m_Item.Get() != null) return (5.0f * super.speed()) / 6.0f;
 		else return super.speed();
 	}
 
@@ -93,11 +100,11 @@ public class Thief extends Mob {
 
 	@Override
 	public void rollToDropLoot() {
-		if (item != null) {
-			Dungeon.level.drop( item, pos ).sprite.drop();
+		if (m_Item.Get() != null) {
+			Dungeon.level.drop( m_Item.Get(), pos ).sprite.drop();
 			//updates position
-			if (item instanceof Honeypot.ShatteredPot) ((Honeypot.ShatteredPot)item).dropPot( this, pos );
-			item = null;
+			if (m_Item.Get() instanceof Honeypot.ShatteredPot) ((Honeypot.ShatteredPot)m_Item.Get()).dropPot( this, pos );
+			m_Item.Set(null);
 		}
 		super.rollToDropLoot();
 	}
@@ -106,40 +113,6 @@ public class Thief extends Mob {
 	public Item createLoot(int itemSlot) {
 		Dungeon.LimitedDrops.THEIF_MISC.count++;
 		return super.createLoot(itemSlot);
-	}
-
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
-		if (getRandomizerEnabled(RandomTraits.CLUMSY_HANDS)) {
-			if (Random.Int(3) > 0) {
-				return damage;
-			}
-		}
-		
-		if (alignment == Alignment.ENEMY && item == null
-				&& enemy instanceof Hero && steal( (Hero)enemy )) {
-			state = FLEEING;
-		}
-
-		return damage;
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		if (getRandomizerEnabled(RandomTraits.GOLD_BAGS)) {
-			if (maxGold == 0) {
-				maxGold = Random.Int(25, 50);
-			}
-			float percDamage = (float)damage / (float)GetMaxHP();
-			Dungeon.level.drop( new Gold((int) (maxGold * percDamage)), pos ).sprite.drop();
-		}
-		else if (state == FLEEING) {
-			Dungeon.level.drop( new Gold(), pos ).sprite.drop();
-		}
-
-		return super.defenseProc(enemy, damage);
 	}
 
 	protected boolean steal( Hero hero ) {
@@ -154,11 +127,11 @@ public class Thief extends Mob {
 			}
 			Item.updateQuickslot();
 
-			item = toSteal.detach( hero.belongings.backpack );
-			if (item instanceof Honeypot){
-				item = ((Honeypot)item).shatter(this, this.pos);
-			} else if (item instanceof Honeypot.ShatteredPot) {
-				((Honeypot.ShatteredPot)item).pickupPot(this);
+			m_Item.Set(toSteal.detach( hero.belongings.backpack ));
+			if (m_Item.Get() instanceof Honeypot){
+				m_Item.Set(((Honeypot)m_Item.Get()).shatter(this, this.pos));
+			} else if (m_Item.Get() instanceof Honeypot.ShatteredPot) {
+				((Honeypot.ShatteredPot)m_Item.Get()).pickupPot(this);
 			}
 
 			return true;
@@ -171,21 +144,63 @@ public class Thief extends Mob {
 	public String description(boolean forceNoMonsterUnknown) {
 		String desc = super.description(forceNoMonsterUnknown);
 
-		if (item != null) {
-			desc += Messages.get(this, "carries", item.name() );
+		if (m_Item.Get() != null) {
+			desc += Messages.get(this, "carries", m_Item.Get().name() );
 		}
 
 		return desc;
 	}
-	
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.defender == this) {
+			if (getRandomizerEnabled(RandomTraits.GOLD_BAGS)) {
+				if (m_MaxGold.Get() == 0) {
+					m_MaxGold.Set(Random.Int(25, 50));
+				}
+				float percDamage = (float)damageDealt / (float)GetMaxHP();
+				Dungeon.level.drop( new Gold((int) (m_MaxGold.Get() * percDamage)), pos ).sprite.drop();
+			}
+			else if (state == FLEEING) {
+				Dungeon.level.drop( new Gold(), pos ).sprite.drop();
+			}
+		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (context.attacker == this) {
+			if (getRandomizerEnabled(RandomTraits.CLUMSY_HANDS)) {
+				if (Random.Int(3) > 0) {
+					return;
+				}
+			}
+
+			if (alignment == Alignment.ENEMY && m_Item.Get() == null
+					&& enemy instanceof Hero && steal((Hero) enemy)) {
+				state = FLEEING;
+			}
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
+	}
+
 	private class Wandering extends Mob.Wandering {
 		
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			super.act(enemyInFOV, justAlerted);
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			super.act(mob, enemyInFOV, justAlerted);
 			
 			//if an enemy is just noticed and the thief posses an item, run, don't fight.
-			if (state == HUNTING && item != null){
+			if (state == HUNTING && m_Item.Get() != null){
 				state = FLEEING;
 			}
 			
@@ -193,36 +208,36 @@ public class Thief extends Mob {
 		}
 	}
 
-	private class Fleeing extends Mob.Fleeing {
+	private static class Fleeing extends Mob.Fleeing {
 		@Override
-		protected void escaped() {
-			if (item != null
-					&& !Dungeon.level.heroFOV[pos]
-					&& Dungeon.level.distance(Dungeon.hero.pos, pos) >= 6) {
+		protected void escaped(Mob mob) {
+			if (((Thief)mob).m_Item.Get() != null
+					&& !Dungeon.level.heroFOV[mob.pos]
+					&& Dungeon.level.distance(Dungeon.hero.pos, mob.pos) >= 6) {
 
 				int count = 32;
 				int newPos;
 				do {
-					newPos = Dungeon.level.randomRespawnCell( Thief.this );
+					newPos = Dungeon.level.randomRespawnCell( mob );
 					if (count-- <= 0) {
 						break;
 					}
-				} while (newPos == -1 || Dungeon.level.heroFOV[newPos] || Dungeon.level.distance(newPos, pos) < (count/3));
+				} while (newPos == -1 || Dungeon.level.heroFOV[newPos] || Dungeon.level.distance(newPos, mob.pos) < (count/3));
 
 				if (newPos != -1) {
 
-					pos = newPos;
-					sprite.place( pos );
-					sprite.visible = Dungeon.level.heroFOV[pos];
-					if (Dungeon.level.heroFOV[pos]) CellEmitter.get(pos).burst(Speck.factory(Speck.WOOL), 6);
+					mob.pos = newPos;
+					mob.sprite.place( mob.pos );
+					mob.sprite.visible = Dungeon.level.heroFOV[mob.pos];
+					if (Dungeon.level.heroFOV[mob.pos]) CellEmitter.get(mob.pos).burst(Speck.factory(Speck.WOOL), 6);
 
 				}
 
-				if (item != null) GLog.n( Messages.get(Thief.class, "escapes", item.name()));
-				item = null;
-				state = WANDERING;
+				if (((Thief)mob).m_Item.Get() != null) GLog.n( Messages.get(Thief.class, "escapes", ((Thief)mob).m_Item.Get().name()));
+				((Thief)mob).m_Item.Set( null );
+				mob.state = mob.WANDERING;
 			} else {
-				state = WANDERING;
+				mob.state = mob.WANDERING;
 			}
 		}
 	}

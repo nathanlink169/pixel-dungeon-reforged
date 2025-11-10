@@ -28,41 +28,41 @@ import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.GooBlob;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SlimeSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Slime extends Mob {
+public class Slime extends Mob implements CombatModifier.PostArmorDamageModifier, CombatModifier.OnDamageEffect, CombatModifier.OnHitEffect, CombatModifier.OnMissEffect {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.slime; }
 
-	private boolean stealthy = false;
-
-	private static final String STEALTHY= "stealthy";
+	private BundleableProperty.Bool m_Stealthy = new BundleableProperty.Bool("stealthy", false);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( STEALTHY, stealthy );
+		m_Stealthy.Store(bundle);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle(bundle);
-		stealthy = bundle.getBoolean(STEALTHY);
+		m_Stealthy.Restore(bundle);
 	}
 
 	@Override
@@ -70,43 +70,8 @@ public class Slime extends Mob {
 		boolean previousFirstAdded = firstAdded;
 		super.onAdd();
 		if (previousFirstAdded) {
-			stealthy = getRandomizerEnabled(RandomTraits.CHAMELEON_OOZE);
+			m_Stealthy.Set(getRandomizerEnabled(RandomTraits.CHAMELEON_OOZE));
 		}
-	}
-
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		if (getRandomizerEnabled(RandomTraits.STICKY_COATING)) {
-			if (Random.Int(2) == 0) {
-				Buff.affect(enemy, Slow.class);
-			}
-		}
-		if (stealthy()) {
-			stealthy = false;
-			((SlimeSprite) sprite).unhide();
-		}
-
-		return super.attackProc( enemy, damage );
-	}
-	
-	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		float scaleFactor = AscensionChallenge.statModifier(this);
-		int scaledDmg = Math.round(dmg/scaleFactor);
-		int damageThreshold = 6;
-		if (getRandomizerEnabled(RandomTraits.ENHANCED_RESILIENCE)) damageThreshold = 4;
-		if (getRandomizerEnabled(RandomTraits.SOFTENED_MEMBRANE)) damageThreshold = 10;
-
-		if (scaledDmg >= damageThreshold - 1){
-			//takes 5/6/7/8/9/10 dmg at 5/7/10/14/19/25 incoming dmg
-			scaledDmg = (damageThreshold - 2) + (int)(Math.sqrt((2 * (damageThreshold - 2))*(scaledDmg - (damageThreshold - 2)) + 1) - 1)/2;
-		}
-		dmg = (int)(scaledDmg*AscensionChallenge.statModifier(this));
-
-		if (getRandomizerEnabled(RandomTraits.BLADE_WEAKNESS) && DamageType.getIsDamageType(damageType, DamageType.SLASHING)) {
-			dmg *= 3; // happens after scaling damage
-		}
-		super.damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -127,7 +92,7 @@ public class Slime extends Mob {
 
 	// as mimic
 	public boolean stealthy(){
-		return stealthy;
+		return m_Stealthy.Get();
 	}
 
 	@Override
@@ -149,6 +114,66 @@ public class Slime extends Mob {
 		SlimeSprite sprite = (SlimeSprite) super.sprite();
 		if (stealthy()) sprite.hide(this);
 		return sprite;
+	}
+
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender == this) {
+			int damageThreshold = 6;
+			if (getRandomizerEnabled(RandomTraits.ENHANCED_RESILIENCE)) damageThreshold = 4;
+			if (getRandomizerEnabled(RandomTraits.SOFTENED_MEMBRANE)) damageThreshold = 10;
+
+			if (currentDamage >= damageThreshold - 1) {
+				//takes 5/6/7/8/9/10 dmg at 5/7/10/14/19/25 incoming dmg
+				currentDamage = (damageThreshold - 2) + (int) (Math.sqrt((2 * (damageThreshold - 2)) * (currentDamage - (damageThreshold - 2)) + 1) - 1) / 2;
+			}
+			currentDamage = (int) (currentDamage * AscensionChallenge.statModifier(this));
+
+			if (getRandomizerEnabled(RandomTraits.BLADE_WEAKNESS) && context.damageType.contains(DamageType.SLASHING)) {
+				currentDamage *= 3; // happens after scaling damage
+			}
+		}
+		return currentDamage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			if (getRandomizerEnabled(RandomTraits.STICKY_COATING)) {
+				if (Random.Int(2) == 0) {
+					Buff.affect(enemy, Slow.class);
+				}
+			}
+		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		RevealSlime(context);
+	}
+
+	@Override
+	public void onMiss(AttackContext context) {
+		RevealSlime(context);
+	}
+
+	private void RevealSlime(AttackContext context) {
+		if (context.attacker == this) {
+			if (stealthy()) {
+				m_Stealthy.Set(false);
+				((SlimeSprite) sprite).unhide();
+			}
+		}
 	}
 
 	public enum RandomTraits {

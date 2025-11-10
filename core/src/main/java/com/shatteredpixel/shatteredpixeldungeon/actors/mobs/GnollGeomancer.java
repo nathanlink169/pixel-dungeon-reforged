@@ -36,6 +36,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -52,11 +54,11 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollGeomancerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -66,6 +68,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class GnollGeomancer extends Mob {
 
@@ -80,12 +83,6 @@ public class GnollGeomancer extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollgeomancer; }
 
-	private int abilityCooldown = Random.NormalIntRange(3, 5);
-	private boolean lastAbilityWasRockfall;
-
-	private int[] throwingRocksFromPos = null;
-	private int throwingRockToPos = -1; //only need 1 to pos, it's always the same.
-
 	private int sapperID = -1;
 	private int[] sapperSpawns = null;
 
@@ -96,24 +93,24 @@ public class GnollGeomancer extends Mob {
 			int i = 0;
 			for (Mob m : Dungeon.level.mobs){
 				if (m instanceof GnollSapper){
-					sapperSpawns[i] = ((GnollSapper) m).spawnPos;
+					sapperSpawns[i] = ((GnollSapper) m).SpawnPosition();
 					i++;
 				}
 				if (i == 3) break;
 			}
 		}
 
-		if (throwingRocksFromPos != null){
+		if (m_ThrowingRocksFromPosition.Get() != null){
 			boolean attacked = false;
-			for (int rock : throwingRocksFromPos) {
+			for (int rock : m_ThrowingRocksFromPosition.Get()) {
 				if (rock != -1 && Dungeon.level.map[rock] == Terrain.MINE_BOULDER) {
 					attacked = true;
-					GnollGeomancer.doRockThrowAttack(this, rock, throwingRockToPos);
+					GnollGeomancer.doRockThrowAttack(this, rock, m_ThrowingRocksToPosition.Get());
 				}
 			}
 
-			throwingRocksFromPos = null;
-			throwingRockToPos = -1;
+			m_ThrowingRocksFromPosition.Set(null);
+			m_ThrowingRocksToPosition.Set(-1);
 
 			spend(TICK);
 			return !attacked;
@@ -156,7 +153,7 @@ public class GnollGeomancer extends Mob {
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		return false;
 	}
 
@@ -165,7 +162,6 @@ public class GnollGeomancer extends Mob {
 		return false;
 	}
 
-	int hits = 0;
 
 	@Override
 	public boolean interact(Char c) {
@@ -183,7 +179,7 @@ public class GnollGeomancer extends Mob {
 				public void call() {
 					//does its own special damage calculation that's only influenced by pickaxe level and augment
 					//we pretend the geomancer is the owner here so that properties like hero str or or other equipment do not factor in
-					int dmg = p.damageRoll(GnollGeomancer.this, false);
+					int dmg = p.damageRoll(false, true);
 
 					boolean wasSleeping = state == SLEEPING;
 
@@ -192,14 +188,14 @@ public class GnollGeomancer extends Mob {
 
 					dmg = Math.min(dmg, buff(RockArmor.class).shielding());
 
-					damage(dmg, p);
+					Damage(dmg, p, DamageType.of(DamageType.PIERCING));
 					sprite.bloodBurstA(Dungeon.hero.sprite.center(), dmg);
 					sprite.flash();
 
-					hits++;
-					if (hits == 1){
+					m_Hits.Increment();
+					if (m_Hits.Get() == 1){
 						GLog.w( Messages.get(GnollGeomancer.this, "warning"));
-					} if (hits == 3){
+					} if (m_Hits.Get() == 3){
 						GLog.n( Messages.get(GnollGeomancer.this, "alert"));
 						wasSleeping = false;
 						spend(TICK);
@@ -235,7 +231,7 @@ public class GnollGeomancer extends Mob {
 
 					Sample.INSTANCE.play(Assets.Sounds.MINE, 1f, Random.Float(0.85f, 1.15f));
 					Invisibility.dispel(Dungeon.hero);
-					Dungeon.hero.spendAndNext(p.delayFactor(GnollGeomancer.this));
+					Dungeon.hero.spendAndNext(p.timeToUse());
 				}
 			});
 
@@ -244,7 +240,8 @@ public class GnollGeomancer extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+		int preHP = HP;
 		int hpBracket = GetMaxHP() / 3;
 
 		int curbracket = HP / hpBracket;
@@ -252,9 +249,9 @@ public class GnollGeomancer extends Mob {
 
 		inFinalBracket = curbracket == 0;
 
-		super.damage(dmg, src, damageType);
+		super.Damage(dmg, src, damageType);
 
-		abilityCooldown -= dmg/10f;
+		m_AbilityCooldown.Subtract((int) (dmg/10f));
 
 		int newBracket =  HP / hpBracket;
 		if (newBracket == 3) newBracket--; //full HP isn't its own bracket
@@ -270,6 +267,8 @@ public class GnollGeomancer extends Mob {
 			carveRockAndDash();
 			Buff.affect(this, RockArmor.class).setShield(25);
 		}
+
+		return HP - preHP;
 	}
 
 	private boolean inFinalBracket = false;
@@ -315,7 +314,7 @@ public class GnollGeomancer extends Mob {
 			if (closestSapperPos == -1) {
 				closestSapperPos = sapperSpawns[i];
 				for (Mob m : Dungeon.level.mobs){
-					if (m instanceof GnollSapper && ((GnollSapper) m).spawnPos == closestSapperPos){
+					if (m instanceof GnollSapper && ((GnollSapper) m).SpawnPosition() == closestSapperPos){
 						closestisAlive = true;
 						break;
 					}
@@ -325,7 +324,7 @@ public class GnollGeomancer extends Mob {
 
 			boolean sapperAlive = false;
 			for (Mob m : Dungeon.level.mobs){
-				if (m instanceof GnollSapper && ((GnollSapper) m).spawnPos == sapperSpawns[i]){
+				if (m instanceof GnollSapper && ((GnollSapper) m).SpawnPosition() == sapperSpawns[i]){
 					sapperAlive = true;
 					break;
 				}
@@ -420,13 +419,13 @@ public class GnollGeomancer extends Mob {
 		int oldpos = pos;
 		pos = dashPos;
 		spend(TICK);
-		abilityCooldown = 1;
+		m_AbilityCooldown.Set(1);
 		Actor.add(new Pushing(this, oldpos, pos));
 
 		if (closestisAlive){
 			GnollSapper closest = null;
 			for (Mob m : Dungeon.level.mobs){
-				if (m instanceof GnollSapper && ((GnollSapper) m).spawnPos == closestSapperPos){
+				if (m instanceof GnollSapper && ((GnollSapper) m).SpawnPosition() == closestSapperPos){
 					closest = (GnollSapper) m;
 					break;
 				}
@@ -449,7 +448,7 @@ public class GnollGeomancer extends Mob {
 					if (!candidates.isEmpty()){
 						int newSapperPos = Random.element(candidates);
 						ScrollOfTeleportation.appear(closest, newSapperPos);
-						closest.spawnPos = newSapperPos;
+						closest.SetSpawnPosition(newSapperPos);
 						candidates.remove((Integer)newSapperPos);
 
 						if (guard instanceof GnollGuard && !candidates.isEmpty()){
@@ -516,42 +515,43 @@ public class GnollGeomancer extends Mob {
 		}
 	}
 
-	private class Sleeping extends Mob.Sleeping {
+	private static class Sleeping extends Mob.Sleeping {
 
 		@Override
-		protected void awaken(boolean enemyInFOV) {
+		protected void awaken(Mob mob, boolean enemyInFOV) {
 			//do nothing, has special awakening rules
 		}
 	}
 
-	private class Hunting extends Mob.Hunting {
+	private static class Hunting extends Mob.Hunting {
 
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
 			if (!enemyInFOV){
-				spend(TICK);
+				mob.spend(TICK);
 				return true;
 			} else {
-				enemySeen = true;
+				mob.m_EnemySeen.Set(true);
 
 				//use abilities more frequently on the hero's initial approach or if sapper is alive
 				// but only if hero isn't stunned, to prevent stunlocking
-				if ((Dungeon.level.distance(pos, enemy.pos) > 2 || hasSapper())
-						&& buff(RockArmor.class) != null
-						&& enemy.buff(Paralysis.class) == null){
-					abilityCooldown -= 1f;
+				if ((Dungeon.level.distance(mob.pos, mob.enemy.pos) > 2 || ((GnollGeomancer)mob).hasSapper())
+						&& mob.buff(RockArmor.class) != null
+						&& mob.enemy.buff(Paralysis.class) == null){
+					((GnollGeomancer)mob).m_AbilityCooldown.Decrement();
 				}
 
-				if (hasSapper()){
-					((GnollSapper)Actor.findById(sapperID)).aggro(enemy);
+				if (((GnollGeomancer)mob).hasSapper()){
+					((GnollSapper)Actor.findById(((GnollGeomancer)mob).sapperID)).aggro(mob.enemy);
 				}
 
-				if (abilityCooldown-- <= 0){
+				((GnollGeomancer)mob).m_AbilityCooldown.Decrement();
+				if (((GnollGeomancer)mob).m_AbilityCooldown.Get() <= 0){
 
 					boolean targetNextToBarricade = false;
 					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.map[enemy.pos+i] == Terrain.BARRICADE
-								|| Dungeon.level.map[enemy.pos+i] == Terrain.ENTRANCE){
+						if (Dungeon.level.map[mob.enemy.pos+i] == Terrain.BARRICADE
+								|| Dungeon.level.map[mob.enemy.pos+i] == Terrain.ENTRANCE){
 							targetNextToBarricade = true;
 							break;
 						}
@@ -560,47 +560,47 @@ public class GnollGeomancer extends Mob {
 					// 50/50 to either throw a rock or do rockfall, but never do rockfall twice
 					// unless target is next to a barricade, then always try to throw
 					// unless nothing to throw, then always rockfall
-					int hpBracket = GetMaxHP() / 3;
+					int hpBracket = mob.GetMaxHP() / 3;
 
-					int curbracket = HP / hpBracket;
+					int curbracket = mob.HP / hpBracket;
 					if (curbracket == 3) curbracket--; //full HP isn't its own bracket
 
-					Ballistica aim = GnollGeomancer.prepRockThrowAttack(enemy, GnollGeomancer.this);
-					if (aim != null && (targetNextToBarricade || lastAbilityWasRockfall || Random.Int(2) == 0)) {
+					Ballistica aim = GnollGeomancer.prepRockThrowAttack(mob.enemy, mob);
+					if (aim != null && (targetNextToBarricade || ((GnollGeomancer)mob).m_LastAbilityWasRockfall.Get() || Random.Int(2) == 0)) {
 
-						lastAbilityWasRockfall = false;
-						throwingRocksFromPos = new int[]{-1, -1, -1};
-						throwingRockToPos = aim.collisionPos;
+						((GnollGeomancer)mob).m_LastAbilityWasRockfall.Set(false);
+						((GnollGeomancer)mob).m_ThrowingRocksFromPosition.Set(new int[]{-1, -1, -1});
+						((GnollGeomancer)mob).m_ThrowingRocksToPosition.Set(aim.collisionPos);
 
 						//do up to 3 thrown rock attacks at once, depending on HP
 						for (int i = 0; i < 3 - curbracket; i++){
 							if (aim == null) break;
 
-							throwingRocksFromPos[i] = aim.sourcePos;
+							((GnollGeomancer)mob).m_ThrowingRocksFromPosition.Get()[i] = aim.sourcePos;
 
 							Ballistica warnPath = new Ballistica(aim.sourcePos, aim.collisionPos, Ballistica.STOP_SOLID);
 							for (int j : warnPath.subPath(0, warnPath.dist)){
-								sprite.parent.add(new TargetedCell(j, 0xFF0000));
+								mob.sprite.parent.add(new TargetedCell(j, 0xFF0000));
 							}
 
-							aim = GnollGeomancer.prepRockThrowAttack(enemy, GnollGeomancer.this);
+							aim = GnollGeomancer.prepRockThrowAttack(mob.enemy, mob);
 						}
 
 						Dungeon.hero.interrupt();
-						abilityCooldown = Random.NormalIntRange(3, 5);
-						spend(GameMath.gate(TICK, (int)Math.ceil(enemy.cooldown()), 3*TICK));
+						((GnollGeomancer)mob).m_AbilityCooldown.Set(Random.NormalIntRange(3, 5));
+						mob.spend(GameMath.gate(TICK, (int)Math.ceil(mob.enemy.cooldown()), 3*TICK));
 						return true;
-					} else if (GnollGeomancer.prepRockFallAttack(enemy, GnollGeomancer.this, 6-2*curbracket, true)) {
-						lastAbilityWasRockfall = true;
+					} else if (GnollGeomancer.prepRockFallAttack(mob.enemy, mob, 6-2*curbracket, true)) {
+						((GnollGeomancer)mob).m_LastAbilityWasRockfall.Set(true);
 						Dungeon.hero.interrupt();
-						spend(GameMath.gate(TICK, (int)Math.ceil(enemy.cooldown()), 3*TICK));
-						abilityCooldown = Random.NormalIntRange(3, 5);
+						mob.spend(GameMath.gate(TICK, (int)Math.ceil(mob.enemy.cooldown()), 3*TICK));
+						((GnollGeomancer)mob).m_AbilityCooldown.Set(Random.NormalIntRange(3, 5));
 						return true;
 					}
 				}
 
 				//does not perform regular attacks
-				spend(TICK);
+				mob.spend(TICK);
 				return true;
 			}
 		}
@@ -622,12 +622,12 @@ public class GnollGeomancer extends Mob {
 
 		//ignore rocks already being thrown
 		for (Char ch : Actor.chars()){
-			if (ch instanceof GnollGeomancer && ((GnollGeomancer) ch).throwingRocksFromPos != null){
-				for (int i : ((GnollGeomancer) ch).throwingRocksFromPos){
+			if (ch instanceof GnollGeomancer && ((GnollGeomancer) ch).m_ThrowingRocksFromPosition.Get() != null){
+				for (int i : ((GnollGeomancer) ch).m_ThrowingRocksFromPosition.Get()){
 					candidateRocks.remove((Integer)i);
 				}
 			} else if (ch instanceof GnollSapper){
-				candidateRocks.remove((Integer)((GnollSapper) ch).throwingRockFromPos);
+				candidateRocks.remove((Integer)((GnollSapper) ch).ThrowingRocksFromPosition());
 			}
 		}
 
@@ -682,7 +682,7 @@ public class GnollGeomancer extends Mob {
 						}
 
 						if (ch != null && !(ch instanceof GnollGeomancer)){
-							ch.damage(Random.NormalIntRange(6, 12), new GnollGeomancer.Boulder());
+							ch.Damage(Random.NormalIntRange(6, 12), new GnollGeomancer.Boulder(), DamageType.of(DamageType.BLUDGEONING));
 
 							if (ch == Dungeon.hero){
 								Statistics.questScores[2] -= 100;
@@ -789,7 +789,7 @@ public class GnollGeomancer extends Mob {
 
 		@Override
 		public void affectChar(Char ch) {
-			ch.damage(Random.NormalIntRange(6, 12), this);
+			ch.Damage(Random.NormalIntRange(6, 12), this, DamageType.of(DamageType.BLUDGEONING));
 			if (ch == Dungeon.hero){
 				Statistics.questScores[2] -= 100;
 			}
@@ -815,54 +815,37 @@ public class GnollGeomancer extends Mob {
 
 	public static class RockArmor extends ShieldBuff { }
 
-	public static final String HITS = "hits";
-
-	private static final String ABILITY_COOLDOWN = "ability_cooldown";
-	private static final String LAST_ABILITY_WAS_ROCKFALL = "last_ability_was_rockfall";
-
-	private static final String ROCK_FROM_POS = "rock_from_pos";
-	private static final String ROCK_TO_POS = "rock_to_pos";
-
-	private static final String SAPPER_ID = "sapper_id";
-	private static final String SAPPER_SPAWNS = "sapper_spawns";
-
+	private BundleableProperty.Int m_Hits = new BundleableProperty.Int("hits", 0);
+	private BundleableProperty.Int m_AbilityCooldown = new BundleableProperty.Int("ability_cooldown", Random.NormalIntRange(3, 5));
+	private BundleableProperty.Bool m_LastAbilityWasRockfall = new BundleableProperty.Bool("last_ability_was_rockfall", false);
+	private BundleableProperty.IntArray m_ThrowingRocksFromPosition = new BundleableProperty.IntArray("rock_from_pos", null);
+	private BundleableProperty.Int m_ThrowingRocksToPosition = new BundleableProperty.Int("rock_to_pos", -1);
+	private BundleableProperty.Int m_SapperID = new BundleableProperty.Int("sapper_id", -1);
+	private BundleableProperty.IntArray m_SapperSpawns = new BundleableProperty.IntArray("sapper_spawns", null);
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(HITS, hits);
-
-		bundle.put(ABILITY_COOLDOWN, abilityCooldown);
-		bundle.put(LAST_ABILITY_WAS_ROCKFALL, lastAbilityWasRockfall);
-
-		if (throwingRocksFromPos != null) {
-			bundle.put(ROCK_FROM_POS, throwingRocksFromPos);
-		}
-		bundle.put(ROCK_TO_POS, throwingRockToPos);
-
-		bundle.put(SAPPER_ID, sapperID);
-		if (sapperSpawns != null){
-			bundle.put(SAPPER_SPAWNS, sapperSpawns);
-		}
+		m_Hits.Store(bundle);
+		m_AbilityCooldown.Store(bundle);
+		m_LastAbilityWasRockfall.Store(bundle);
+		m_ThrowingRocksFromPosition.Store(bundle);
+		m_ThrowingRocksToPosition.Store(bundle);
+		m_SapperID.Store(bundle);
+		m_SapperSpawns.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		hits = bundle.getInt(HITS);
-		abilityCooldown = bundle.getInt(ABILITY_COOLDOWN);
-		lastAbilityWasRockfall = bundle.getBoolean(LAST_ABILITY_WAS_ROCKFALL);
+		m_Hits.Restore(bundle);
+		m_AbilityCooldown.Restore(bundle);
+		m_LastAbilityWasRockfall.Restore(bundle);
+		m_ThrowingRocksFromPosition.Restore(bundle);
+		m_ThrowingRocksToPosition.Restore(bundle);
+		m_SapperID.Restore(bundle);
+		m_SapperSpawns.Restore(bundle);
 
-		if (bundle.contains(ROCK_FROM_POS)) {
-			throwingRocksFromPos = bundle.getIntArray(ROCK_FROM_POS);
-		}
-		throwingRockToPos = bundle.getInt(ROCK_TO_POS);
-
-		sapperID = bundle.getInt(SAPPER_ID);
-		if (bundle.contains(SAPPER_SPAWNS)) {
-			sapperSpawns = bundle.getIntArray(SAPPER_SPAWNS);
-		}
-
-		if (hits >= 3){
+		if (m_Hits.Get() >= 3){
 			BossHealthBar.assignBoss(this);
 		}
 	}

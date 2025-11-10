@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -113,7 +114,7 @@ public class ChaliceOfBlood extends Artifact {
 			damage = rockArmor.absorb(damage);
 		}
 
-		damage -= hero.drRoll();
+		damage -= hero.drRoll(DamageType.of(DamageType.NONE));
 
 		hero.sprite.operate( hero.pos );
 		hero.busy();
@@ -126,7 +127,7 @@ public class ChaliceOfBlood extends Artifact {
 			hero.sprite.emitter().burst( ShadowParticle.CURSE, 4+(damage/10) );
 		}
 
-		hero.damage(damage, this);
+		hero.Damage(damage, this, DamageType.of(DamageType.NONE));
 
 		if (!hero.isAlive()) {
 			Badges.validateDeathFromFriendlyMagic();

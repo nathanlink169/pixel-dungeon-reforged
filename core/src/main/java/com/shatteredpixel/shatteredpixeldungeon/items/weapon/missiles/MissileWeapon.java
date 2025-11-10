@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.POINT_BLANK;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -37,7 +38,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -55,7 +60,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-abstract public class MissileWeapon extends Weapon {
+abstract public class MissileWeapon extends Weapon implements CombatModifier.AccuracyModifier, CombatModifier.ArmorModifier {
 
 	{
 		stackable = true;
@@ -212,30 +217,6 @@ abstract public class MissileWeapon extends Weapon {
 	}
 
 	@Override
-	public float accuracyFactor(Char owner, Char target) {
-		float accFactor = super.accuracyFactor(owner, target);
-		if (owner instanceof Hero && owner.buff(Momentum.class) != null && owner.buff(Momentum.class).freerunning()){
-			accFactor *= 1f + 0.2f*((Hero) owner).pointsInTalent(Talent.PROJECTILE_MOMENTUM);
-		}
-
-		accFactor *= adjacentAccFactor(owner, target);
-
-		return accFactor;
-	}
-
-	protected float adjacentAccFactor(Char owner, Char target){
-		if (Dungeon.level.adjacent( owner.pos, target.pos )) {
-			if (owner instanceof Hero){
-				return (0.5f + 0.2f*((Hero) owner).pointsInTalent(Talent.POINT_BLANK));
-			} else {
-				return 0.5f;
-			}
-		} else {
-			return 1.5f;
-		}
-	}
-
-	@Override
 	public void doThrow(Hero hero) {
 		parent = null; //reset parent before throwing, just incase
 		super.doThrow(hero);
@@ -272,22 +253,6 @@ abstract public class MissileWeapon extends Weapon {
 	}
 
 	@Override
-	public int proc(Char attacker, Char defender, int damage) {
-		if (attacker == Dungeon.hero && Random.Int(3) < Dungeon.hero.pointsInTalent(Talent.SHARED_ENCHANTMENT)){
-			if (this instanceof Dart && ((Dart) this).crossbowHasEnchant(Dungeon.hero)){
-				//do nothing
-			} else {
-				SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
-				if (bow != null && bow.enchantment != null && Dungeon.hero.buff(MagicImmune.class) == null) {
-					damage = bow.enchantment.proc(this, attacker, defender, damage);
-				}
-			}
-		}
-
-		return super.proc(attacker, defender, damage);
-	}
-
-	@Override
 	public Item random() {
 		if (!stackable) return this;
 		
@@ -311,7 +276,7 @@ abstract public class MissileWeapon extends Weapon {
 	
 	@Override
 	public float castDelay(Char user, int dst) {
-		return delayFactor( user );
+		return timeToUse();
 	}
 	
 	protected void rangedHit( Char enemy, int cell ){
@@ -406,14 +371,14 @@ abstract public class MissileWeapon extends Weapon {
 	}
 	
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		if (owner instanceof Hero && ((Hero)owner).hasTalent(EFFECTIVE_SHOT) && ((Hero)owner).heroClass != HeroClass.ARTIFICER) {
-			if (owner.buff(EffectiveShotCooldown.class) == null) {
+	public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+		if (usedByHero && Dungeon.hero.hasTalent(EFFECTIVE_SHOT) && Dungeon.hero.heroClass != HeroClass.ARTIFICER) {
+			if (Dungeon.hero.buff(EffectiveShotCooldown.class) == null) {
 				isMaxDamage = true;
-				Buff.affect(owner, EffectiveShotCooldown.class).set(7 - ((Hero) owner).pointsInTalent(EFFECTIVE_SHOT));
+				Buff.affect(Dungeon.hero, EffectiveShotCooldown.class).set(7 - Dungeon.hero.pointsInTalent(EFFECTIVE_SHOT));
 			}
 			else {
-				EffectiveShotCooldown cd = owner.buff(EffectiveShotCooldown.class);
+				EffectiveShotCooldown cd = Dungeon.hero.buff(EffectiveShotCooldown.class);
 				if (cd.left == 1) {
 					cd.detach();
 				}
@@ -423,15 +388,15 @@ abstract public class MissileWeapon extends Weapon {
 			}
 		}
 
-		int damage = augment.damageFactor(super.damageRoll( owner, isMaxDamage));
+		int damage = augment.damageFactor(super.damageRoll(isMaxDamage, usedByHero));
 		
-		if (owner instanceof Hero) {
-			int exStr = ((Hero)owner).STR() - STRReq();
+		if (usedByHero) {
+			int exStr = Dungeon.hero.STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
-			if (owner.buff(Momentum.class) != null && owner.buff(Momentum.class).freerunning()) {
-				damage = Math.round(damage * (1f + 0.15f * ((Hero) owner).pointsInTalent(Talent.PROJECTILE_MOMENTUM)));
+			if (Dungeon.hero.buff(Momentum.class) != null && Dungeon.hero.buff(Momentum.class).freerunning()) {
+				damage = Math.round(damage * (1f + 0.15f * Dungeon.hero.pointsInTalent(Talent.PROJECTILE_MOMENTUM)));
 			}
 		}
 		
@@ -495,7 +460,8 @@ abstract public class MissileWeapon extends Weapon {
 				tier,
 				Math.round(augment.damageFactor(min())),
 				Math.round(augment.damageFactor(max())),
-				STRReq());
+				STRReq(),
+				DamageType.FormatDamageTypeString(damageType));
 
 		if (Dungeon.hero != null) {
 			if (STRReq() > Dungeon.hero.STR()) {
@@ -558,6 +524,43 @@ abstract public class MissileWeapon extends Weapon {
 		bundleRestoring = false;
 		spawnedForEffect = bundle.getBoolean(SPAWNED);
 		durability = bundle.getFloat(DURABILITY);
+	}
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		float multiplier = 1.0f;
+		if (context.attacker == Dungeon.hero && Dungeon.hero.buff(Momentum.class) != null && Dungeon.hero.buff(Momentum.class).freerunning()) {
+			multiplier *= 1f + 0.2f * Dungeon.hero.pointsInTalent(Talent.PROJECTILE_MOMENTUM);
+		}
+
+		if (Dungeon.level.adjacent(context.attacker.pos, context.defender.pos)) {
+			if (Dungeon.hero.hasTalent(POINT_BLANK)) {
+				return currentAccuracy * multiplier; // handled in TalentManager.java
+			}
+			return currentAccuracy * 0.5f * multiplier;
+		}
+		return currentAccuracy * 1.5f * multiplier;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public int modifyArmor(AttackContext context, int currentArmor) {
+		if (context.attacker instanceof Hero) {
+			Hero hero = (Hero) context.attacker;
+			if (hero.belongings.attackingWeapon() == this && hero.subClass == HeroSubClass.SNIPER && context.distance > 1) {
+				return 0; // Complete armor penetration
+			}
+		}
+		return currentArmor;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == Dungeon.hero;
 	}
 
 	public static class PlaceHolder extends MissileWeapon {

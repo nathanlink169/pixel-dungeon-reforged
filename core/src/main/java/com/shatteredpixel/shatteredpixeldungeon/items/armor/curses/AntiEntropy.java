@@ -29,6 +29,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Freezing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
@@ -37,28 +41,35 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class AntiEntropy extends Glyph {
+public class AntiEntropy extends Glyph implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
-	
-	@Override
-	public int proc( Armor armor, Char attacker, Char defender, int damage) {
 
-		float procChance = 1/8f * procChanceMultiplier(defender);
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/8f * procChanceMultiplier(context.defender);
 		if ( Random.Float() < procChance ) {
 
 			for (int i : PathFinder.NEIGHBOURS8){
-				Freezing.affect(defender.pos+i);
+				Freezing.affect(context.defenderPosition+i);
 			}
 
-			if (!Dungeon.level.water[defender.pos]) {
-				Buff.affect(defender, Burning.class).reignite(defender, 4);
+			if (!Dungeon.level.water[context.defenderPosition]) {
+				Buff.affect(context.defender, Burning.class).reignite(context.defender, 4);
 			}
-			defender.sprite.emitter().burst( FlameParticle.FACTORY, 5 );
+			context.defender.sprite.emitter().burst( FlameParticle.FACTORY, 5 );
 
 		}
-		
-		return damage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

@@ -32,7 +32,14 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageBonus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageMultiplier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -50,7 +57,7 @@ public class Sword extends MeleeWeapon {
 
 		tier = 3;
 
-		damageType = DamageType.PIERCING | DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.PIERCING, DamageType.SLASHING);
 	}
 
 	@Override
@@ -69,9 +76,7 @@ public class Sword extends MeleeWeapon {
 
 	@Override
 	protected void duelistAbility(Hero hero, Integer target) {
-		//+(5+lvl) damage, roughly +45% base dmg, +40% scaling
-		int dmgBoost = augment.damageFactor(5 + buffedLvl());
-		Sword.cleaveAbility(hero, target, 1, dmgBoost, this);
+		Sword.cleaveAbility(hero, target, this, augment.damageFactor(5 + buffedLvl()));
 	}
 
 	@Override
@@ -89,7 +94,7 @@ public class Sword extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
-	public static void cleaveAbility(Hero hero, Integer target, float dmgMulti, int dmgBoost, MeleeWeapon wep){
+	public static void cleaveAbility(Hero hero, Integer target, MeleeWeapon wep, int damageBoost) {
 		if (target == null) {
 			return;
 		}
@@ -113,15 +118,29 @@ public class Sword extends MeleeWeapon {
 			public void call() {
 				wep.beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING | DamageType.SLASHING, Char.AttackType.MELEE)){
+				InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+				GenericPreArmourDamageBonus gdb = GenericPreArmourDamageBonus.AttackerModifier(damageBoost);
+				iam.attachTo(hero);
+				gdb.attachTo(hero);
+
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.RANGED)
+						.damageType(DamageType.of(DamageType.SLASHING))
+						.build();
+
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
+				iam.detach();
+				gdb.detach();
 
 				Invisibility.dispel();
 
 				if (!enemy.isAlive()){
 					hero.next();
-					wep.onAbilityKill(hero, enemy);
 					if (hero.buff(CleaveTracker.class) != null) {
 						hero.buff(CleaveTracker.class).detach();
 					} else {

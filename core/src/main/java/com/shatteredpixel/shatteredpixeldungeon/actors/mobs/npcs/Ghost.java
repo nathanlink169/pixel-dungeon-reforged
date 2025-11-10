@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.FetidRat;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GnollTrickster;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.GreatCrab;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.LeatherArmor;
@@ -48,8 +49,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.SewerLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndQuest;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndSadGhost;
@@ -60,6 +59,8 @@ import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
+import java.util.EnumSet;
+
 public class Ghost extends NPC {
 
 	{
@@ -69,10 +70,10 @@ public class Ghost extends NPC {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ghost; }
 
-	protected class Wandering extends Mob.Wandering{
+	protected static class Wandering extends Mob.Wandering{
 		@Override
-		protected int randomDestination() {
-			int pos = super.randomDestination();
+		protected int randomDestination(Mob mob) {
+			int pos = super.randomDestination(mob);
 			//cannot wander onto heaps or the level exit
 			if (Dungeon.level.heaps.get(pos) != null || pos == Dungeon.level.exit()){
 				return -1;
@@ -97,7 +98,7 @@ public class Ghost extends NPC {
 	}
 
 	@Override
-	public int defenseSkill( Char enemy ) {
+	public int defenseSkill(  ) {
 		return INFINITE_EVASION;
 	}
 	
@@ -107,8 +108,9 @@ public class Ghost extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 		//do nothing
+		return 0;
 	}
 
 	@Override

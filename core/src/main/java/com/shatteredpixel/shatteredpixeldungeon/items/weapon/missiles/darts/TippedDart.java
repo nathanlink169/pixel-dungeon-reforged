@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
@@ -53,6 +54,7 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
@@ -124,6 +126,42 @@ public abstract class TippedDart extends Dart {
 			
 		}
 	}
+
+	protected boolean processingChargedShot = false;
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		applyDartEffect(context.attacker, context.defender);
+
+		Hero hero = (Hero)context.attacker;
+		Crossbow.ChargedShot chargedBuff = hero.buff(Crossbow.ChargedShot.class);
+
+		// Double check the buff still exists
+		if (chargedBuff == null) return;
+
+		// Build distance map for AoE
+		PathFinder.buildDistanceMap(context.defenderPosition, Dungeon.level.passable, 3);
+		int[] distance = PathFinder.distance.clone();
+
+		processingChargedShot = true;
+
+		// Apply dart effect to all chars in range (except primary target)
+		for (Char ch : Actor.chars()) {
+			if (ch != context.defender
+					&& distance[ch.pos] <= 3
+					&& distance[ch.pos] != Integer.MAX_VALUE) {
+
+				applyDartEffect(context.attacker, ch);
+			}
+		}
+
+		processingChargedShot = false;
+
+		// Remove charged shot buff after AoE is processed
+		chargedBuff.detach();
+	}
+
+	protected abstract void applyDartEffect(Char attacker, Char defender);
 	
 	//exact same damage as regular darts, despite being higher tier.
 

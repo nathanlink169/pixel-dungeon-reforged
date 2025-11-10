@@ -224,10 +224,6 @@ public abstract class Level implements Bundlable {
 
 			addItemToSpawn(Generator.random(Generator.Category.FOOD));
 
-			if ((Dungeon.depth + 1) % 5 == 0) {
-				addItemToSpawn(Generator.random(Generator.Category.FOOD));
-			}
-
 			if (Dungeon.posNeeded()) {
 				Dungeon.LimitedDrops.STRENGTH_POTIONS.count++;
 				addItemToSpawn( new PotionOfStrength() );

@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ArtifactRecharge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.CounterBuff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotTracker;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EnhancedRings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
@@ -50,7 +51,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.DivineSense;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.RecallInscription;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -290,8 +293,92 @@ public enum Talent {
 		public void tintIcon(Image icon) { icon.hardlight(0.7f, 0.4f, 0.7f); }
 		public float iconFadePercent() { return Math.max(0, visualcooldown() / 20); }
 	};
-	public static class SpiritBladesTracker extends FlavourBuff{};
-	public static class PatientStrikeTracker extends Buff {
+	public static class SpiritBladesTracker extends FlavourBuff implements CombatModifier.OnHitEffect, CombatModifier.PostArmorDamageModifier, CombatModifier.OnDamageEffect {
+		@Override
+		public void onDamage(AttackContext context, int damageDealt) {
+			SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+			if (bow == null) {
+				return;
+			}
+			Weapon.Enchantment enchantment = bow.enchantment;
+			if (enchantment == null) {
+				return;
+			}
+
+			if (enchantment instanceof CombatModifier.OnDamageEffect) {
+				((CombatModifier.OnDamageEffect)enchantment).onDamage(context, damageDealt);
+			}
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+			if (bow == null) {
+				return;
+			}
+			Weapon.Enchantment enchantment = bow.enchantment;
+			if (enchantment == null) {
+				return;
+			}
+
+			if (enchantment instanceof CombatModifier.OnHitEffect) {
+				((CombatModifier.OnHitEffect)enchantment).onHit(context, finalDamage);
+			}
+
+			if (Random.Int(10) < 3*Dungeon.hero.pointsInTalent(Talent.SPIRIT_BLADES)){
+				detach();
+			}
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+			if (bow == null) {
+				return currentDamage;
+			}
+			Weapon.Enchantment enchantment = bow.enchantment;
+			if (enchantment == null) {
+				return currentDamage;
+			}
+
+			if (enchantment instanceof CombatModifier.PostArmorDamageModifier) {
+				return ((CombatModifier.PostArmorDamageModifier)enchantment).modifyPostArmorDamage(context, currentDamage);
+			}
+			return currentDamage;
+		}
+
+		@Override
+		public int priority() {
+			SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+			if (bow == null) {
+				return Priority.NORMAL;
+			}
+			Weapon.Enchantment enchantment = bow.enchantment;
+			if (enchantment == null) {
+				return Priority.NORMAL;
+			}
+
+			if (enchantment instanceof CombatModifier) {
+				return ((CombatModifier)enchantment).priority();
+			}
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			SpiritBow bow = Dungeon.hero.belongings.getItem(SpiritBow.class);
+			if (bow == null) {
+				return false;
+			}
+			Weapon.Enchantment enchantment = bow.enchantment;
+			if (enchantment == null) {
+				return false;
+			}
+
+			return context.attacker == target;
+		}
+	};
+	public static class PatientStrikeTracker extends Buff implements CombatModifier.PreArmorDamageModifier {
 		public int pos;
 		{ type = Buff.buffType.POSITIVE; }
 		public int icon() { return BuffIndicator.TIME; }
@@ -316,14 +403,51 @@ public enum Talent {
 			super.restoreFromBundle(bundle);
 			pos = bundle.getInt(POS);
 		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			detach();
+			return currentDamage + Random.IntRange(Dungeon.hero.pointsInTalent(Talent.PATIENT_STRIKE), 2);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target && !(context.attacker.getWeapon() instanceof MissileWeapon) && context.attackerPosition == pos;
+		}
 	};
 	public static class AggressiveBarrierCooldown extends FlavourBuff{
 		public int icon() { return BuffIndicator.TIME; }
 		public void tintIcon(Image icon) { icon.hardlight(0.35f, 0f, 0.7f); }
 		public float iconFadePercent() { return Math.max(0, visualcooldown() / 50); }
 	};
-	public static class LiquidAgilEVATracker extends FlavourBuff{};
-	public static class LiquidAgilACCTracker extends FlavourBuff{
+	public static class LiquidAgilEVATracker extends FlavourBuff implements CombatModifier.EvasionModifier {
+		@Override
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			if (Dungeon.hero.pointsInTalent(LIQUID_AGILITY) == 2) {
+				return Char.INFINITE_EVASION;
+			}
+			if (Dungeon.hero.pointsInTalent(LIQUID_AGILITY) == 1) {
+				return currentEvasion * 3.0f;
+			}
+			return currentEvasion;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
+		}
+	};
+	public static class LiquidAgilACCTracker extends FlavourBuff implements CombatModifier.AccuracyModifier {
 		public int uses;
 
 		{ type = buffType.POSITIVE; }
@@ -341,6 +465,27 @@ public enum Talent {
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			uses = bundle.getInt(USES);
+		}
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			if (Dungeon.hero.pointsInTalent(LIQUID_AGILITY) == 2) {
+				return Char.INFINITE_ACCURACY;
+			}
+			if (Dungeon.hero.pointsInTalent(LIQUID_AGILITY) == 1) {
+				return currentAccuracy * 3.0f;
+			}
+			return currentAccuracy;
+		}
+
+		@Override
+		public int priority() {
+			return 0;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
 		}
 	};
 	public static class LethalHasteCooldown extends FlavourBuff{
@@ -391,11 +536,38 @@ public enum Talent {
 			object = bundle.getInt(OBJECT);
 		}
 	}
-	public static class PreciseAssaultTracker extends FlavourBuff{
+	public static class PreciseAssaultTracker extends FlavourBuff implements CombatModifier.AccuracyModifier {
 		{ type = buffType.POSITIVE; }
 		public int icon() { return BuffIndicator.INVERT_MARK; }
 		public void tintIcon(Image icon) { icon.hardlight(1f, 1f, 0.0f); }
 		public float iconFadePercent() { return Math.max(0, 1f - (visualcooldown() / 5)); }
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			switch (Dungeon.hero.pointsInTalent(Talent.PRECISE_ASSAULT)) {
+				case 1:
+					currentAccuracy *= 2.0f;
+					break;
+				case 2:
+					currentAccuracy *= 5.0f;
+					break;
+				case 3:
+					currentAccuracy = Char.INFINITE_ACCURACY;
+					break;
+			}
+
+			return currentAccuracy;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
 	};
 	public static class VariedChargeTracker extends Buff{
 		public Class weapon;
@@ -596,10 +768,14 @@ public enum Talent {
 			}
 		}
 
-		if (talent == PATTERN_RECOGNITION) {
+		if (talent == PATTERN_RECOGNITION && !ShardOfOblivion.passiveIDDisabled()) {
 			for (Potion p : hero.belongings.getAllItems(Potion.class)) {
 				p.identify(false);
 			}
+		}
+
+		if (talent == EFFECTIVE_SHOT) {
+			Buff.affect(hero, EffectiveShotTracker.class);
 		}
 	}
 
@@ -728,8 +904,29 @@ public enum Talent {
 		{ actPriority = HERO_PRIO + 1; }
 	}
 
-	public static class ArtificerFoodEvasionBonus extends FlavourBuff {
+	public static class ArtificerFoodEvasionBonus extends FlavourBuff implements CombatModifier.EvasionModifier {
 		{ actPriority = HERO_PRIO + 1;}
+
+		@Override
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			if (Dungeon.hero.pointsInTalent(QUICK_CALIBRATION) == 2) {
+				return Char.INFINITE_EVASION;
+			}
+			if (Dungeon.hero.pointsInTalent(QUICK_CALIBRATION) == 1 && Random.Int(4) != 0) {
+				return Char.INFINITE_EVASION;
+			}
+			return 0;
+		}
+
+		@Override
+		public int priority() {
+			return 0;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return false;
+		}
 	}
 
 	public static float itemIDSpeedFactor( Hero hero, Item item ){
@@ -813,7 +1010,7 @@ public enum Talent {
 			}
 			for (Char ch : affected){
 				if (hero.pointsInTalent(REACTIVE_CHEMISTRY) == 2) {
-					ch.damage(6, hero);
+					ch.Damage(6, hero, DamageType.of(DamageType.EXPLOSIVE));
 
 					//trace a ballistica to our target (which will also extend past them
 					Ballistica trajectory = new Ballistica(hero.pos, ch.pos, Ballistica.STOP_TARGET);
@@ -828,7 +1025,7 @@ public enum Talent {
 							hero);
 				}
 				else { // hero.pointsInTalent(REACTIVE_CHEMISTRY == 1
-					ch.damage(4, hero);
+					ch.Damage(4, hero, DamageType.of(DamageType.EXPLOSIVE));
 				}
 			}
 		}
@@ -952,87 +1149,49 @@ public enum Talent {
 		}
 	}
 
-	public static int onAttackProc( Hero hero, Char enemy, int dmg ){
-
-		if (hero.hasTalent(Talent.PROVOKED_ANGER)
-			&& hero.buff(ProvokedAngerTracker.class) != null){
-			dmg += 1 + 2*hero.pointsInTalent(Talent.PROVOKED_ANGER);
-			hero.buff(ProvokedAngerTracker.class).detach();
-		}
-
-		if (hero.hasTalent(Talent.LINGERING_MAGIC)
-				&& hero.buff(LingeringMagicTracker.class) != null){
-			dmg += Random.IntRange(hero.pointsInTalent(Talent.LINGERING_MAGIC) , 2);
-			hero.buff(LingeringMagicTracker.class).detach();
-		}
-
-		if (hero.hasTalent(Talent.SUCKER_PUNCH)
-				&& enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)
-				&& enemy.buff(SuckerPunchTracker.class) == null){
-			dmg += Random.IntRange(hero.pointsInTalent(Talent.SUCKER_PUNCH) , 2);
-			Buff.affect(enemy, SuckerPunchTracker.class);
-		}
-
-		if (hero.hasTalent(Talent.FOLLOWUP_STRIKE) && enemy.isAlive() && enemy.alignment == Char.Alignment.ENEMY) {
-			if (hero.belongings.attackingWeapon() instanceof MissileWeapon) {
-				Buff.prolong(hero, FollowupStrikeTracker.class, 5f).object = enemy.id();
-			} else if (hero.buff(FollowupStrikeTracker.class) != null
-					&& hero.buff(FollowupStrikeTracker.class).object == enemy.id()){
-				dmg += 1 + hero.pointsInTalent(FOLLOWUP_STRIKE);
-				hero.buff(FollowupStrikeTracker.class).detach();
-			}
-		}
-
-		if (hero.hasTalent(Talent.VOLATILE_CHAIN) && enemy.isAlive() && enemy.alignment == Char.Alignment.ENEMY) {
-			if (hero.belongings.attackingWeapon() instanceof Gun) {
-				Buff.prolong(hero, VolatileChainTracker.class, 5f).object = enemy.id();
-			} else if (hero.buff(VolatileChainTracker.class) != null
-					&& hero.buff(VolatileChainTracker.class).object == enemy.id()) {
-				dmg += 1 + hero.pointsInTalent(VOLATILE_CHAIN);
-				hero.buff(VolatileChainTracker.class).detach();
-			}
-		}
-
-		if (hero.buff(Talent.SpiritBladesTracker.class) != null
-				&& Random.Int(10) < 3*hero.pointsInTalent(Talent.SPIRIT_BLADES)){
-			SpiritBow bow = hero.belongings.getItem(SpiritBow.class);
-			if (bow != null) dmg = bow.proc( hero, enemy, dmg );
-			hero.buff(Talent.SpiritBladesTracker.class).detach();
-		}
-
-		if (hero.hasTalent(PATIENT_STRIKE)){
-			if (hero.buff(PatientStrikeTracker.class) != null
-					&& !(hero.belongings.attackingWeapon() instanceof MissileWeapon)){
-				hero.buff(PatientStrikeTracker.class).detach();
-				dmg += Random.IntRange(hero.pointsInTalent(Talent.PATIENT_STRIKE), 2);
-			}
-		}
-
-		if (hero.hasTalent(DEADLY_FOLLOWUP) && enemy.alignment == Char.Alignment.ENEMY) {
-			if (hero.belongings.attackingWeapon() instanceof MissileWeapon) {
-				if (!(hero.belongings.attackingWeapon() instanceof SpiritBow.SpiritArrow)) {
-					Buff.prolong(hero, DeadlyFollowupTracker.class, 5f).object = enemy.id();
-				}
-			} else if (hero.buff(DeadlyFollowupTracker.class) != null
-					&& hero.buff(DeadlyFollowupTracker.class).object == enemy.id()){
-				dmg = Math.round(dmg * (1.0f + .1f*hero.pointsInTalent(DEADLY_FOLLOWUP)));
-			}
-		}
-
-		return dmg;
-	}
-
-	public static class ProvokedAngerTracker extends FlavourBuff{
+	public static class ProvokedAngerTracker extends FlavourBuff implements CombatModifier.PreArmorDamageModifier {
 		{ type = Buff.buffType.POSITIVE; }
 		public int icon() { return BuffIndicator.WEAPON; }
 		public void tintIcon(Image icon) { icon.hardlight(1.43f, 1.43f, 1.43f); }
 		public float iconFadePercent() { return Math.max(0, 1f - (visualcooldown() / 5)); }
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			detach();
+			return currentDamage + 1 + 2*Dungeon.hero.pointsInTalent(Talent.PROVOKED_ANGER);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
 	}
-	public static class LingeringMagicTracker extends FlavourBuff{
+	public static class LingeringMagicTracker extends FlavourBuff implements CombatModifier.PreArmorDamageModifier {
 		{ type = Buff.buffType.POSITIVE; }
 		public int icon() { return BuffIndicator.WEAPON; }
 		public void tintIcon(Image icon) { icon.hardlight(1.43f, 1.43f, 0f); }
 		public float iconFadePercent() { return Math.max(0, 1f - (visualcooldown() / 5)); }
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			detach();
+			return currentDamage + Random.IntRange(Dungeon.hero.pointsInTalent(Talent.LINGERING_MAGIC), 2);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
 	}
 	public static class SuckerPunchTracker extends Buff{};
 	public static class FollowupStrikeTracker extends FlavourBuff{

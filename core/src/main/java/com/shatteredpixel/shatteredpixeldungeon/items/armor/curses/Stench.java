@@ -27,26 +27,38 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.curses;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Random;
 
-public class Stench extends Armor.Glyph {
+public class Stench extends Armor.Glyph implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc(Armor armor, Char attacker, Char defender, int damage) {
-
-		float procChance = 1/8f * procChanceMultiplier(defender);
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/8f * procChanceMultiplier(context.defender);
 		if ( Random.Float() < procChance ) {
 
-			GameScene.add( Blob.seed( defender.pos, 250, ToxicGas.class ) );
+			GameScene.add( Blob.seed( context.defender.pos, 250, ToxicGas.class ) );
 
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

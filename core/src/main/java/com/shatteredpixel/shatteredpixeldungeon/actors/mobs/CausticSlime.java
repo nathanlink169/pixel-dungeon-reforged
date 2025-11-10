@@ -30,6 +30,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.GooBlob;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CausticSlimeSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -41,14 +43,15 @@ import com.watabou.utils.Random;
 public class CausticSlime extends Slime {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.causticslime; }
-	
+
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		if (Random.Int( 2 ) == 0) {
-			Buff.affect( enemy, Ooze.class ).set( Ooze.DURATION );
-			enemy.sprite.burst( 0x000000, 5 );
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			if (Random.Int( 2 ) == 0) {
+				Buff.affect( enemy, Ooze.class ).set( Ooze.DURATION );
+				enemy.sprite.burst( 0x000000, 5 );
+			}
 		}
-		
-		return super.attackProc( enemy, damage );
+		super.onDamage(context, damageDealt);
 	}
 }

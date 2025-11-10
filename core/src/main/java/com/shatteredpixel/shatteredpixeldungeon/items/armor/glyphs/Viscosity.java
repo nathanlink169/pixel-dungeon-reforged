@@ -26,11 +26,10 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -40,69 +39,50 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 
-public class Viscosity extends Glyph {
+public class Viscosity extends Glyph implements CombatModifier.PostArmorDamageModifier {
 	
 	private static ItemSprite.Glowing PURPLE = new ItemSprite.Glowing( 0x8844CC );
-	
-	@Override
-	public int proc( Armor armor, Char attacker, Char defender, int damage ) {
-
-		//we use a tracker so that this glyph can apply after armor
-		Buff.affect(defender, ViscosityTracker.class).level = armor.buffedLvl();
-
-		return damage;
-		
-	}
 
 	@Override
 	public Glowing glowing() {
 		return PURPLE;
 	}
 
-	public static class ViscosityTracker extends Buff {
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		int level = Math.max( 0, context.defender.getArmor().buffedLvl() );
 
-		{
-			actPriority = Actor.VFX_PRIO;
+		float percent = (level+1)/(float)(level+6);
+		percent *= genericProcChanceMultiplier(context.defender);
+
+		int amount;
+		if (percent > 1f){
+			currentDamage = Math.round(currentDamage / percent);
+			amount = currentDamage;
+		} else {
+			amount = (int)Math.ceil(currentDamage * percent);
 		}
 
-		private int level = 0;
+		if (amount > 0){
+			DeferedDamage deferred = Buff.affect( context.defender, DeferedDamage.class );
+			deferred.extend( amount );
 
-		public int deferDamage(int dmg){
-			//account for icon stomach (just skip the glyph)
-			if (target.buff(Talent.WarriorFoodImmunity.class) != null){
-				return dmg;
-			}
-
-			int level = Math.max( 0, this.level );
-
-			float percent = (level+1)/(float)(level+6);
-			percent *= genericProcChanceMultiplier(target);
-
-			int amount;
-			if (percent > 1f){
-				dmg = Math.round(dmg / percent);
-				amount = dmg;
-			} else {
-				amount = (int)Math.ceil(dmg * percent);
-			}
-
-			if (amount > 0){
-				DeferedDamage deferred = Buff.affect( target, DeferedDamage.class );
-				deferred.extend( amount );
-
-				target.sprite.showStatus( CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", amount) );
-			}
-
-			return dmg - amount;
+			context.defender.sprite.showStatus( CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", amount) );
 		}
 
-		@Override
-		public boolean act() {
-			detach();
-			return true;
-		}
-	};
-	
+		return currentDamage - amount;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.LOWEST;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
+	}
+
 	public static class DeferedDamage extends Buff {
 		
 		{
@@ -149,7 +129,7 @@ public class Viscosity extends Glyph {
 			if (target.isAlive()) {
 
 				int damageThisTick = Math.max(1, (int)(damage*0.1f));
-				target.damage( damageThisTick, this );
+				target.Damage( damageThisTick, this, DamageType.of(DamageType.DEFERRED));
 				if (target == Dungeon.hero && !target.isAlive()) {
 
 					Badges.validateDeathFromFriendlyMagic();

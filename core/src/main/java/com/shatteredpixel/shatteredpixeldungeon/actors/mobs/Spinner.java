@@ -36,16 +36,19 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpinnerSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Spinner extends Mob {
+import java.util.EnumSet;
+
+public class Spinner extends Mob implements CombatModifier.OnDamageEffect {
 	{
 		HUNTING = new Hunting();
 		FLEEING = new Fleeing();
@@ -60,41 +63,38 @@ public class Spinner extends Mob {
 	}
 
 	@Override
-	public int drRoll() {
+	public int drRoll(EnumSet<DamageType> damageType) {
 		if (getRandomizerEnabled(RandomTraits.FRAGILE_CHITIN)) {
 			return 0;
 		}
-		return super.drRoll();
+		return super.drRoll(damageType);
 	}
 
-	private int webCoolDown = 0;
-	private int lastEnemyPos = -1;
-
-	private static final String WEB_COOLDOWN = "web_cooldown";
-	private static final String LAST_ENEMY_POS = "last_enemy_pos";
+	private BundleableProperty.Int m_WebCooldown = new BundleableProperty.Int("web_cooldown", 0);
+	private BundleableProperty.Int m_LastEnemyPosition = new BundleableProperty.Int("last_enemy_pos", -1);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(WEB_COOLDOWN, webCoolDown);
-		bundle.put(LAST_ENEMY_POS, lastEnemyPos);
+		m_WebCooldown.Store(bundle);
+		m_LastEnemyPosition.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		webCoolDown = bundle.getInt( WEB_COOLDOWN );
-		lastEnemyPos = bundle.getInt( LAST_ENEMY_POS );
+		m_WebCooldown.Restore(bundle);
+		m_LastEnemyPosition.Restore(bundle);
 	}
 	
 	@Override
 	protected boolean act() {
 		if (state == HUNTING || state == FLEEING){
-			webCoolDown--;
+			m_WebCooldown.Decrement();
 		}
 
 		if (getRandomizerEnabled(RandomTraits.WEBLESS)) {
-			webCoolDown = 500;
+			m_WebCooldown.Set(500);
 		}
 
 		AiState lastState = state;
@@ -104,37 +104,16 @@ public class Spinner extends Mob {
 		//Also want to avoid updating when we visually shot a web this turn (don't want to change the position)
 		if (!(lastState == WANDERING && state == HUNTING)) {
 			if (!shotWebVisually){
-				if (enemy != null && enemySeen) {
-					lastEnemyPos = enemy.pos;
+				if (enemy != null && m_EnemySeen.Get()) {
+					m_LastEnemyPosition.Set(enemy.pos);
 				} else {
-					lastEnemyPos = Dungeon.hero.pos;
+					m_LastEnemyPosition.Set(Dungeon.hero.pos);
 				}
 			}
 			shotWebVisually = false;
 		}
 		
 		return result;
-	}
-
-	@Override
-	public int attackProc(Char enemy, int damage) {
-		damage = super.attackProc( enemy, damage );
-		if (Random.Int(2) == 0) {
-			int duration = Random.IntRange(7, 8);
-			if (getRandomizerEnabled(RandomTraits.POTENT_VENOM)) {
-				duration += 5;
-			}
-			if (getRandomizerEnabled(RandomTraits.WEAK_VENOM)) {
-				duration -= 5;
-			}
-			//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
-			duration = Math.round(duration * (AscensionChallenge.statModifier(this)/2f + 0.5f));
-			Buff.affect(enemy, Poison.class).set(duration);
-			webCoolDown = 0;
-			state = FLEEING;
-		}
-
-		return damage;
 	}
 	
 	private boolean shotWebVisually = false;
@@ -148,7 +127,7 @@ public class Spinner extends Mob {
 		if (enemy == null) return -1;
 
 		//don't web a non-moving enemy that we're going to attack
-		if (state != FLEEING && enemy.pos == lastEnemyPos && canAttack(enemy)){
+		if (state != FLEEING && enemy.pos == m_LastEnemyPosition.Get() && canAttack(enemy)){
 			return -1;
 		}
 
@@ -159,10 +138,10 @@ public class Spinner extends Mob {
 		else {
 			Ballistica b;
 			//aims web in direction enemy is moving, or between self and enemy if they aren't moving
-			if (lastEnemyPos == enemy.pos) {
+			if (m_LastEnemyPosition.Get() == enemy.pos) {
 				b = new Ballistica(enemy.pos, pos, Ballistica.WONT_STOP);
 			} else {
-				b = new Ballistica(lastEnemyPos, enemy.pos, Ballistica.WONT_STOP);
+				b = new Ballistica(m_LastEnemyPosition.Get(), enemy.pos, Ballistica.WONT_STOP);
 			}
 
 			int collisionIndex = 0;
@@ -218,7 +197,7 @@ public class Spinner extends Mob {
 				}
 			}
 			
-			webCoolDown = 10;
+			m_WebCooldown.Set(10);
 
 			if (Dungeon.level.heroFOV[enemy.pos]){
 				Dungeon.hero.interrupt();
@@ -258,50 +237,80 @@ public class Spinner extends Mob {
 		immunities.add(Web.class);
 	}
 
-	private class Hunting extends Mob.Hunting {
-
-		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (enemyInFOV && webCoolDown <= 0 && lastEnemyPos != -1){
-				if (webPos() != -1){
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( webPos() );
-						shotWebVisually = true;
-						return false;
-					} else {
-						shootWeb();
-						return true;
-					}
-				}
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (Random.Int(2) == 0) {
+			int duration = Random.IntRange(7, 8);
+			if (getRandomizerEnabled(RandomTraits.POTENT_VENOM)) {
+				duration += 5;
 			}
-
-			return super.act(enemyInFOV, justAlerted);
+			if (getRandomizerEnabled(RandomTraits.WEAK_VENOM)) {
+				duration -= 5;
+			}
+			//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
+			duration = Math.round(duration * (AscensionChallenge.statModifier(this)/2f + 0.5f));
+			Buff.affect(enemy, Poison.class).set(duration);
+			m_WebCooldown.Set(0);
+			state = FLEEING;
 		}
 	}
 
-	private class Fleeing extends Mob.Fleeing {
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	private static class Hunting extends Mob.Hunting {
 
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (buff( Terror.class ) == null && buff( Dread.class ) == null &&
-					enemyInFOV && enemy.buff( Poison.class ) == null){
-				state = HUNTING;
-				return true;
-			}
-
-			if (enemyInFOV && webCoolDown <= 0 && lastEnemyPos != -1){
-				if (webPos() != -1){
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( webPos() );
-						shotWebVisually = true;
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			Spinner s = (Spinner)mob;
+			if (enemyInFOV && s.m_WebCooldown.Get() <= 0 && s.m_LastEnemyPosition.Get() != -1){
+				if (s.webPos() != -1){
+					if (s.sprite != null && (s.sprite.visible || s.enemy.sprite.visible)) {
+						s.sprite.zap( s.webPos() );
+						s.shotWebVisually = true;
 						return false;
 					} else {
-						shootWeb();
+						s.shootWeb();
 						return true;
 					}
 				}
 			}
-			return super.act(enemyInFOV, justAlerted);
+
+			return super.act(s, enemyInFOV, justAlerted);
+		}
+	}
+
+	private static class Fleeing extends Mob.Fleeing {
+
+		@Override
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			Spinner s = (Spinner)mob;
+			if (s.buff( Terror.class ) == null && s.buff( Dread.class ) == null &&
+					enemyInFOV && s.enemy.buff( Poison.class ) == null){
+				s.state = s.HUNTING;
+				return true;
+			}
+
+			if (enemyInFOV && s.m_WebCooldown.Get() <= 0 && s.m_LastEnemyPosition.Get() != -1){
+				if (s.webPos() != -1){
+					if (s.sprite != null && (s.sprite.visible || s.enemy.sprite.visible)) {
+						s.sprite.zap( s.webPos() );
+						s.shotWebVisually = true;
+						return false;
+					} else {
+						s.shootWeb();
+						return true;
+					}
+				}
+			}
+			return super.act(s, enemyInFOV, justAlerted);
 		}
 
 	}

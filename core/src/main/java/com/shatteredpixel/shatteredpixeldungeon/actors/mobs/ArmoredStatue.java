@@ -26,21 +26,21 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.StatueSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class ArmoredStatue extends Statue {
 
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.armoredstatue; }
-
-	protected Armor armor;
 
 	@Override
 	public int GetMaxHP() {
@@ -51,45 +51,39 @@ public class ArmoredStatue extends Statue {
 	public void createWeapon(boolean useDecks) {
 		super.createWeapon(useDecks);
 
-		armor = Generator.randomArmor();
-		armor.cursed = false;
-		armor.inscribe(Armor.Glyph.random());
+		m_Armour.Set(Generator.randomArmor());
+		m_Armour.Get().cursed = false;
+		m_Armour.Get().inscribe(Armor.Glyph.random());
 	}
 
-	private static final String ARMOR	= "armor";
+	protected BundleableProperty.Object<Armor> m_Armour = new BundleableProperty.Object("armor", null);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( ARMOR, armor );
+		m_Armour.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		armor = (Armor)bundle.get( ARMOR );
+		m_Armour.Restore(bundle);
 	}
 
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange( armor.DRMin(), armor.DRMax());
+	public int drRoll(EnumSet<DamageType> damageType) {
+		return super.drRoll(damageType) + m_Armour.Get().drRoll(damageType);
 	}
 
 	//used in some glyph calculations
 	public Armor armor(){
-		return armor;
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		damage = armor.proc(enemy, this, damage);
-		return super.defenseProc(enemy, damage);
+		return m_Armour.Get();
 	}
 
 	@Override
 	public int glyphLevel(Class<? extends Armor.Glyph> cls) {
-		if (armor != null && armor.hasGlyph(cls, this)){
-			return Math.max(super.glyphLevel(cls), armor.buffedLvl());
+		if (m_Armour.Get() != null && m_Armour.Get().hasGlyph(cls, this)){
+			return Math.max(super.glyphLevel(cls), m_Armour.Get().buffedLvl());
 		} else {
 			return super.glyphLevel(cls);
 		}
@@ -99,8 +93,8 @@ public class ArmoredStatue extends Statue {
 	public CharSprite sprite() {
 		CharSprite sprite = super.sprite();
 		if (sprite instanceof StatueSprite) {
-			if (armor != null) {
-				((StatueSprite) sprite).setArmor(armor.tier);
+			if (m_Armour.Get() != null) {
+				((StatueSprite) sprite).setArmor(m_Armour.Get().tier);
 			} else {
 				((StatueSprite) sprite).setArmor(3);
 			}
@@ -109,24 +103,28 @@ public class ArmoredStatue extends Statue {
 	}
 
 	@Override
-	public int GetDefenseSkillInternal() {
-		return Math.round(armor.evasionFactor(this, super.defenseSkill(enemy)));
+	public int defenseSkill() {
+		return Math.round(super.defenseSkill() + m_Armour.Get().augment.evasionFactor(m_Armour.Get().buffedLvl()));
 	}
 
 	@Override
 	public void die( Object cause ) {
-		armor.identify(false);
-		Dungeon.level.drop( armor, pos ).sprite.drop();
+		m_Armour.Get().identify(false);
+		Dungeon.level.drop( m_Armour.Get(), pos ).sprite.drop();
 		super.die( cause );
 	}
 
 	@Override
 	public String description(boolean forceNoMonsterUnknown) {
 		String desc = Messages.get(this, "desc");
-		if (weapon != null && armor != null){
-			desc += "\n\n" + Messages.get(this, "desc_arm_wep", weapon.name(), armor.name());
+		if (m_Weapon.Get() != null && m_Armour.Get() != null){
+			desc += "\n\n" + Messages.get(this, "desc_arm_wep", m_Weapon.Get().name(), m_Armour.Get().name());
 		}
 		return desc;
 	}
 
+	@Override
+	public Armor getArmor() {
+		return m_Armour.Get();
+	}
 }

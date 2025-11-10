@@ -38,13 +38,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.AscendedForm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Projecting;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -195,14 +198,14 @@ public abstract class MeleeWeapon extends Weapon {
 		updateQuickslot();
 	}
 
-	protected void afterAbilityUsed( Hero hero ){
+	protected void afterAbilityUsed( Hero hero ) {
 		hero.belongings.abilityWeapon = null;
-		if (hero.hasTalent(Talent.PRECISE_ASSAULT)){
-			Buff.prolong(hero, Talent.PreciseAssaultTracker.class, hero.cooldown()+4f);
+		if (hero.hasTalent(Talent.PRECISE_ASSAULT)) {
+			Buff.prolong(hero, Talent.PreciseAssaultTracker.class, hero.cooldown() + 4f);
 		}
-		if (hero.hasTalent(Talent.VARIED_CHARGE)){
+		if (hero.hasTalent(Talent.VARIED_CHARGE)) {
 			Talent.VariedChargeTracker tracker = hero.buff(Talent.VariedChargeTracker.class);
-			if (tracker == null || tracker.weapon == getClass() || tracker.weapon == null){
+			if (tracker == null || tracker.weapon == getClass() || tracker.weapon == null) {
 				Buff.affect(hero, Talent.VariedChargeTracker.class).weapon = getClass();
 			} else {
 				tracker.detach();
@@ -213,33 +216,26 @@ public abstract class MeleeWeapon extends Weapon {
 		}
 		if (hero.hasTalent(Talent.COMBINED_LETHALITY)) {
 			Talent.CombinedLethalityAbilityTracker tracker = hero.buff(Talent.CombinedLethalityAbilityTracker.class);
-			if (tracker == null || tracker.weapon == this || tracker.weapon == null){
+			if (tracker == null || tracker.weapon == this || tracker.weapon == null) {
 				Buff.affect(hero, Talent.CombinedLethalityAbilityTracker.class, hero.cooldown()).weapon = this;
 			} else {
 				//we triggered the talent, so remove the tracker
 				tracker.detach();
 			}
 		}
-		if (hero.hasTalent(Talent.COMBINED_ENERGY)){
+		if (hero.hasTalent(Talent.COMBINED_ENERGY)) {
 			Talent.CombinedEnergyAbilityTracker tracker = hero.buff(Talent.CombinedEnergyAbilityTracker.class);
-			if (tracker == null || !tracker.monkAbilused){
+			if (tracker == null || !tracker.monkAbilused) {
 				Buff.prolong(hero, Talent.CombinedEnergyAbilityTracker.class, 5f).wepAbilUsed = true;
 			} else {
 				tracker.wepAbilUsed = true;
 				Buff.affect(hero, MonkEnergy.class).processCombinedEnergy(tracker);
 			}
 		}
-		if (hero.buff(Talent.CounterAbilityTacker.class) != null){
+		if (hero.buff(Talent.CounterAbilityTacker.class) != null) {
 			Charger charger = Buff.affect(hero, Charger.class);
-			charger.gainCharge(hero.pointsInTalent(Talent.COUNTER_ABILITY)*0.375f);
+			charger.gainCharge(hero.pointsInTalent(Talent.COUNTER_ABILITY) * 0.375f);
 			hero.buff(Talent.CounterAbilityTacker.class).detach();
-		}
-	}
-
-	public static void onAbilityKill( Hero hero, Char killed ){
-		if (killed.alignment == Char.Alignment.ENEMY && hero.hasTalent(Talent.LETHAL_HASTE)){
-			//effectively 3/5 turns of greater haste
-			Buff.affect(hero, GreaterHaste.class).set(2 + 2*hero.pointsInTalent(Talent.LETHAL_HASTE));
 		}
 	}
 
@@ -298,16 +294,46 @@ public abstract class MeleeWeapon extends Weapon {
 	}
 
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		int damage = augment.damageFactor(super.damageRoll( owner, isMaxDamage));
+	public int damageRoll(boolean isMaxDamage, boolean userIsHero) {
+		int damage = super.damageRoll( isMaxDamage, userIsHero );
 
-		if (owner instanceof Hero) {
-			int exStr = ((Hero)owner).STR() - STRReq();
+		if (userIsHero) {
+			int exStr = Dungeon.hero.STR() - STRReq();
 			if (exStr > 0) {
 				damage += Hero.heroDamageIntRange( 0, exStr );
 			}
 		}
 		return damage;
+	}
+
+	// TODO: This could probably be a combat modifier, so that enemies could modify their own reach as well?
+	@Override
+	public int reachFactor( Char owner ){
+		int reach = GetWeaponReach();
+
+		// Unarmed fighting resets to 1 (brawler's stance)
+		if (owner instanceof Hero && RingOfForce.fightingUnarmed((Hero) owner)) {
+			reach = 1;
+			if (!RingOfForce.unarmedGetsWeaponEnchantment((Hero) owner)) {
+				return reach;
+			}
+		}
+
+		// Ascended Form adds +2 reach
+		if (owner instanceof Hero && owner.buff(AscendedForm.AscendBuff.class) != null) {
+			reach += 2;
+		}
+
+		// Projecting enchantment adds reach based on enchantment power
+		if (hasEnchant(Projecting.class, owner)) {
+			return reach + Math.round(Enchantment.genericProcChanceMultiplier(owner));
+		}
+
+		return reach;
+	}
+
+	public int GetWeaponReach() {
+		return 1;
 	}
 	
 	@Override
@@ -316,7 +342,7 @@ public abstract class MeleeWeapon extends Weapon {
 		String info = super.info();
 
 		if (levelKnown) {
-			info += "\n\n" + Messages.get(MeleeWeapon.class, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq());
+			info += "\n\n" + Messages.get(MeleeWeapon.class, "stats_known", tier, augment.damageFactor(min()), augment.damageFactor(max()), STRReq(), DamageType.FormatDamageTypeString(damageType));
 			if (Dungeon.hero != null) {
 				if (STRReq() > Dungeon.hero.STR()) {
 					info += " " + Messages.get(Weapon.class, "too_heavy");
@@ -325,7 +351,7 @@ public abstract class MeleeWeapon extends Weapon {
 				}
 			}
 		} else {
-			info += "\n\n" + Messages.get(MeleeWeapon.class, "stats_unknown", tier, min(0), max(0), STRReq(0));
+			info += "\n\n" + Messages.get(MeleeWeapon.class, "stats_unknown", tier, min(0), max(0), STRReq(0), DamageType.FormatDamageTypeString(damageType));
 			if (Dungeon.hero != null && STRReq(0) > Dungeon.hero.STR()) {
 				info += " " + Messages.get(MeleeWeapon.class, "probably_too_heavy");
 			}
@@ -570,7 +596,7 @@ public abstract class MeleeWeapon extends Weapon {
 				return;
 			}
 
-			KindOfWeapon temp = Dungeon.hero.belongings.weapon;
+			Weapon temp = Dungeon.hero.belongings.weapon;
 			Dungeon.hero.belongings.weapon = Dungeon.hero.belongings.secondWep;
 			Dungeon.hero.belongings.secondWep = temp;
 

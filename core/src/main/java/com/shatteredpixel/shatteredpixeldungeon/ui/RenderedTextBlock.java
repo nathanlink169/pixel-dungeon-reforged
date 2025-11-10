@@ -117,12 +117,16 @@ public class RenderedTextBlock extends Component {
 		
 		clear();
 		words = new ArrayList<>();
+		boolean highlightingBlocked = false;
 		boolean highlighting = false;
 		for (String str : tokens){
 
 			//if highlighting is enabled, '_' or '**' is used to toggle highlighting on or off
 			// the actual symbols are not rendered
-			if ((str.equals("_") || str.equals("**")) && highlightingEnabled){
+			if (str.equals("^") && highlightingEnabled) {
+				highlightingBlocked = !highlightingBlocked;
+			}
+			else if ((str.equals("_") || str.equals("**")) && highlightingEnabled && !highlightingBlocked){
 				highlighting = !highlighting;
 			} else if (str.equals("\n")){
 				words.add(NEWLINE);

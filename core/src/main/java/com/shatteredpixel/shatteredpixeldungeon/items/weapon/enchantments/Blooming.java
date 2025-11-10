@@ -26,31 +26,37 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Regeneration;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class Blooming extends Weapon.Enchantment {
+public class Blooming extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 	
 	private static ItemSprite.Glowing DARK_GREEN = new ItemSprite.Glowing( 0x008800 );
-	
+
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage) {
-		int level = Math.max( 0, weapon.buffedLvl() );
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max( 0, context.attacker.getWeapon().buffedLvl() );
 
 		// lvl 0 - 33%
 		// lvl 1 - 50%
 		// lvl 2 - 60%
-		float procChance = (level+1f)/(level+3f) * procChanceMultiplier(attacker);
+		float procChance = (level+1f)/(level+3f) * procChanceMultiplier(context.attacker);
 		if (Random.Float() < procChance) {
 
 			float powerMulti = Math.max(1f, procChance);
@@ -61,39 +67,47 @@ public class Blooming extends Weapon.Enchantment {
 			} else {
 				plants = (float)Math.floor(plants);
 			}
-			
-			if (plantGrass(defender.pos)){
+
+			if (plantGrass(context.defender.pos)){
 				plants--;
 				if (plants <= 0){
-					return damage;
+					return;
 				}
 			}
-			
+
 			ArrayList<Integer> positions = new ArrayList<>();
 			for (int i : PathFinder.NEIGHBOURS8){
-				if (defender.pos + i != attacker.pos) {
-					positions.add(defender.pos + i);
+				if (context.defender.pos + i != context.attacker.pos) {
+					positions.add(context.defender.pos + i);
 				}
 			}
 			Random.shuffle( positions );
 
 			//The attacker's position is always lowest priority
-			if (Dungeon.level.adjacent(attacker.pos, defender.pos)){
-				positions.add(attacker.pos);
+			if (Dungeon.level.adjacent(context.attacker.pos, context.defender.pos)){
+				positions.add(context.attacker.pos);
 			}
 
 			for (int i : positions){
 				if (plantGrass(i)){
 					plants--;
 					if (plants <= 0) {
-						return damage;
+						return;
 					}
 				}
 			}
-			
+
 		}
-		
-		return damage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 	
 	private boolean plantGrass(int cell){

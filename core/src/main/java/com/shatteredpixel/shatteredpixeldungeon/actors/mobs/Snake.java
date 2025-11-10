@@ -35,16 +35,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SnakeSprite;
 import com.watabou.utils.Random;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 
-public class Snake extends Mob {
+public class Snake extends Mob implements CombatModifier.OnDamageEffect {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.snake; }
 
@@ -128,34 +129,14 @@ public class Snake extends Mob {
 
 	@Override
 
-	public int drRoll() {
-		int dr = super.drRoll();
+	public int drRoll(EnumSet<DamageType> damageType) {
+		int dr = super.drRoll(damageType);
 
 		if(getRandomizerEnabled(RandomTraits.HARDENED_HIDE)) {
 			dr += 2;
 		}
 
 		return dr;
-	}
-
-	@Override
-	public int attackProc(Char enemy, int damage) {
-		if (getRandomizerEnabled(RandomTraits.VENOMOUS_BITE)) {
-			damage = super.attackProc(enemy, damage);
-			if (Random.Int(3) == 0) {
-				int duration = Random.IntRange(1, 3);
-				if (Math.random() > 0.8f) {
-					++duration; // really rare chance to get 4 turns
-				}
-				//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
-				duration = Math.round(duration * (AscensionChallenge.statModifier(this) / 2f + 0.5f));
-				Buff.affect(enemy, Poison.class).set(duration);
-				state = FLEEING;
-			}
-
-			return damage;
-		}
-		return super.attackProc(enemy, damage);
 	}
 
 	@Override
@@ -175,7 +156,7 @@ public class Snake extends Mob {
 
 	
 	@Override
-	public int attackSkill( Char target ) {
+	public int attackSkill() {
 		return 10;
 	}
 
@@ -192,6 +173,32 @@ public class Snake extends Mob {
 			dodges = 0;
 		}
 		return super.defenseVerb();
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (getRandomizerEnabled(RandomTraits.VENOMOUS_BITE)) {
+			if (Random.Int(3) == 0) {
+				int duration = Random.IntRange(1, 3);
+				if (Math.random() > 0.8f) {
+					++duration; // really rare chance to get 4 turns
+				}
+				//we only use half the ascension modifier here as total poison dmg doesn't scale linearly
+				duration = Math.round(duration * (AscensionChallenge.statModifier(this) / 2f + 0.5f));
+				Buff.affect(enemy, Poison.class).set(duration);
+				state = FLEEING;
+			}
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
 	}
 
 	public enum RandomTraits {

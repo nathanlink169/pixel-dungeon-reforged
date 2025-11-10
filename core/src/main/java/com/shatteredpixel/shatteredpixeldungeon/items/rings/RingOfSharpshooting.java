@@ -63,7 +63,7 @@ public class RingOfSharpshooting extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Aim();
 	}
 	

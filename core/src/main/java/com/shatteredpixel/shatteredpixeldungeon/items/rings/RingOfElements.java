@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corrosion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
@@ -68,7 +69,7 @@ public class RingOfElements extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Resistance();
 	}
 
@@ -85,7 +86,7 @@ public class RingOfElements extends Ring {
 		RESISTS.add( ToxicGas.class );
 		RESISTS.add( Electricity.class );
 
-		RESISTS.addAll( AntiMagic.RESISTS );
+		RESISTS.addAll( ChampionEnemy.AntiMagic.RESISTS );
 	}
 	
 	public static float resist( Char target, Class effect ){

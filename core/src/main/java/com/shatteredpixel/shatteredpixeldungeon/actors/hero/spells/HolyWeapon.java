@@ -30,9 +30,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Enchanting;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
@@ -75,7 +79,7 @@ public class HolyWeapon extends ClericSpell {
 		return desc + "\n\n" + Messages.get(this, "charge_cost", (int)chargeUse(Dungeon.hero));
 	}
 
-	public static class HolyWepBuff extends FlavourBuff {
+	public static class HolyWepBuff extends FlavourBuff implements CombatModifier.OnHitEffect {
 
 		public static final float DURATION	= 50f;
 
@@ -114,6 +118,31 @@ public class HolyWeapon extends ClericSpell {
 			} else {
 				postpone(2*DURATION);
 			}
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (!(context.attacker instanceof Hero)) return;
+			Hero hero = (Hero) context.attacker;
+
+			int dmg = hero.subClass == HeroSubClass.PALADIN ? 6 : 2;
+			context.defender.Damage(
+					Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(hero)),
+					HolyWeapon.INSTANCE,
+					DamageType.of(DamageType.POSITIVE_ENERGY)
+			);
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target
+					&& target instanceof Hero
+					&& context.attackType == AttackContext.AttackType.MELEE;
+		}
+
+		@Override
+		public int priority() {
+			return CombatModifier.Priority.LOW;
 		}
 	}
 

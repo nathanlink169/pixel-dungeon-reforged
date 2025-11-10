@@ -37,7 +37,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Crab;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Scorpio;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Spinner;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Swarm;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageBonus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.MiningLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -61,7 +67,7 @@ public class Pickaxe extends MeleeWeapon {
 
 		tier = 2;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
@@ -124,14 +130,23 @@ public class Pickaxe extends MeleeWeapon {
 				}
 				beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, 1, damageBoost, Char.INFINITE_ACCURACY)) {
+				InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+				iam.attachTo(hero);
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.MELEE)
+						.damageType(DamageType.of(DamageType.PIERCING))
+						.build();
+
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					if (enemy.isAlive()) {
 						Buff.affect(enemy, Vulnerable.class, 3f);
-					} else {
-						onAbilityKill(hero, enemy);
 					}
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
+				iam.detach();
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
 				afterAbilityUsed(hero);
@@ -149,5 +164,4 @@ public class Pickaxe extends MeleeWeapon {
 		int dmgBoost = 8 + 2*level;
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
-
 }

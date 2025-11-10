@@ -45,6 +45,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wraith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.DirectableAlly;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -65,7 +67,6 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
@@ -86,6 +87,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class DriedRose extends Artifact {
 
@@ -615,7 +617,7 @@ public class DriedRose extends Artifact {
 			if (rose == null
 					|| !rose.isEquipped(Dungeon.hero)
 					|| Dungeon.hero.buff(MagicImmune.class) != null){
-				damage(1, new NoRoseDamage());
+				Damage(1, new NoRoseDamage(), DamageType.of(DamageType.NONE));
 			}
 			
 			if (!isAlive()) {
@@ -627,23 +629,15 @@ public class DriedRose extends Artifact {
 		public static class NoRoseDamage{}
 
 		@Override
-		public int attackSkill(Char target) {
-			
-			//same accuracy as the hero.
-			int acc = Dungeon.hero.lvl + 9;
-			
-			if (rose != null && rose.weapon != null){
-				acc *= rose.weapon.accuracyFactor( this, target );
-			}
-			
-			return acc;
+		public int attackSkill() {
+			return Dungeon.hero.lvl + 9;
 		}
 		
 		@Override
 		public float attackDelay() {
 			float delay = super.attackDelay();
 			if (rose != null && rose.weapon != null){
-				delay *= rose.weapon.delayFactor(this);
+				delay *= rose.weapon.timeToUse();
 			}
 			return delay;
 		}
@@ -654,10 +648,10 @@ public class DriedRose extends Artifact {
 		}
 		
 		@Override
-		public int damageRoll(AttackType type, boolean isMaxDamage) {
+		public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 			int dmg = 0;
 			if (rose != null && rose.weapon != null){
-				dmg += rose.weapon.damageRoll(this, isMaxDamage);
+				dmg += rose.weapon.damageRoll(isMaxDamage, false);
 			} else {
 				if (isMaxDamage) dmg += 5;
 				else dmg += Random.NormalIntRange(0, 5);
@@ -665,37 +659,14 @@ public class DriedRose extends Artifact {
 			
 			return dmg;
 		}
-		
 		@Override
-		public int attackProc(Char enemy, int damage) {
-			damage = super.attackProc(enemy, damage);
-			if (rose != null) {
-				if (rose.weapon != null) {
-					damage = rose.weapon.proc(this, enemy, damage);
-					if (!enemy.isAlive() && enemy == Dungeon.hero) {
-						Dungeon.fail(this);
-						GLog.n(Messages.capitalize(Messages.get(Char.class, "kill", name(false))));
-					}
-				}
-			}
-
-			return damage;
-		}
-		
-		@Override
-		public int defenseProc(Char enemy, int damage) {
-			if (rose != null && rose.armor != null) {
-				damage = rose.armor.proc( enemy, this, damage );
-			}
-			return super.defenseProc(enemy, damage);
-		}
-		
-		@Override
-		public void damage(int dmg, Object src, int damageType) {
-			super.damage( dmg, src, damageType );
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+			int toReturn = super.Damage( dmg, src, damageType );
 			
 			//for the rose status indicator
 			Item.updateQuickslot();
+
+			return toReturn;
 		}
 		
 		@Override
@@ -711,26 +682,12 @@ public class DriedRose extends Artifact {
 			
 			return speed;
 		}
-
-		@Override
-		public int defenseSkill(Char enemy) {
-			int defense = Dungeon.hero.lvl + 4;
-
-			if (defense != 0 && rose != null && rose.armor != null ){
-				defense = Math.round(rose.armor.evasionFactor( this, defense ));
-			}
-			
-			return defense;
-		}
 		
 		@Override
-		public int drRoll() {
-			int dr = super.drRoll();
+		public int drRoll(EnumSet<DamageType> damageType) {
+			int dr = super.drRoll(damageType);
 			if (rose != null && rose.armor != null){
-				dr += Random.NormalIntRange( rose.armor.DRMin(), rose.armor.DRMax());
-			}
-			if (rose != null && rose.weapon != null){
-				dr += Random.NormalIntRange( 0, rose.weapon.defenseFactor( this ));
+				dr += rose.armor.drRoll(damageType);
 			}
 			return dr;
 		}

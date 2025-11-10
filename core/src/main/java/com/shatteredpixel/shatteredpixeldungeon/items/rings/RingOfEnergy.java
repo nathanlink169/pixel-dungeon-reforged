@@ -60,7 +60,7 @@ public class RingOfEnergy extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Energy();
 	}
 	

@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Wound;
 
 public class GrippingTrap extends Trap {
@@ -51,7 +52,7 @@ public class GrippingTrap extends Trap {
 			if (c instanceof Mob) {
 				Buff.prolong(c, Trap.HazardAssistTracker.class, HazardAssistTracker.DURATION);
 			}
-			int damage = Math.max( 0,  (2 + scalingDepth()/2) - c.drRoll()/2 );
+			int damage = Math.max( 0,  (2 + scalingDepth()/2) - c.drRoll(DamageType.of(DamageType.PIERCING))/2 );
 			Buff.affect( c, Bleeding.class ).set( damage );
 			Buff.prolong( c, Cripple.class, Cripple.DURATION);
 			Wound.hit( c );

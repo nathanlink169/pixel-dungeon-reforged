@@ -26,9 +26,12 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.utils.Random;
 
 public class Greatshield extends MeleeWeapon {
 
@@ -37,7 +40,7 @@ public class Greatshield extends MeleeWeapon {
 
 		tier = 5;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -46,16 +49,11 @@ public class Greatshield extends MeleeWeapon {
 				lvl*(tier-1);               //+3 per level, down from +6
 	}
 
-	@Override
-	public int defenseFactor( Char owner ) {
-		return DRMax();
-	}
-
-	public int DRMax(){
+	public int DRMax() {
 		return DRMax(buffedLvl());
 	}
 
-	//6 extra defence, plus 2 per level
+	// 6 extra defence, plus 2 per level
 	public int DRMax(int lvl){
 		return 6 + 2*lvl;
 	}
@@ -85,5 +83,17 @@ public class Greatshield extends MeleeWeapon {
 	@Override
 	public String upgradeAbilityStat(int level) {
 		return Integer.toString(3 + level);
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender.getWeapon() == this) {
+			currentDamage -= Random.Int(DRMax());
+			if (currentDamage < 0) {
+				currentDamage = 0;
+			}
+		}
+
+		return super.modifyPreArmorDamage(context, currentDamage);
 	}
 }

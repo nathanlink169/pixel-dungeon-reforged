@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
@@ -35,11 +36,17 @@ import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class ShrapnelBomb extends Bomb {
 	
 	{
 		image = ItemSpriteSheet.SHRAPNEL_BOMB;
+	}
+
+	@Override
+	protected EnumSet<DamageType> GetDamageType() {
+		return DamageType.of(DamageType.EXPLOSIVE, DamageType.PIERCING);
 	}
 	
 	@Override
@@ -77,8 +84,8 @@ public class ShrapnelBomb extends Bomb {
 		for (Char ch : affected){
 			//regular bomb damage over an FOV up to 8-range
 			int damage = Random.NormalIntRange( 4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth() );
-			damage -= ch.drRoll();
-			ch.damage(damage, this);
+			damage -= ch.drRoll(GetDamageType());
+			ch.Damage(damage, this, GetDamageType());
 			if (ch == Dungeon.hero && !ch.isAlive()) {
 				Dungeon.fail(this);
 			}

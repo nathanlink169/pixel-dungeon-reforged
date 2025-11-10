@@ -26,11 +26,13 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class HandAxe extends MeleeWeapon {
+public class HandAxe extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.HAND_AXE;
@@ -38,9 +40,8 @@ public class HandAxe extends MeleeWeapon {
 		hitSoundPitch = 1f;
 
 		tier = 2;
-		ACC = 1.32f; //32% boost to accuracy
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	@Override
@@ -58,7 +59,7 @@ public class HandAxe extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(4+1.5*lvl) damage, roughly +55% base dmg, +75% scaling
 		int dmgBoost = augment.damageFactor(4 + Math.round(1.5f*buffedLvl()));
-		Mace.heavyBlowAbility(hero, target, 1, dmgBoost, this);
+		Mace.heavyBlowAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -76,4 +77,11 @@ public class HandAxe extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 1.32f;
+		}
+		return currentAccuracy;
+	}
 }

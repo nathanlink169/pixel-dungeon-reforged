@@ -27,30 +27,26 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CrabSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.EnumSet;
+
 public class Crab extends Mob {
-	private boolean movedLastTurn = false;
-
-	private static final String MOVED_LAST_TURN = "moved_last_turn";
-
+	private BundleableProperty.Bool m_MovedLastTurn = new BundleableProperty.Bool("moved_last_turn", false);
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( MOVED_LAST_TURN, movedLastTurn );
+		m_MovedLastTurn.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		movedLastTurn = bundle.getBoolean( MOVED_LAST_TURN );
+		m_MovedLastTurn.Restore(bundle);
 	}
 
 	@Override
@@ -71,26 +67,25 @@ public class Crab extends Mob {
 	}
 	
 	@Override
-	public int attackSkill( Char target ) {
-		int skill = super.attackSkill(target);
+	public int attackSkill() {
+		int skill = super.attackSkill();
 		if (getRandomizerEnabled(RandomTraits.CLUMSY_CLAWS)) {
-			skill *= 2;
-			skill /= 3;
+			skill *= (2.0f / 3.0f);
 		}
 		return skill;
 	}
 	
 	@Override
-	public int drRoll() {
+	public int drRoll(EnumSet<DamageType> damageType) {
 		if (getRandomizerEnabled(RandomTraits.MOLTING_SEASON)) {
 			return 0;
 		}
-		return super.drRoll();
+		return super.drRoll(damageType);
 	}
 
 	@Override
 	public float attackDelay() {
-		if (!movedLastTurn && getRandomizerEnabled(RandomTraits.FLURRY_CLAWS)) {
+		if (!m_MovedLastTurn.Get() && getRandomizerEnabled(RandomTraits.FLURRY_CLAWS)) {
 			return super.attackDelay() * 0.5f;
 		}
 		return super.attackDelay();
@@ -98,7 +93,7 @@ public class Crab extends Mob {
 
 	@Override
 	protected boolean act() {
-		movedLastTurn = false;
+		m_MovedLastTurn.Set(false);
 		return super.act();
 	}
 
@@ -106,7 +101,7 @@ public class Crab extends Mob {
 	public void move( int step, boolean travelling ) {
 		int oldPos = pos;
 		super.move(step, travelling);
-		movedLastTurn = oldPos != pos;
+		m_MovedLastTurn.Set(oldPos != pos);
 	}
 
 	public enum RandomTraits {

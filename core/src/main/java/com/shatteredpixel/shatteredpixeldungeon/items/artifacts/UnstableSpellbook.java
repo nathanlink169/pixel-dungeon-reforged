@@ -79,13 +79,12 @@ public class UnstableSpellbook extends Artifact {
 		defaultAction = AC_READ;
 	}
 
+	public static boolean isUsing = false;
+
 	public static final String AC_READ = "READ";
 	public static final String AC_ADD = "ADD";
 
 	private final ArrayList<Class> scrolls = new ArrayList<>();
-
-	// TODO: This is very hacky. When you do the great artifact rework, please fix this
-	public static boolean isUsing = false;
 
 	public UnstableSpellbook() {
 		super();

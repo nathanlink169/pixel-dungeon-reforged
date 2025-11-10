@@ -28,7 +28,6 @@ import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoItem;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
@@ -46,8 +45,8 @@ public class Ringbox extends Artifact {
     private Ring slot3Ring = null;
 
     @Override
-    public ArrayList<String> actions(Hero hero) {
-        ArrayList<String> actions = super.actions(hero);
+    public ArrayList<String> actions(Hero hero ) {
+        ArrayList<String> actions = super.actions( hero );
         if (isIdentified() && !cursed) {
             actions.add(AC_OPEN);
         }
@@ -55,11 +54,11 @@ public class Ringbox extends Artifact {
     }
 
     @Override
-    public void execute(Hero hero, String action) {
+    public void execute(Hero hero, String action ) {
         super.execute(hero, action);
 
         if (action.equals(AC_OPEN)) {
-            GameScene.show(new Ringbox.WndRingboxEquip(this));
+            GameScene.show( new Ringbox.WndRingboxEquip(this) );
         }
     }
 
@@ -70,25 +69,25 @@ public class Ringbox extends Artifact {
     public void storeInBundle(Bundle bundle) {
         super.storeInBundle(bundle);
 
-        if (slot1Ring != null) bundle.put(RING1, slot1Ring);
-        if (slot2Ring != null) bundle.put(RING2, slot2Ring);
-        if (slot3Ring != null) bundle.put(RING3, slot3Ring);
+        if (slot1Ring != null) bundle.put( RING1, slot1Ring );
+        if (slot2Ring != null) bundle.put( RING2, slot2Ring );
+        if (slot3Ring != null) bundle.put( RING3, slot3Ring );
     }
 
     @Override
     public void restoreFromBundle(Bundle bundle) {
         super.restoreFromBundle(bundle);
 
-        if (bundle.contains(RING1)) slot1Ring = (Ring) bundle.get(RING1);
-        if (bundle.contains(RING2)) slot2Ring = (Ring) bundle.get(RING2);
-        if (bundle.contains(RING3)) slot3Ring = (Ring) bundle.get(RING3);
+        if (bundle.contains(RING1)) slot1Ring = (Ring)bundle.get( RING1 );
+        if (bundle.contains(RING2)) slot2Ring = (Ring)bundle.get( RING2 );
+        if (bundle.contains(RING3)) slot3Ring = (Ring)bundle.get( RING3 );
     }
 
     @Override
     public String desc() {
         String desc = super.desc();
 
-        if (isEquipped(Dungeon.hero)) {
+        if (isEquipped (Dungeon.hero)){
             desc += "\n\n";
             if (cursed)
                 desc += Messages.get(this, "desc_cursed");
@@ -137,6 +136,7 @@ public class Ringbox extends Artifact {
         }
     }
 
+
     private static class WndRingboxEquip extends Window {
 
         private static final int BTN_SIZE	= 32;
@@ -148,13 +148,13 @@ public class Ringbox extends Artifact {
         private ItemButton slot2;
         private ItemButton slot3;
 
-        WndRingboxEquip(final Ringbox ringbox) {
+        WndRingboxEquip(final Ringbox ringbox){
 
             IconTitle titlebar = new IconTitle();
-            titlebar.icon(new ItemSprite(ringbox));
-            titlebar.label(Messages.get(Ringbox.class, "name"));
-            titlebar.setRect(0, 0, WIDTH, 0);
-            add(titlebar);
+            titlebar.icon( new ItemSprite(ringbox) );
+            titlebar.label( Messages.get(Ringbox.class, "name") );
+            titlebar.setRect( 0, 0, WIDTH, 0 );
+            add( titlebar );
 
             float firstRingPower = 30;
             float secondRingPower = 30;
@@ -174,22 +174,24 @@ public class Ringbox extends Artifact {
             String desc;
             if (thirdRingPower > 0) {
                 desc = Messages.get(Ringbox.class, "equipwindowthree", firstRingPower, secondRingPower, thirdRingPower);
-            } else {
+            }
+            else {
                 desc = Messages.get(Ringbox.class, "equipwindowtwo", firstRingPower, secondRingPower);
             }
 
-            RenderedTextBlock message = PixelScene.renderTextBlock(desc, 6);
-            message.maxWidth(WIDTH);
+            RenderedTextBlock message =
+                    PixelScene.renderTextBlock(desc, 6);
+            message.maxWidth( WIDTH );
             message.setPos(0, titlebar.bottom() + GAP);
-            add(message);
+            add( message );
 
-            slot1 = new ItemButton() {
+            slot1 = new ItemButton(){
                 @Override
                 protected void onClick() {
-                    if (ringbox.slot1Ring != null) {
+                    if (ringbox.slot1Ring != null){
                         item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
-                        if (!ringbox.slot1Ring.doPickUp(Dungeon.hero)) {
-                            Dungeon.level.drop(ringbox.slot1Ring, Dungeon.hero.pos);
+                        if (!ringbox.slot1Ring.doPickUp(Dungeon.hero)){
+                            Dungeon.level.drop( ringbox.slot1Ring, Dungeon.hero.pos);
                         }
                         ringbox.slot1Ring = null;
                         ringboxLeveling buff = Dungeon.hero.buff(ringboxLeveling.class);
@@ -203,7 +205,7 @@ public class Ringbox extends Artifact {
                             }
 
                             @Override
-                            public Class<? extends Bag> preferredBag() {
+                            public Class<?extends Bag> preferredBag(){
                                 return Belongings.Backpack.class;
                             }
 
@@ -217,13 +219,13 @@ public class Ringbox extends Artifact {
                                 if (!(item instanceof Ring)) {
                                     //do nothing, should only happen when window is cancelled
                                 } else if (!item.isIdentified()) {
-                                    GLog.w(Messages.get(Ringbox.class, "mustidentify"));
+                                    GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                     hide();
                                 } else if (item.cursed) {
-                                    GLog.w(Messages.get(Ringbox.class, "ringcursed"));
+                                    GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                     hide();
                                 } else {
-                                    if (item.isEquipped(Dungeon.hero)) {
+                                    if (item.isEquipped(Dungeon.hero)){
                                         ((Ring) item).doUnequip(Dungeon.hero, false, false);
                                     } else {
                                         item.detach(Dungeon.hero.belongings.backpack);
@@ -241,7 +243,7 @@ public class Ringbox extends Artifact {
 
                 @Override
                 protected boolean onLongClick() {
-                    if (item() != null && item().name() != null) {
+                    if (item() != null && item().name() != null){
                         GameScene.show(new WndInfoItem(item()));
                         return true;
                     }
@@ -251,7 +253,8 @@ public class Ringbox extends Artifact {
             // TODO: Fix spacing pls
             if (thirdRingPower > 0) {
                 slot1.setRect((WIDTH - BTN_GAP) / 3 - BTN_SIZE, message.top() + message.height() + GAP, BTN_SIZE, BTN_SIZE);
-            } else {
+            }
+            else {
                 slot1.setRect((WIDTH - BTN_GAP) / 2 - BTN_SIZE, message.top() + message.height() + GAP, BTN_SIZE, BTN_SIZE);
             }
             if (ringbox.slot1Ring != null) {
@@ -259,15 +262,15 @@ public class Ringbox extends Artifact {
             } else {
                 slot1.item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
             }
-            add(slot1);
+            add( slot1 );
 
-            slot2 = new ItemButton() {
+            slot2 = new ItemButton(){
                 @Override
                 protected void onClick() {
-                    if (ringbox.slot2Ring != null) {
+                    if (ringbox.slot2Ring != null){
                         item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
-                        if (!ringbox.slot2Ring.doPickUp(Dungeon.hero)) {
-                            Dungeon.level.drop(ringbox.slot2Ring, Dungeon.hero.pos);
+                        if (!ringbox.slot2Ring.doPickUp(Dungeon.hero)){
+                            Dungeon.level.drop( ringbox.slot2Ring, Dungeon.hero.pos);
                         }
                         ringbox.slot2Ring = null;
                         ringboxLeveling buff = Dungeon.hero.buff(ringboxLeveling.class);
@@ -281,7 +284,7 @@ public class Ringbox extends Artifact {
                             }
 
                             @Override
-                            public Class<? extends Bag> preferredBag() {
+                            public Class<?extends Bag> preferredBag(){
                                 return Belongings.Backpack.class;
                             }
 
@@ -295,13 +298,13 @@ public class Ringbox extends Artifact {
                                 if (!(item instanceof Ring)) {
                                     //do nothing, should only happen when window is cancelled
                                 } else if (!item.isIdentified()) {
-                                    GLog.w(Messages.get(Ringbox.class, "mustidentify"));
+                                    GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                     hide();
                                 } else if (item.cursed) {
-                                    GLog.w(Messages.get(Ringbox.class, "ringcursed"));
+                                    GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                     hide();
                                 } else {
-                                    if (item.isEquipped(Dungeon.hero)) {
+                                    if (item.isEquipped(Dungeon.hero)){
                                         ((Ring) item).doUnequip(Dungeon.hero, false, false);
                                     } else {
                                         item.detach(Dungeon.hero.belongings.backpack);
@@ -319,7 +322,7 @@ public class Ringbox extends Artifact {
 
                 @Override
                 protected boolean onLongClick() {
-                    if (item() != null && item().name() != null) {
+                    if (item() != null && item().name() != null){
                         GameScene.show(new WndInfoItem(item()));
                         return true;
                     }
@@ -327,24 +330,24 @@ public class Ringbox extends Artifact {
                 }
             };
 
-            slot2.setRect(slot1.right() + BTN_GAP, slot1.top(), BTN_SIZE, BTN_SIZE);
+            slot2.setRect( slot1.right() + BTN_GAP, slot1.top(), BTN_SIZE, BTN_SIZE );
             if (ringbox.slot2Ring != null) {
                 slot2.item(ringbox.slot2Ring);
             } else {
                 slot2.item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
             }
-            add(slot2);
+            add( slot2 );
 
             if (thirdRingPower == 0) {
                 resize(WIDTH, (int) (slot2.bottom() + GAP));
             } else {
-                slot3 = new ItemButton() {
+                slot3 = new ItemButton(){
                     @Override
                     protected void onClick() {
-                        if (ringbox.slot3Ring != null) {
+                        if (ringbox.slot3Ring != null){
                             item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
-                            if (!ringbox.slot3Ring.doPickUp(Dungeon.hero)) {
-                                Dungeon.level.drop(ringbox.slot3Ring, Dungeon.hero.pos);
+                            if (!ringbox.slot3Ring.doPickUp(Dungeon.hero)){
+                                Dungeon.level.drop( ringbox.slot3Ring, Dungeon.hero.pos);
                             }
                             ringbox.slot3Ring = null;
                             ringboxLeveling buff = Dungeon.hero.buff(ringboxLeveling.class);
@@ -358,7 +361,7 @@ public class Ringbox extends Artifact {
                                 }
 
                                 @Override
-                                public Class<? extends Bag> preferredBag() {
+                                public Class<?extends Bag> preferredBag(){
                                     return Belongings.Backpack.class;
                                 }
 
@@ -372,13 +375,13 @@ public class Ringbox extends Artifact {
                                     if (!(item instanceof Ring)) {
                                         //do nothing, should only happen when window is cancelled
                                     } else if (!item.isIdentified()) {
-                                        GLog.w(Messages.get(Ringbox.class, "mustidentify"));
+                                        GLog.w( Messages.get(Ringbox.class, "mustidentify") );
                                         hide();
                                     } else if (item.cursed) {
-                                        GLog.w(Messages.get(Ringbox.class, "ringcursed"));
+                                        GLog.w( Messages.get(Ringbox.class, "ringcursed") );
                                         hide();
                                     } else {
-                                        if (item.isEquipped(Dungeon.hero)) {
+                                        if (item.isEquipped(Dungeon.hero)){
                                             ((Ring) item).doUnequip(Dungeon.hero, false, false);
                                         } else {
                                             item.detach(Dungeon.hero.belongings.backpack);
@@ -396,7 +399,7 @@ public class Ringbox extends Artifact {
 
                     @Override
                     protected boolean onLongClick() {
-                        if (item() != null && item().name() != null) {
+                        if (item() != null && item().name() != null){
                             GameScene.show(new WndInfoItem(item()));
                             return true;
                         }
@@ -404,19 +407,20 @@ public class Ringbox extends Artifact {
                     }
                 };
 
-                slot3.setRect(slot2.right() + BTN_GAP, slot2.top(), BTN_SIZE, BTN_SIZE);
+                slot3.setRect( slot2.right() + BTN_GAP, slot2.top(), BTN_SIZE, BTN_SIZE );
                 if (ringbox.slot3Ring != null) {
                     slot3.item(ringbox.slot3Ring);
                 } else {
                     slot3.item(new WndBag.Placeholder(ItemSpriteSheet.RING_HOLDER));
                 }
-                add(slot3);
+                add( slot3 );
                 resize((int) (slot3.right() + GAP), (int) (slot3.bottom() + GAP));
             }
         }
+
     }
 
-    public class ringboxLeveling extends ArtifactBuff {
+    public class ringboxLeveling extends ArtifactBuff{
 
         // Track the proxy buffs we've attached
         private ArrayList<Ring.RingBuff> proxyBuffs = new ArrayList<>();
@@ -428,7 +432,7 @@ public class Ringbox extends Artifact {
                 return true;
             }
             return false;
-    }
+        }
 
         @Override
         public void detach() {
@@ -438,12 +442,6 @@ public class Ringbox extends Artifact {
             }
             proxyBuffs.clear();
             super.detach();
-        }
-
-        @Override
-        public boolean act() {
-            spend(TICK);
-            return true;
         }
 
         public void updateProxyBuffs() {
@@ -488,31 +486,37 @@ public class Ringbox extends Artifact {
             }
         }
 
-        public void gainExp(float levelPortion) {
+        @Override
+        public boolean act() {
+            spend( TICK );
+            return true;
+        }
+
+        public void gainExp( float levelPortion ) {
             if (cursed || target.buff(MagicImmune.class) != null || levelPortion == 0) return;
 
-            exp += Math.round(levelPortion * 100);
+            exp += Math.round(levelPortion*100);
 
             //past the soft charge cap, gaining  charge from leveling is slowed.
-            if (charge > 5 + (level() * 2)) {
-                levelPortion *= (5 + ((float) level() * 2)) / charge;
+            if (charge > 5+(level()*2)){
+                levelPortion *= (5+((float)level()*2))/charge;
             }
-            partialCharge += levelPortion * 6f;
+            partialCharge += levelPortion*6f;
 
-            if (exp > 100 + level() * 100 && level() < levelCap) {
-                exp -= 100 + level() * 100;
-                GLog.p(Messages.get(Ringbox.class, "levelup"));
+            if (exp > 100+level()*100 && level() < levelCap){
+                exp -= 100+level()*100;
+                GLog.p( Messages.get(Ringbox.class, "levelup") );
                 upgrade();
                 if (level() == 3) {
                     GLog.p(Messages.get(Ringbox.class, "levelupthirdslot"));
                 }
-                // Update proxy buffs when ringbox levels up (powers change)
-                updateProxyBuffs();
             }
+            // Update proxy buffs when ringbox levels up (powers change)
+            updateProxyBuffs();
         }
 
         public Ring[] getRings() {
-            return new Ring[]{slot1Ring, slot2Ring, slot3Ring};
+            return new Ring[] { slot1Ring, slot2Ring, slot3Ring };
         }
 
         public float[] getRingPower() {

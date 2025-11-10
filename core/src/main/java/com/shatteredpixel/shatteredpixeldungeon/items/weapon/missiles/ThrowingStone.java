@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class ThrowingStone extends MissileWeapon {
@@ -41,7 +41,7 @@ public class ThrowingStone extends MissileWeapon {
 		baseUses = 5;
 		sticky = false;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 	
 	@Override

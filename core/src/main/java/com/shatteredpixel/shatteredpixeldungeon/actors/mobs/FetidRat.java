@@ -24,25 +24,22 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.StenchGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.FetidRatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class FetidRat extends Rat {
+public class FetidRat extends Rat implements CombatModifier.OnDamageEffect {
 
 	{
 		WANDERING = new Wandering();
@@ -53,40 +50,47 @@ public class FetidRat extends Rat {
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.fetidrat; }
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (Random.Int(3) == 0) {
-			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
-			//score loss is on-hit instead of on-attack because it's tied to ooze
-			if (enemy == Dungeon.hero && !Dungeon.level.water[enemy.pos]){
-				Statistics.questScores[0] -= 50;
-			}
-		}
-
-		return damage;
-	}
-
-	@Override
-	public int defenseProc( Char enemy, int damage ) {
-
-		GameScene.add(Blob.seed(pos, 20, StenchGas.class));
-
-		return super.defenseProc(enemy, damage);
-	}
-
-	@Override
 	public void die( Object cause ) {
 		super.die( cause );
 
 		Ghost.Quest.process();
 	}
 
-	protected class Wandering extends Mob.Wandering{
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			if (Random.Int(3) == 0) {
+				Buff.affect(context.defender, Ooze.class).set( Ooze.DURATION );
+				//score loss is on-hit instead of on-attack because it's tied to ooze
+				if (context.defender == Dungeon.hero && !Dungeon.level.water[context.defenderPosition]){
+					Statistics.questScores[0] -= 50;
+				}
+			}
+		} else {
+			GameScene.add(Blob.seed(context.defenderPosition, 20, StenchGas.class));
+		}
+
+		if (super.appliesTo(context)) {
+			super.onDamage(context, damageDealt);
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
+	}
+
+	protected static class Wandering extends Mob.Wandering{
 		@Override
-		protected int randomDestination() {
+		protected int randomDestination(Mob mob) {
 			//of two potential wander positions, picks the one closest to the hero
-			int pos1 = super.randomDestination();
-			int pos2 = super.randomDestination();
+			int pos1 = super.randomDestination(mob);
+			int pos2 = super.randomDestination(mob);
 			PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable);
 			if (PathFinder.distance[pos2] < PathFinder.distance[pos1]){
 				return pos2;

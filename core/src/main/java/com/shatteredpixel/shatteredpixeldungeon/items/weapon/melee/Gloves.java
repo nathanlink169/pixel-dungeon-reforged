@@ -26,7 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -38,11 +38,10 @@ public class Gloves extends MeleeWeapon {
 		hitSoundPitch = 1.3f;
 
 		tier = 1;
-		DLY = 0.5f; //2x speed
 		
 		bones = false;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -60,7 +59,7 @@ public class Gloves extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(3+0.75*lvl) damage, roughly +100% base damage, +100% scaling
 		int dmgBoost = augment.damageFactor(3 + buffedLvl());
-		Sai.comboStrikeAbility(hero, target, 0, dmgBoost, this);
+		Sai.comboStrikeAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -75,6 +74,11 @@ public class Gloves extends MeleeWeapon {
 
 	public String upgradeAbilityStat(int level){
 		return "+" + augment.damageFactor(3 + level);
+	}
+
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 0.5f;
 	}
 
 }

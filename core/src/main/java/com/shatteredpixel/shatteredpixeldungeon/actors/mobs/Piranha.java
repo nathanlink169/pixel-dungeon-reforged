@@ -35,14 +35,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.BlobImmunity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Levitation;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.RatSkull;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.PiranhaSprite;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class Piranha extends Mob {
 	
@@ -63,7 +64,7 @@ public class Piranha extends Mob {
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
+	public int defenseSkill() {
 		return 10 + Dungeon.depth * 2;
 	}
 	
@@ -82,19 +83,19 @@ public class Piranha extends Mob {
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		if (isMaxDamage) return 4 + Dungeon.depth * 2;
 		return Random.NormalIntRange( Dungeon.depth, 4 + Dungeon.depth * 2 );
 	}
-	
+
 	@Override
-	public int attackSkill( Char target ) {
+	public int attackSkill() {
 		return 20 + Dungeon.depth * 2;
 	}
 	
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, Dungeon.depth);
+	public int drRoll(EnumSet<DamageType> damageType) {
+		return super.drRoll(damageType) + Random.NormalIntRange(0, Dungeon.depth);
 	}
 
 	@Override
@@ -132,7 +133,7 @@ public class Piranha extends Mob {
 	}
 	
 	@Override
-	protected boolean getCloser( int target ) {
+    public boolean getCloser(int target) {
 		
 		if (rooted) {
 			return false;
@@ -168,40 +169,40 @@ public class Piranha extends Mob {
 	}
 	
 	//if there is not a path to the enemy, piranhas act as if they can't see them
-	private class Sleeping extends Mob.Sleeping{
+	private static class Sleeping extends Mob.Sleeping{
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
-				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
+				PathFinder.buildDistanceMap(mob.enemy.pos, Dungeon.level.water, mob.GetViewDistance());
+				enemyInFOV = PathFinder.distance[mob.pos] != Integer.MAX_VALUE;
 			}
 			
-			return super.act(enemyInFOV, justAlerted);
+			return super.act(mob, enemyInFOV, justAlerted);
 		}
 	}
 	
-	private class Wandering extends Mob.Wandering{
+	private static class Wandering extends Mob.Wandering{
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
-				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
+				PathFinder.buildDistanceMap(mob.enemy.pos, Dungeon.level.water, mob.GetViewDistance());
+				enemyInFOV = PathFinder.distance[mob.pos] != Integer.MAX_VALUE;
 			}
 			
-			return super.act(enemyInFOV, justAlerted);
+			return super.act(mob, enemyInFOV, justAlerted);
 		}
 	}
 	
-	private class Hunting extends Mob.Hunting{
+	private static class Hunting extends Mob.Hunting{
 		
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
 			if (enemyInFOV) {
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.water, GetViewDistance());
-				enemyInFOV = PathFinder.distance[pos] != Integer.MAX_VALUE;
+				PathFinder.buildDistanceMap(mob.enemy.pos, Dungeon.level.water, mob.GetViewDistance());
+				enemyInFOV = PathFinder.distance[mob.pos] != Integer.MAX_VALUE;
 			}
 			
-			return super.act(enemyInFOV, justAlerted);
+			return super.act(mob, enemyInFOV, justAlerted);
 		}
 	}
 

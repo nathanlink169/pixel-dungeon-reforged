@@ -26,10 +26,16 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -39,7 +45,7 @@ import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Explosive extends Weapon.Enchantment {
+public class Explosive extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 	private static ItemSprite.Glowing WARM = new ItemSprite.Glowing( 0x000000, 0.5f );
@@ -47,36 +53,35 @@ public class Explosive extends Weapon.Enchantment {
 	private int durability = 100;
 
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-
+	public void onHit(AttackContext context, int finalDamage) {
 		//average value of 5, or 20 hits to an explosion
-		int durToReduce = Math.round(Random.IntRange(0, 10) * procChanceMultiplier(attacker));
+		int durToReduce = Math.round(Random.IntRange(0, 10) * procChanceMultiplier(context.attacker));
 		int currentDurability = durability;
 		durability -= durToReduce;
 
 		if (currentDurability > 50 && durability <= 50){
-			attacker.sprite.showStatus(CharSprite.WARNING, Messages.get(this, "warm"));
+			context.attacker.sprite.showStatus(CharSprite.WARNING, Messages.get(this, "warm"));
 			GLog.w(Messages.get(this, "desc_warm"));
-			attacker.sprite.emitter().burst(SmokeParticle.FACTORY, 4);
+			context.attacker.sprite.emitter().burst(SmokeParticle.FACTORY, 4);
 			Item.updateQuickslot();
 		} else if (currentDurability > 10 && durability <= 10){
-			attacker.sprite.showStatus(CharSprite.WARNING, Messages.get(this, "hot"));
+			context.attacker.sprite.showStatus(CharSprite.WARNING, Messages.get(this, "hot"));
 			GLog.n(Messages.get(this, "desc_hot"));
-			attacker.sprite.emitter().burst(BlastParticle.FACTORY, 5);
+			context.attacker.sprite.emitter().burst(BlastParticle.FACTORY, 5);
 			Item.updateQuickslot();
 		} else if (durability <= 0) {
 			//explosion position is the closest adjacent cell to the defender
 			// this will be the attacker's position if they are adjacent
 			int explosionPos = -1;
 			for (int i : PathFinder.NEIGHBOURS8){
-				if (!Dungeon.level.solid[defender.pos+i] &&
+				if (!Dungeon.level.solid[context.defender.pos+i] &&
 						(explosionPos == -1 ||
-						Dungeon.level.trueDistance(attacker.pos, defender.pos+i) < Dungeon.level.trueDistance(attacker.pos, explosionPos))){
-					explosionPos = defender.pos+i;
+								Dungeon.level.trueDistance(context.attacker.pos, context.defender.pos+i) < Dungeon.level.trueDistance(context.attacker.pos, explosionPos))){
+					explosionPos = context.defender.pos+i;
 				}
 			}
 			if (explosionPos == -1) {
-				explosionPos = defender.pos;
+				explosionPos = context.defender.pos;
 			}
 
 			new Bomb.ConjuredBomb().explode(explosionPos);
@@ -84,8 +89,16 @@ public class Explosive extends Weapon.Enchantment {
 			durability = 100;
 			Item.updateQuickslot();
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 
 	@Override

@@ -28,16 +28,17 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Spear;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollGuardSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
 
-public class GnollGuard extends Mob {
+public class GnollGuard extends Mob implements CombatModifier.PreArmorDamageModifier, CombatModifier.OnDamageEffect {
 
 	{
 		WANDERING = new Wandering();
@@ -45,24 +46,22 @@ public class GnollGuard extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollguard; }
 
-	private int sapperID = -1;
-
 	public void linkSapper( GnollSapper sapper){
-		this.sapperID = sapper.id();
+		this.m_SapperID.Set(sapper.id());
 		if (sprite instanceof GnollGuardSprite){
 			((GnollGuardSprite) sprite).setupArmor();
 		}
 	}
 
 	public boolean hasSapper(){
-		return sapperID != -1
-				&& Actor.findById(sapperID) instanceof GnollSapper
-				&& ((GnollSapper)Actor.findById(sapperID)).isAlive();
+		return m_SapperID.Get() != -1
+				&& Actor.findById(m_SapperID.Get()) instanceof GnollSapper
+				&& ((GnollSapper)Actor.findById(m_SapperID.Get())).isAlive();
 	}
 
 	public void loseSapper(){
-		if (sapperID != -1){
-			sapperID = -1;
+		if (m_SapperID.Get() != -1){
+			m_SapperID.Set(-1);
 			if (sprite instanceof GnollGuardSprite){
 				((GnollGuardSprite) sprite).loseArmor();
 			}
@@ -70,26 +69,11 @@ public class GnollGuard extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (hasSapper()) dmg /= 4;
-		super.damage(dmg, src, damageType);
-	}
-
-	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
-		if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos) && type == AttackType.MELEE){
-			return super.damageRoll(AttackType.RANGED_PHYSICAL, isMaxDamage);
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
+		if (enemy != null && !Dungeon.level.adjacent(pos, enemy.pos) && type == AttackContext.AttackType.MELEE){
+			return super.damageRoll(AttackContext.AttackType.RANGED, isMaxDamage);
 		}
 		return super.damageRoll(type, isMaxDamage);
-	}
-
-	@Override
-	public int attackProc(Char enemy, int damage) {
-		int dmg = super.attackProc(enemy, damage);
-		if (enemy == Dungeon.hero && !Dungeon.level.adjacent(pos, enemy.pos) && dmg > 12){
-			GLog.n(Messages.get(this, "spear_warn"));
-		}
-		return dmg;
 	}
 
 	@Override
@@ -109,27 +93,55 @@ public class GnollGuard extends Mob {
 		}
 	}
 
-	private static final String SAPPER_ID = "sapper_id";
+	private BundleableProperty.Int m_SapperID = new BundleableProperty.Int("sapper_id", -1);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(SAPPER_ID, sapperID);
+		m_SapperID.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		sapperID = bundle.getInt(SAPPER_ID);
+		m_SapperID.Restore(bundle);
 	}
 
-	public class Wandering extends Mob.Wandering {
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender == this && hasSapper()) {
+			return currentDamage / 4;
+		}
+		return currentDamage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this || context.attacker == this;
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			if (context.defender == Dungeon.hero && context.distance > 1 && damageDealt > 12){
+				GLog.n(Messages.get(this, "spear_warn"));
+			}
+		}
+	}
+
+	public static class Wandering extends Mob.Wandering {
 		@Override
-		protected int randomDestination() {
-			if (hasSapper()){
-				return ((GnollSapper)Actor.findById(sapperID)).pos;
+		protected int randomDestination(Mob mob) {
+			GnollGuard g = (GnollGuard) mob;
+			if (g.hasSapper()){
+				return ((GnollSapper)Actor.findById(g.m_SapperID.Get())).pos;
 			} else {
-				return super.randomDestination();
+				return super.randomDestination(g);
 			}
 		}
 	}

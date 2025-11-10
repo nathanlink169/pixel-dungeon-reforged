@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
@@ -40,14 +41,13 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatUsurperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class RatUsurper extends Mob {
     @Override
@@ -79,14 +79,14 @@ public class RatUsurper extends Mob {
     }
 
     @Override
-    public void damage(int dmg, Object src, int damageType) {
+    public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
         if (!BossHealthBar.isAssigned()){
             BossHealthBar.assignBoss( this );
             Dungeon.level.seal();
         }
         int lastHP = HP;
         boolean bleeding = (HP*2 <= GetMaxHP());
-        super.damage(dmg, src, damageType);
+        super.Damage(dmg, src, damageType);
         if (lastHP != HP && HP > 0) {
             // only spawn rat if actually takes damage
             if (bleeding) {
@@ -132,6 +132,7 @@ public class RatUsurper extends Mob {
             if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmg);
             else                                                    lock.addTime(dmg*1.5f);
         }
+        return lastHP - HP;
     }
 
     private void teleportRat() {
@@ -248,10 +249,10 @@ public class RatUsurper extends Mob {
         yell( Messages.get(this, "defeated") );
     }
 
-    @Override
-    public void storeInBundle( Bundle bundle ) {
-        super.storeInBundle( bundle );
-    }
+//    @Override
+//    public void storeInBundle( Bundle bundle ) {
+//        super.storeInBundle( bundle );
+//    }
 
     @Override
     public void restoreFromBundle( Bundle bundle ) {

@@ -48,6 +48,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Shaman;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.UnholyPriest;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ArcaneBomb;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.HolyBomb;
@@ -73,97 +74,75 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocki
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 
 public class AntiMagic extends Armor.Glyph {
 
-	private static ItemSprite.Glowing TEAL = new ItemSprite.Glowing( 0x88EEFF );
-	
-	public static final HashSet<Class> RESISTS = new HashSet<>();
-	static {
-		RESISTS.add( MagicalSleep.class );
-		RESISTS.add( Charm.class );
-		RESISTS.add( Weakness.class );
-		RESISTS.add( Vulnerable.class );
-		RESISTS.add( Hex.class );
-		RESISTS.add( Degrade.class );
-		
-		RESISTS.add( DisintegrationTrap.class );
-		RESISTS.add( GrimTrap.class );
+	private EnumSet<DamageType> m_DamageTypes = null;
 
-		RESISTS.add( ArcaneBomb.class );
-		RESISTS.add( HolyBomb.HolyDamage.class );
-		RESISTS.add( ScrollOfRetribution.class );
-		RESISTS.add( ScrollOfPsionicBlast.class );
-		RESISTS.add( ScrollOfTeleportation.class );
-		RESISTS.add( ScrollOfDecay.class );
-		RESISTS.add( HolyDart.class );
-
-		RESISTS.add( GuidingLight.class );
-		RESISTS.add( HolyWeapon.class );
-		RESISTS.add( Sunray.class );
-		RESISTS.add( HolyLance.class );
-		RESISTS.add( Smite.class );
-		RESISTS.add( Judgement.class );
-
-		RESISTS.add( ElementalBlast.class );
-		RESISTS.add( CursedWand.class );
-		RESISTS.add( WandOfBlastWave.class );
-		RESISTS.add( WandOfDisintegration.class );
-		RESISTS.add( WandOfFireblast.class );
-		RESISTS.add( WandOfFrost.class );
-		RESISTS.add( WandOfLightning.class );
-		RESISTS.add( WandOfLivingEarth.class );
-		RESISTS.add( WandOfMagicMissile.class );
-		RESISTS.add( WandOfPrismaticLight.class );
-		RESISTS.add( WandOfTransfusion.class );
-		RESISTS.add( WandOfWarding.Ward.class );
-		RESISTS.add( WandOfDisplacement.class );
-
-		RESISTS.add( ElementalStrike.class );
-		RESISTS.add( Blazing.class );
-		RESISTS.add( WandOfFireblast.FireBlastOnHit.class );
-		RESISTS.add( Shocking.class );
-		RESISTS.add( WandOfLightning.LightningOnHit.class );
-		RESISTS.add( Grim.class );
-
-		RESISTS.add( WarpBeacon.class );
-		
-		RESISTS.add( DM100.LightningBolt.class );
-		RESISTS.add( Shaman.EarthenBolt.class );
-		RESISTS.add( UnholyPriest.class );
-		RESISTS.add( CrystalWisp.LightBeam.class );
-		RESISTS.add( Warlock.DarkBolt.class );
-		RESISTS.add( UnholyPriest.CursedBolt.class );
-		RESISTS.add( Eye.DeathGaze.class );
-		RESISTS.add( YogFist.BrightFist.LightBeam.class );
-		RESISTS.add( YogFist.DarkFist.DarkBolt.class );
-		RESISTS.add( Fiend.class );
-		RESISTS.add( Fiend.FiendExplosion.class );
+	public EnumSet<DamageType> GetDamageTypes() {
+		if (m_DamageTypes == null) {
+			int[] damageTypes = new int[3];
+			damageTypes[0] = Random.Int(DamageType.ENERGY_DAMAGE_TYPES.size());
+			do {
+				damageTypes[1] = Random.Int(DamageType.ENERGY_DAMAGE_TYPES.size());
+			} while (damageTypes[1] == damageTypes[0]);
+			do {
+				damageTypes[2] = Random.Int(DamageType.ENERGY_DAMAGE_TYPES.size());
+			} while (damageTypes[2] == damageTypes[0] || damageTypes[2] == damageTypes[1]);
+			m_DamageTypes = DamageType.of(DamageType.ENERGY_DAMAGE_TYPES.get(damageTypes[0]),
+										  DamageType.ENERGY_DAMAGE_TYPES.get(damageTypes[1]),
+										  DamageType.ENERGY_DAMAGE_TYPES.get(damageTypes[2]));
+		}
+		return m_DamageTypes;
 	}
-	
+
+	private static final String DAMAGE_TYPES = "damageTypes";
+
 	@Override
-	public int proc(Armor armor, Char attacker, Char defender, int damage) {
-		//no proc effect, triggers in Char.damage
-		return damage;
-	}
-	
-	public static int drRoll( Char owner, int level ){
-		if (level == -1){
-			return 0;
-		} else {
-			return Random.NormalIntRange(
-					Math.round(level * genericProcChanceMultiplier(owner)),
-					Math.round((3 + (level * 1.5f)) * genericProcChanceMultiplier(owner)));
+	public void storeInBundle( Bundle bundle ) {
+		super.storeInBundle( bundle );
+		if (m_DamageTypes != null) {
+			// Convert EnumSet to int array of ordinals
+			int[] ordinals = m_DamageTypes.stream()
+					.mapToInt(DamageType::ordinal)
+					.toArray();
+			bundle.put(DAMAGE_TYPES, ordinals);
 		}
 	}
+
+	@Override
+	public void restoreFromBundle( Bundle bundle ) {
+		super.restoreFromBundle( bundle );
+		if (bundle.contains(DAMAGE_TYPES)) {
+			// Restore from ordinals
+			int[] ordinals = bundle.getIntArray(DAMAGE_TYPES);
+			m_DamageTypes = DamageType.of(DamageType.values()[ordinals[0]],
+					                      DamageType.values()[ordinals[1]],
+										  DamageType.values()[ordinals[2]]);
+		}
+	}
+
+	private static ItemSprite.Glowing TEAL = new ItemSprite.Glowing( 0x88EEFF );
 
 	@Override
 	public ItemSprite.Glowing glowing() {
 		return TEAL;
 	}
 
+	@Override
+	public String desc() {
+		ArrayList<DamageType> list = new ArrayList<>(GetDamageTypes());
+		return Messages.get(this, "desc",
+				DamageType.GetName(list.get(0)),
+				DamageType.GetName(list.get(1)),
+				DamageType.GetName(list.get(2)));
+	}
 }

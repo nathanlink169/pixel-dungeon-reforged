@@ -24,16 +24,13 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.remains;
 
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
@@ -50,7 +47,7 @@ public class CrackedGun extends RemainsItem {
 
 			Char ch = Dungeon.level.findMob(hero.pos + neighbourOffset);
 			if (ch != null) {
-				ch.damage(Random.Int(Math.max((int) (ch.GetMaxHP() * 0.05f), 1), Math.max((int) (ch.GetMaxHP() * 0.15f), 2)), hero);
+				ch.Damage(Random.Int(Math.max((int) (ch.GetMaxHP() * 0.05f), 1), Math.max((int) (ch.GetMaxHP() * 0.15f), 2)), hero, DamageType.of(DamageType.EXPLOSIVE));
 
 				//trace a ballistica to our target (which will also extend past them)
 				Ballistica trajectory = new Ballistica(hero.pos, ch.pos, Ballistica.STOP_TARGET);

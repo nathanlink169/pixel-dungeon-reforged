@@ -28,7 +28,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Tomahawk extends MissileWeapon {
@@ -41,7 +43,7 @@ public class Tomahawk extends MissileWeapon {
 		tier = 4;
 		baseUses = 5;
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	@Override
@@ -55,10 +57,10 @@ public class Tomahawk extends MissileWeapon {
 		return  Math.round(3.75f * tier) +  //15 base, down from 20
 				(tier)*lvl;                 //scaling unchanged
 	}
-	
+
 	@Override
-	public int proc( Char attacker, Char defender, int damage ) {
-		Buff.affect( defender, Bleeding.class ).set( Math.round(damage*0.6f) );
-		return super.proc( attacker, defender, damage );
+	public void onHit(AttackContext context, int finalDamage) {
+		Buff.affect( context.defender, Bleeding.class ).set( Math.round(finalDamage*0.6f) );
+		super.onHit( context, finalDamage );
 	}
 }

@@ -25,7 +25,12 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.EnergyParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
@@ -33,30 +38,37 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.utils.Random;
 
-public class Potential extends Glyph {
+public class Potential extends Glyph implements CombatModifier.OnHitEffect {
 	
 	private static ItemSprite.Glowing WHITE = new ItemSprite.Glowing( 0xFFFFFF, 0.6f );
-	
-	@Override
-	public int proc( Armor armor, Char attacker, Char defender, int damage) {
 
-		int level = Math.max( 0, armor.buffedLvl() );
-		
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max( 0, context.defender.getArmor().buffedLvl() );
+
 		// lvl 0 - 16.7%
 		// lvl 1 - 28.6%
 		// lvl 2 - 37.5%
-		float procChance = (level+1f)/(level+6f) * procChanceMultiplier(defender);
-		if (Random.Float() < procChance && defender instanceof Hero) {
+		float procChance = (level+1f)/(level+6f) * procChanceMultiplier(context.defender);
+		if (Random.Float() < procChance && context.defender instanceof Hero) {
 
 			float powerMulti = Math.max(1f, procChance);
 
-			int wands = ((Hero) defender).belongings.charge( powerMulti );
+			int wands = ((Hero) context.defender).belongings.charge( powerMulti );
 			if (wands > 0) {
-				defender.sprite.centerEmitter().burst(EnergyParticle.FACTORY, 10);
+				context.defender.sprite.centerEmitter().burst(EnergyParticle.FACTORY, 10);
 			}
 		}
-		
-		return damage;
+	}
+
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

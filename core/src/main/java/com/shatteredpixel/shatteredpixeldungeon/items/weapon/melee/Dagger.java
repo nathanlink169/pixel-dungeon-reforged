@@ -32,9 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
@@ -55,7 +57,7 @@ public class Dagger extends MeleeWeapon {
 		
 		bones = false;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
@@ -65,9 +67,9 @@ public class Dagger extends MeleeWeapon {
 	}
 	
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		if (owner instanceof Hero) {
-			Hero hero = (Hero)owner;
+	public int damageRoll(boolean isMaxDamage, boolean userIsHero) {
+		if (userIsHero) {
+			Hero hero = Dungeon.hero;
 			Char enemy = hero.enemy();
 			if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
 				//deals 75% toward max to max on surprise, instead of min to max.
@@ -86,7 +88,8 @@ public class Dagger extends MeleeWeapon {
 				return damage;
 			}
 		}
-		return super.damageRoll(owner, isMaxDamage);
+		return super.damageRoll(isMaxDamage, userIsHero
+		);
 	}
 
 	@Override

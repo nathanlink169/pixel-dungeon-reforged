@@ -26,11 +26,13 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class WarScythe extends MeleeWeapon {
+public class WarScythe extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.WAR_SCYTHE;
@@ -38,9 +40,15 @@ public class WarScythe extends MeleeWeapon {
 		hitSoundPitch = 0.9f;
 
 		tier = 5;
-		ACC = 0.8f; //20% penalty to accuracy
+		damageType = DamageType.of(DamageType.SLASHING);
+	}
 
-		damageType = DamageType.SLASHING;
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 0.8f;
+		}
+		return currentAccuracy;
 	}
 
 	@Override
@@ -58,7 +66,7 @@ public class WarScythe extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//replaces damage with 30+4.5*lvl bleed, roughly 133% avg base dmg, 129% avg scaling
 		int bleedAmt = augment.damageFactor(Math.round(30f + 4.5f*buffedLvl()));
-		Sickle.harvestAbility(hero, target, 0f, bleedAmt, this);
+		Sickle.harvestAbility(hero, target, bleedAmt, this);
 	}
 
 	@Override

@@ -112,8 +112,8 @@ public abstract class ShieldBuff extends Buff {
 		return dmg;
 	}
 
-	public static int processDamage( Char target, int damage, Object src ){
-		//hunger damage is not affected by shielding
+	public static int processDamage( Char target, int damage, Object src ) {
+		// hunger damage is not affected by shielding
 		if (src instanceof Hunger){
 			return damage;
 		}

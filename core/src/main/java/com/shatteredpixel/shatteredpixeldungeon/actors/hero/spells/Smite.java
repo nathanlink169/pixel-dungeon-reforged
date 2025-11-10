@@ -33,6 +33,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -105,7 +108,7 @@ public class Smite extends TargetedClericSpell {
 						|| ((Weapon) hero.belongings.attackingWeapon()).STRReq() <= hero.STR()){
 					accMult = Char.INFINITE_ACCURACY;
 				}
-				if (hero.attack(enemy, 1, 0, accMult)){
+				if (hero.Attack(enemy, AttackContext.AttackType.RANGED, DamageType.of(DamageType.POSITIVE_ENERGY))) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 					enemy.sprite.burst(0xFFFFFFFF, 10);
 				}
@@ -130,6 +133,72 @@ public class Smite extends TargetedClericSpell {
 		}
 	}
 
-	public static class SmiteTracker extends FlavourBuff {};
+	public static class SmiteTracker extends FlavourBuff implements
+			CombatModifier.AccuracyModifier,
+			CombatModifier.PreArmorDamageModifier,
+			CombatModifier.OnHitEffect,
+			CombatModifier.OnMissEffect {
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			context.defender.sprite.burst(0xFFFFFFFF, 10);
+			detach();
+		}
+
+		@Override
+		public void onMiss(AttackContext context) {
+			// Still detach even on miss
+			detach();
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			// Only applies to the next melee attack by the paladin
+			return context.attacker == target
+					&& context.attackType == AttackContext.AttackType.MELEE;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.LOWEST; // Apply last
+		}
+
+		// Guaranteed hit (if not encumbered)
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			if (context.attacker instanceof Hero) {
+				Hero hero = (Hero) context.attacker;
+
+				// Check encumbrance
+				boolean encumbered = false;
+				if (hero.belongings.weapon() != null) {
+					Weapon weapon = hero.belongings.weapon();
+					if (weapon.STRReq() > hero.STR()) {
+						encumbered = true;
+					}
+				}
+
+				if (!encumbered) {
+					return Char.INFINITE_ACCURACY;
+				}
+			}
+			return currentAccuracy;
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			Hero hero = (Hero) context.attacker;
+
+			int min = 5 + hero.lvl/2;
+			int max = 10 + hero.lvl;
+
+			// Always max damage vs undead/demonic
+			if (Char.hasProp(context.defender, Char.Property.UNDEAD) ||
+					Char.hasProp(context.defender, Char.Property.DEMONIC)) {
+				return currentDamage + max;
+			} else {
+				return currentDamage + Random.NormalIntRange(min, max);
+			}
+		}
+	};
 
 }

@@ -24,9 +24,13 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
-public class Weakness extends FlavourBuff {
+import java.text.Normalizer;
+
+public class Weakness extends FlavourBuff implements CombatModifier.PreArmorDamageModifier {
 
 	public static final float DURATION = 20f;
 
@@ -43,5 +47,20 @@ public class Weakness extends FlavourBuff {
 	@Override
 	public float iconFadePercent() {
 		return Math.max(0, (DURATION - visualcooldown()) / DURATION);
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		return (currentDamage * 2) / 3;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == target;
 	}
 }

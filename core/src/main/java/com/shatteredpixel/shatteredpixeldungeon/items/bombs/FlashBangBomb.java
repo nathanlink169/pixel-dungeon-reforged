@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
@@ -46,11 +47,17 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class FlashBangBomb extends Bomb {
 	
 	{
 		image = ItemSpriteSheet.FLASHBANG;
+	}
+
+	@Override
+	protected EnumSet<DamageType> GetDamageType() {
+		return DamageType.of(DamageType.ELECTRICITY);
 	}
 
 	@Override
@@ -74,7 +81,7 @@ public class FlashBangBomb extends Bomb {
 		for (Char ch : affected){
 			//25% bonus damage and 10 turns of stun
 			int damage = Math.round(Random.NormalIntRange(4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth()) / 4f);
-			ch.damage(damage, new Electricity());
+			ch.Damage(damage, new Electricity(), GetDamageType());
 			if (ch.isAlive()) Buff.prolong(ch, Paralysis.class, Paralysis.DURATION);
 			arcs.add(new Lightning.Arc(DungeonTilemap.tileCenterToWorld(cell), ch.sprite.center()));
 

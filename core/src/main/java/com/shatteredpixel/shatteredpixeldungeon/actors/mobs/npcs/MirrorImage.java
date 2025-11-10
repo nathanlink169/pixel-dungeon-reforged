@@ -39,7 +39,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.BodyForm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
@@ -49,7 +52,6 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.MirrorSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
-import com.watabou.utils.Random;
 
 public class MirrorImage extends NPC {
 	
@@ -108,37 +110,56 @@ public class MirrorImage extends NPC {
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		int damage;
 		if (hero.belongings.weapon() != null){
 			if (isMaxDamage) return hero.belongings.weapon().max();
-			damage = hero.belongings.weapon().damageRoll(this, isMaxDamage);
+			damage = hero.belongings.weapon().damageRoll(isMaxDamage, false);
 		} else {
-			damage = hero.damageRoll(type, isMaxDamage); //handles ring of force
+			AttackContext.Builder builder = new AttackContext.Builder(this, null);
+			if (isMaxDamage) {
+				builder.forceMaxDamage();
+			}
+			AttackContext context = builder.build();
+			damage = hero.damageRoll(context); //handles ring of force
 		}
 		return (damage+1)/2; //half hero damage, rounded up
 	}
 	
 	@Override
-	public int attackSkill( Char target ) {
-		//same base attack skill as hero, benefits from accuracy ring and weapon
-		int attackSkill = 9 + hero.lvl;
-		attackSkill *= RingOfAccuracy.accuracyMultiplier(hero);
-		if (hero.belongings.attackingWeapon() != null){
-			attackSkill *= hero.belongings.attackingWeapon().accuracyFactor(this, target);
-		}
-		return attackSkill;
+	public int attackSkill() {
+		return 9 + hero.lvl;
+	}
+
+	@Override
+	public Weapon getWeapon() {
+		return Dungeon.hero.getWeapon();
+	}
+
+	@Override
+	public Armor getArmor() {
+		return Dungeon.hero.getArmor();
+	}
+
+	@Override
+	public Item getMisc() {
+		return Dungeon.hero.getMisc();
+	}
+
+	@Override
+	public Ring getRing() {
+		return Dungeon.hero.getRing();
 	}
 	
 	@Override
-	public int defenseSkill(Char enemy) {
+	public int defenseSkill() {
 		if (hero != null) {
 			int baseEvasion = 4 + hero.lvl;
 			int heroEvasion = (int)((4 + hero.lvl) * RingOfEvasion.evasionMultiplier( hero ));
 			
 			//if the hero has more/less evasion, 50% of it is applied
 			//includes ring of evasion boost
-			return super.defenseSkill(enemy) * (baseEvasion + heroEvasion) / 2;
+			return super.defenseSkill() * (baseEvasion + heroEvasion) / 2;
 		} else {
 			return 0;
 		}
@@ -152,52 +173,6 @@ public class MirrorImage extends NPC {
 	@Override
 	protected boolean canAttack(Char enemy) {
 		return super.canAttack(enemy) || (hero.belongings.weapon() != null && hero.belongings.weapon().canReach(this, enemy.pos));
-	}
-	
-	@Override
-	public int drRoll() {
-		int dr = super.drRoll();
-		if (hero != null && hero.belongings.weapon() != null){
-			return dr + Random.NormalIntRange(0, hero.belongings.weapon().defenseFactor(this)/2);
-		} else {
-			return dr;
-		}
-	}
-	
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		
-		MirrorInvis buff = buff(MirrorInvis.class);
-		if (buff != null){
-			buff.detach();
-		}
-		
-		if (enemy instanceof Mob) {
-			((Mob)enemy).aggro( this );
-		}
-		if (hero.belongings.weapon() != null){
-			damage = hero.belongings.weapon().proc( this, enemy, damage );
-			if (!enemy.isAlive() && enemy == Dungeon.hero){
-				Dungeon.fail(this);
-				GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
-			}
-			return damage;
-		} else {
-			//hero benefits from holy weapon and body form when unarmed, so do mirror images
-			boolean wasEnemy = enemy.alignment == Alignment.ENEMY;
-			if (hero.buff(BodyForm.BodyFormBuff.class) != null
-					&& hero.buff(BodyForm.BodyFormBuff.class).enchant() != null){
-				damage = hero.buff(BodyForm.BodyFormBuff.class).enchant().proc(new WornShortsword(), this, enemy, damage);
-			}
-			if (!wasEnemy || enemy.alignment == Alignment.ENEMY) {
-				if (hero.buff(HolyWeapon.HolyWepBuff.class) != null) {
-					int dmg = hero.subClass == HeroSubClass.PALADIN ? 6 : 2;
-					enemy.damage(Math.round(dmg * Weapon.Enchantment.genericProcChanceMultiplier(this)), HolyWeapon.INSTANCE);
-				}
-			}
-			return damage;
-		}
 	}
 	
 	@Override

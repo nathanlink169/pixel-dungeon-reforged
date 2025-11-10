@@ -28,19 +28,27 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
-public class Sickle extends MeleeWeapon {
+import java.util.ArrayList;
+
+public class Sickle extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.SICKLE;
@@ -48,9 +56,16 @@ public class Sickle extends MeleeWeapon {
 		hitSoundPitch = 1f;
 
 		tier = 2;
-		ACC = 0.68f; //32% penalty to accuracy
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
+	}
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 0.68f;
+		}
+		return currentAccuracy;
 	}
 
 	@Override
@@ -68,7 +83,7 @@ public class Sickle extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//replaces damage with 15+2.5*lvl bleed, roughly 138% avg base dmg, 125% avg scaling
 		int bleedAmt = augment.damageFactor(Math.round(15f + 2.5f*buffedLvl()));
-		Sickle.harvestAbility(hero, target, 0f, bleedAmt, this);
+		Sickle.harvestAbility(hero, target, bleedAmt, this);
 	}
 
 	@Override
@@ -86,7 +101,7 @@ public class Sickle extends MeleeWeapon {
 		return Integer.toString(augment.damageFactor(Math.round(15f + 2.5f*level)));
 	}
 
-	public static void harvestAbility(Hero hero, Integer target, float bleedMulti, int bleedBoost, MeleeWeapon wep){
+	public static void harvestAbility(Hero hero, Integer target, int bleedBoost, MeleeWeapon wep){
 
 		if (target == null) {
 			return;
@@ -112,22 +127,87 @@ public class Sickle extends MeleeWeapon {
 				wep.beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
 
-				Buff.affect(enemy, HarvestBleedTracker.class, 0);
-				if (hero.attack(enemy, bleedMulti, bleedBoost, Char.INFINITE_ACCURACY, DamageType.SLASHING, Char.AttackType.MELEE)){
+				Buff.affect(enemy, HarvestBleedTracker.class, 0).dmgBoost = bleedBoost;
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.RANGED)
+						.damageType(DamageType.of(DamageType.SLASHING))
+						.build();
+
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
 
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
-				if (!enemy.isAlive()){
-					wep.onAbilityKill(hero, enemy);
-				}
 				wep.afterAbilityUsed(hero);
 			}
 		});
 
 	}
 
-	public static class HarvestBleedTracker extends FlavourBuff{};
+	public static class HarvestBleedTracker extends FlavourBuff implements
+			CombatModifier.AccuracyModifier,
+			CombatModifier.PostArmorDamageModifier,
+			CombatModifier.OnHitEffect {
+
+		private boolean consumed = false;
+		private int bleedDamage = 0;
+		public int dmgBoost = 0;
+
+		@Override
+		public int priority() {
+			return Priority.LOWEST; // Get the post armour damage AFTER all the modifiers
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			// Only apply to the single attack this buff is attached for
+			return !consumed && context.defender == target;
+		}
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			// Always hit
+			return Char.INFINITE_ACCURACY;
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			bleedDamage = currentDamage + dmgBoost;
+			return 0;
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (context.defender.isImmune(Bleeding.class)) {
+				consumed = true;
+				detach();
+				return;
+			}
+
+			Bleeding b = context.defender.buff(Bleeding.class);
+			if (b == null) {
+				b = new Bleeding();
+				b.attachTo(context.defender);
+			}
+			b.announced = false;
+			b.set(bleedDamage, HarvestBleedTracker.class);
+			bleedDamage = 0;
+
+			// Show bleed status
+			if (context.defender.sprite != null) {
+				context.defender.sprite.showStatus(
+						CharSprite.WARNING,
+						Messages.titleCase(b.name()) + " " + (int)b.level()
+				);
+			}
+
+			consumed = true;
+			detach();
+		}
+	}
 
 }

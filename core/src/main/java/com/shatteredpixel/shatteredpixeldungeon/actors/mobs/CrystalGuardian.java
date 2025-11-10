@@ -33,6 +33,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
@@ -45,7 +47,8 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
+
+import java.util.EnumSet;
 
 public class CrystalGuardian extends Mob {
 	{
@@ -58,11 +61,11 @@ public class CrystalGuardian extends Mob {
 
 	@Override
 	public Class<? extends CharSprite> GetSpriteName() {
-		if (m_SpriteVariant == -1) {
-			m_SpriteVariant = Random.Int(3);
+		if (m_SpriteVariant.Get() == -1) {
+			m_SpriteVariant.Set(Random.Int(3));
 		}
 
-		switch (m_SpriteVariant){
+		switch (m_SpriteVariant.Get()) {
 			case 0: default:
 				return CrystalGuardianSprite.Blue.class;
 			case 1:
@@ -99,9 +102,9 @@ public class CrystalGuardian extends Mob {
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
+	public int defenseSkill() {
 		if (recovering) return 0;
-		else            return super.defenseSkill(enemy);
+		else            return super.defenseSkill();
 	}
 
 	@Override
@@ -116,7 +119,7 @@ public class CrystalGuardian extends Mob {
 	}
 
 	@Override
-	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+	public boolean Attack(Char enemy, AttackContext.AttackType attackType, EnumSet<DamageType> damageType) {
 		//if enemy is hero, and they aren't currently fighting the spire, -100 points
 		if (enemy == Dungeon.hero){
 			boolean spireNear = false;
@@ -129,19 +132,7 @@ public class CrystalGuardian extends Mob {
 				Statistics.questScores[2] -= 100;
 			}
 		}
-		return super.attack(enemy, dmgMulti, dmgBonus, accMulti);
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		if (recovering){
-			//this triggers before blocking, so the dmg as block-bypassing
-			sprite.showStatusWithIcon(CharSprite.NEGATIVE, Integer.toString(damage), FloatingText.PHYS_DMG_NO_BLOCK);
-			HP = Math.max(1, HP-damage);
-			damage = -1;
-		}
-
-		return super.defenseProc(enemy, damage);
+		return super.Attack(enemy, attackType, damageType);
 	}
 
 	@Override
@@ -207,10 +198,10 @@ public class CrystalGuardian extends Mob {
 	@Override
 	public boolean[] modifyPassable(boolean[] passable) {
 		//if we are hunting, we can stomp through crystals, but prefer not to
-		if (state == HUNTING && target != -1){
-			PathFinder.buildDistanceMap(target, passable);
+		if (state == HUNTING && m_Target.Get() != -1){
+			PathFinder.buildDistanceMap(m_Target.Get(), passable);
 
-			if (PathFinder.distance[pos] > 2*Dungeon.level.distance(pos, target)) {
+			if (PathFinder.distance[pos] > 2*Dungeon.level.distance(pos, m_Target.Get())) {
 				for (int i = 0; i < Dungeon.level.length(); i++) {
 					passable[i] = passable[i] || Dungeon.level.map[i] == Terrain.MINE_CRYSTAL;
 				}
@@ -228,18 +219,18 @@ public class CrystalGuardian extends Mob {
 		}
 	}
 
-	protected class Sleeping extends Mob.Sleeping{
+	protected static class Sleeping extends Mob.Sleeping{
 
 		@Override
-		protected void awaken(boolean enemyInFOV) {
+		protected void awaken(Mob mob, boolean enemyInFOV) {
 			if (enemyInFOV){
 				//do not wake up if we see an enemy we can't actually reach
-				PathFinder.buildDistanceMap(enemy.pos, Dungeon.level.passable);
-				if (PathFinder.distance[pos] == Integer.MAX_VALUE){
+				PathFinder.buildDistanceMap(mob.enemy.pos, Dungeon.level.passable);
+				if (PathFinder.distance[mob.pos] == Integer.MAX_VALUE){
 					return;
 				}
 			}
-			super.awaken(enemyInFOV);
+			super.awaken(mob, enemyInFOV);
 		}
 	}
 

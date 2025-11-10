@@ -49,6 +49,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
@@ -101,7 +104,9 @@ import com.watabou.utils.Random;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class ElementalStrike extends ArmorAbility {
 
@@ -133,6 +138,20 @@ public class ElementalStrike extends ArmorAbility {
 		effectTypes.put(Friendly.class,     MagicMissile.SHADOW_CONE);
 
 		effectTypes.put(null,               MagicMissile.MAGIC_MISS_CONE);
+	}
+	private static final HashMap<Integer, EnumSet<DamageType>> MISSILE_TO_DAMAGE_TYPE = new HashMap<>();
+	static {
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.FIRE_CONE, DamageType.of(DamageType.FIRE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.FROST_CONE, DamageType.of(DamageType.COLD));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.FORCE_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.SPARK_CONE, DamageType.of(DamageType.ELECTRICITY));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.WARD_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.FOLIAGE_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.RAINBOW_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.PURPLE_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.BLOOD_CONE, DamageType.of(DamageType.FORCE));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.SHADOW_CONE, DamageType.of(DamageType.NEGATIVE_ENERGY));
+		MISSILE_TO_DAMAGE_TYPE.put(MagicMissile.MAGIC_MISS_CONE, DamageType.of(DamageType.FORCE));
 	}
 
 	{
@@ -210,9 +229,19 @@ public class ElementalStrike extends ArmorAbility {
 				if (enemy != null){
 					AttackIndicator.target(enemy);
 					oldEnemyPos = enemy.pos;
-					if (hero.attack(enemy, 1, 0, Char.INFINITE_ACCURACY)) {
+
+					InfiniteAccuracyModifier modifier = InfiniteAccuracyModifier.AttackerModifier();
+					modifier.attachTo(hero);
+
+					EnumSet<DamageType> dt = MISSILE_TO_DAMAGE_TYPE.containsKey(effectTypes.get(finalEnchantment)) ?
+							MISSILE_TO_DAMAGE_TYPE.get(effectTypes.get(finalEnchantment)) :
+							DamageType.of(DamageType.FORCE);
+
+					if (hero.Attack(enemy, AttackContext.AttackType.MELEE, dt)) {
 						Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 					}
+
+					modifier.detach();
 				}
 
 				perCellEffect(cone, finalEnchantment);
@@ -375,7 +404,9 @@ public class ElementalStrike extends ArmorAbility {
 		//*** no enchantment ***
 		if (ench == null) {
 			for (Char ch : affected){
-				ch.damage(Math.round(powerMulti* Hero.heroDamageIntRange(6, 12)), ElementalStrike.this);
+				ch.Damage(Math.round(powerMulti* Hero.heroDamageIntRange(6, 12)),
+						ElementalStrike.this,
+						hero.getWeapon() != null ? hero.getWeapon().damageType : DamageType.of(DamageType.BLUDGEONING));
 			}
 
 		//*** Kinetic ***
@@ -383,7 +414,9 @@ public class ElementalStrike extends ArmorAbility {
 			if (storedKineticDamage > 0) {
 				for (Char ch : affected) {
 					if (ch != primaryTarget) {
-						ch.damage(Math.round(storedKineticDamage * 0.4f * powerMulti), ench);
+						ch.Damage(Math.round(storedKineticDamage * 0.4f * powerMulti),
+								ench,
+								hero.getWeapon() != null ? hero.getWeapon().damageType : DamageType.of(DamageType.BLUDGEONING));
 					}
 				}
 				storedKineticDamage = 0;
@@ -439,18 +472,13 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Projecting){
 			for (Char ch : affected){
 				if (ch != primaryTarget) {
-					ch.damage(Math.round(hero.damageRoll(Char.AttackType.MELEE, false) * 0.3f * powerMulti), ench);
-				}
-			}
-
-		//*** Unstable ***
-		} else if (ench instanceof Unstable){
-			KindOfWeapon w = hero.belongings.weapon();
-			if (w instanceof Weapon) {
-				for (Char ch : affected){
-					if (ch != primaryTarget) {
-						ench.proc((Weapon) w, hero, ch, w.damageRoll(hero, false));
-					}
+					AttackContext context = new AttackContext.Builder(hero, ch)
+							.attackType(AttackContext.AttackType.MELEE)
+							.damageType(hero.getWeapon() != null ? hero.getWeapon().damageType : DamageType.of(DamageType.BLUDGEONING))
+							.build();
+					ch.Damage(Math.round(hero.damageRoll(context) * 0.3f * powerMulti),
+							ench,
+							hero.getWeapon() != null ? hero.getWeapon().damageType : DamageType.of(DamageType.BLUDGEONING));
 				}
 			}
 
@@ -478,7 +506,7 @@ public class ElementalStrike extends ArmorAbility {
 					float hpMissing = 1f - (ch.HP / (float)ch.GetMaxHP());
 					float chance = 0.06f + 0.24f*hpMissing; //6-30%
 					if (Random.Float() < chance*powerMulti){
-						ch.damage( ch.HP, Grim.class );
+						ch.Damage( ch.HP, Grim.class, DamageType.of(DamageType.NEGATIVE_ENERGY) );
 						ch.sprite.emitter().burst( ShadowParticle.UP, 5 );
 					}
 				}
@@ -543,7 +571,9 @@ public class ElementalStrike extends ArmorAbility {
 		} else if (ench instanceof Polarized){
 			for (Char ch : affected){
 				if (Random.Float() < 0.5f*powerMulti){
-					ch.damage(Hero.heroDamageIntRange(24, 36), ElementalStrike.this);
+					ch.Damage(Hero.heroDamageIntRange(24, 36),
+							ElementalStrike.this,
+							hero.getWeapon() != null ? hero.getWeapon().damageType : DamageType.of(DamageType.BLUDGEONING));
 				}
 			}
 

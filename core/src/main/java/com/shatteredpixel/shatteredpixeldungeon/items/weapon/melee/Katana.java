@@ -27,9 +27,11 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.watabou.utils.Random;
 
 public class Katana extends MeleeWeapon {
 
@@ -40,18 +42,13 @@ public class Katana extends MeleeWeapon {
 
 		tier = 4;
 
-		damageType = DamageType.PIERCING | DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.PIERCING, DamageType.SLASHING);
 	}
 
 	@Override
 	public int max(int lvl) {
 		return  4*(tier+1) +    //20 base, down from 25
 				lvl*(tier+1);   //scaling unchanged
-	}
-
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 3;	//3 extra defence
 	}
 
 	@Override
@@ -63,7 +60,7 @@ public class Katana extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(8+2*lvl) damage, roughly +67% damage
 		int dmgBoost = augment.damageFactor(8 + Math.round(2f*buffedLvl()));
-		Rapier.lungeAbility(hero, target, 1, dmgBoost, this);
+		Rapier.lungeAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -81,4 +78,15 @@ public class Katana extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender.getWeapon() == this) {
+			currentDamage -= 3;
+			if (currentDamage < 0) {
+				currentDamage = 0;
+			}
+		}
+
+		return super.modifyPreArmorDamage(context, currentDamage);
+	}
 }

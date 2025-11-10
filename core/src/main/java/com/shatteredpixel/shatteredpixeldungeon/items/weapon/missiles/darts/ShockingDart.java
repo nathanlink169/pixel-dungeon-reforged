@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -42,13 +43,12 @@ public class ShockingDart extends TippedDart {
 	{
 		image = ItemSpriteSheet.SHOCKING_DART;
 	}
-	
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
 
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
 		//when processing charged shot, only shock enemies
 		if (!processingChargedShot || attacker.alignment != defender.alignment) {
-			defender.damage(Random.NormalIntRange(5 + Dungeon.scalingDepth() / 4, 10 + Dungeon.scalingDepth() / 4), new Electricity());
+			defender.Damage(Random.NormalIntRange(5 + Dungeon.scalingDepth() / 4, 10 + Dungeon.scalingDepth() / 4), new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 
 			CharSprite s = defender.sprite;
 			if (s != null && s.parent != null) {
@@ -59,7 +59,5 @@ public class ShockingDart extends TippedDart {
 				Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 			}
 		}
-		
-		return super.proc(attacker, defender, damage);
 	}
 }

@@ -29,16 +29,17 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalWispSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
 
 public class CrystalWisp extends Mob {
 	@Override
@@ -46,11 +47,11 @@ public class CrystalWisp extends Mob {
 
 	@Override
 	public Class<? extends CharSprite> GetSpriteName() {
-		if (m_SpriteVariant == -1) {
-			m_SpriteVariant = Random.Int(3);
+		if (m_SpriteVariant.Get() == -1) {
+			m_SpriteVariant.Set(Random.Int(3));
 		}
 
-		switch (m_SpriteVariant){
+		switch (m_SpriteVariant.Get()){
 			case 0: default:
 				return CrystalWispSprite.Blue.class;
 			case 1:
@@ -73,7 +74,7 @@ public class CrystalWisp extends Mob {
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
 	}
 
-	protected boolean doAttack(Char enemy ) {
+	public boolean doAttack(Char enemy) {
 
 		if (Dungeon.level.adjacent( pos, enemy.pos )
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
@@ -106,18 +107,26 @@ public class CrystalWisp extends Mob {
 
 		Invisibility.dispel(this);
 		Char enemy = this.enemy;
-		if (hit( this, enemy, true )) {
+		// Build attack context
+		AttackContext context = new AttackContext.Builder(this, enemy)
+				.attackType(AttackContext.AttackType.RANGED)
+				.damageType(GetDamageType(AttackContext.AttackType.RANGED))
+				.build();
 
-			int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
-			enemy.damage( dmg, new LightBeam() );
+		// Resolve attack - this handles EVERYTHING internally
+		AttackResult result = CombatResolver.resolve(context);
 
-			if (!enemy.isAlive() && enemy == Dungeon.hero) {
-				Badges.validateDeathFromEnemyMagic();
-				Dungeon.fail( this );
-				GLog.n( Messages.get(this, "beam_kill") );
-			}
-		} else {
-			enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
+		// Check result type for UI/feedback
+		if (result.result == AttackResult.ResultType.MISS) {
+			// Miss feedback is already handled by resolver, but you can add extra
+			enemy.sprite.showStatus(CharSprite.NEUTRAL, enemy.defenseVerb());
+		}
+
+		// Check if killed hero specifically (for special death message)
+		if (result.killed && enemy == Dungeon.hero) {
+			Badges.validateDeathFromEnemyMagic();
+			Dungeon.fail(this);
+			GLog.n(Messages.get(this, "beam_kill"));
 		}
 	}
 

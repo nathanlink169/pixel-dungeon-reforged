@@ -35,10 +35,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.RipperDemon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wraith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogDzewa;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
@@ -311,14 +314,29 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 
 		public abstract void doAbility(Hero hero, Integer target );
 
-		public static class UnarmedAbilityTracker extends FlavourBuff{};
+		public static class UnarmedAbilityTracker extends FlavourBuff implements CombatModifier.ArmorModifier {
+			@Override
+			public int modifyArmor(AttackContext context, int currentArmor) {
+				// Monk abilities all ignore armour
+				return 0;
+			}
+
+			@Override
+			public int priority() {
+				return Priority.HIGHEST;
+			}
+
+			@Override
+			public boolean appliesTo(AttackContext context) {
+				return context.attacker == target;
+			}
+		};
 
 		public static class FlurryEmpowerTracker extends FlavourBuff{};
 
 		public static class FlurryCooldownTracker extends FlavourBuff{};
 
 		public static class Flurry extends MonkAbility {
-
 			@Override
 			public int energyCost() {
 				return 1;
@@ -376,13 +394,17 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					@Override
 					public void call() {
 						AttackIndicator.target(enemy);
-						hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE);
 
+						InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+						iam.attachTo(hero);
+
+						hero.Attack(enemy, AttackContext.AttackType.MELEE, DamageType.of(DamageType.BLUDGEONING));
 						if (enemy.isAlive()){
 							hero.sprite.attack(enemy.pos, new Callback() {
 								@Override
 								public void call() {
-									hero.attack(enemy, 1.5f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE);
+									hero.Attack(enemy, AttackContext.AttackType.MELEE, DamageType.of(DamageType.BLUDGEONING));
+									iam.detach();
 									Invisibility.dispel();
 									hero.next();
 									tracker.detach();
@@ -394,6 +416,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 								}
 							});
 						} else {
+							iam.detach();
 							Invisibility.dispel();
 							hero.next();
 							tracker.detach();
@@ -432,7 +455,7 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 				Buff.affect(hero, MonkEnergy.class).abilityUsed(this);
 			}
 
-			public static class FocusBuff extends Buff {
+			public static class FocusBuff extends Buff implements CombatModifier.EvasionModifier {
 
 				{
 					type = buffType.POSITIVE;
@@ -449,6 +472,20 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 					icon.hardlight(0.25f, 1.5f, 1f);
 				}
 
+				@Override
+				public float modifyEvasion(AttackContext context, float currentEvasion) {
+					return Char.INFINITE_EVASION;
+				}
+
+				@Override
+				public int priority() {
+					return Priority.NORMAL;
+				}
+
+				@Override
+				public boolean appliesTo(AttackContext context) {
+					return context.defender == target;
+				}
 			}
 
 		}
@@ -568,9 +605,12 @@ public class MonkEnergy extends Buff implements ActionIndicator.Action {
 						boolean empowered = Buff.affect(hero, MonkEnergy.class).abilitiesEmpowered(hero);
 
 						int oldPos = enemy.pos;
-						if (hero.attack(enemy, empowered ? 9f : 6f, 0, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE)){
+						InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+						iam.attachTo(hero);
+						if (hero.Attack(enemy, AttackContext.AttackType.MELEE, DamageType.of(DamageType.BLUDGEONING))) {
 							Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 						}
+						iam.detach();
 
 						if (oldPos == enemy.pos){
 							//trace a ballistica to our target (which will also extend past them

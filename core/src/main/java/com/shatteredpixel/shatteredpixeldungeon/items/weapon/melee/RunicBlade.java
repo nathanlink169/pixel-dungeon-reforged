@@ -32,7 +32,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -49,7 +54,7 @@ public class RunicBlade extends MeleeWeapon {
 
 		tier = 4;
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	//Essentially it's a tier 4 weapon, with tier 3 base max damage, and tier 5 scaling.
@@ -95,12 +100,21 @@ public class RunicBlade extends MeleeWeapon {
 			public void call() {
 				beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, 1f, 0, Char.INFINITE_ACCURACY, DamageType.SLASHING, Char.AttackType.MELEE)){
+
+				InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+				iam.attachTo(hero);
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.RANGED)
+						.damageType(DamageType.of(DamageType.SLASHING))
+						.build();
+
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-					if (!enemy.isAlive()){
-						onAbilityKill(hero, enemy);
-					}
 				}
+				iam.detach();
 				tracker.detach();
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());

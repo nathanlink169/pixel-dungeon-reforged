@@ -24,8 +24,14 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfWealth;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -34,35 +40,42 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.noosa.Visual;
 import com.watabou.utils.Random;
 
-public class Lucky extends Weapon.Enchantment {
+public class Lucky extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing GREEN = new ItemSprite.Glowing( 0x00FF00 );
-	
+
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-		int level = Math.max( 0, weapon.buffedLvl() );
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
 
 		// lvl 0 - 10%
 		// lvl 1 ~ 12%
 		// lvl 2 ~ 14%
-		float procChance = (level+4f)/(level+40f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance){
+		float procChance = (level + 4f) / (level + 40f) * procChanceMultiplier(context.attacker);
 
+		if (Random.Float() < procChance) {
 			float powerMulti = Math.max(1f, procChance);
 
-			//default is -5: 80% common, 20% uncommon, 0% rare
-			//ring level increases by 1 for each 20% above 100% proc rate
-			Buff.affect(defender, LuckProc.class).ringLevel = -10 + Math.round(5*powerMulti);
+			// Applies a buff that generates loot when enemy dies
+			// Ring level increases by 1 for each 20% above 100% proc rate
+			Buff.affect(context.defender, LuckProc.class).ringLevel = -10 + Math.round(5 * powerMulti);
 		} else {
-			//in rare cases where we attack many times at once (e.g. gladiator fury)
+			// In rare cases where we attack many times at once (e.g. gladiator fury)
 			// make sure that failed luck procs override prior succeeded ones
-			if (defender.buff(LuckProc.class) != null){
-				defender.buff(LuckProc.class).detach();
+			if (context.defender.buff(LuckProc.class) != null) {
+				context.defender.buff(LuckProc.class).detach();
 			}
 		}
-		
-		return damage;
+	}
 
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 	
 	public static Item genLoot(){

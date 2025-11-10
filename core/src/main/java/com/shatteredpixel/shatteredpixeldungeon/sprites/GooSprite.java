@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -213,7 +214,7 @@ public class GooSprite extends MobSprite {
 			triggerEmitters();
 
 			idle();
-			ch.onAttackComplete(Char.AttackType.MELEE);
+			ch.onAttackComplete(AttackContext.AttackType.MELEE);
 		} else if (anim == die) {
 			if (spray != null) {
 				spray.killAndErase();

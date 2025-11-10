@@ -33,15 +33,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.MiasmaGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.FiendSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class Fiend extends Mob {
+public class Fiend extends Mob implements CombatModifier.OnDamageEffect {
 
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.fiend; }
@@ -71,7 +71,7 @@ public class Fiend extends Mob {
 
 				damage = Math.round( damage * AscensionChallenge.statModifier(this));
 
-				ch.damage( damage, new FiendExplosion() );
+				ch.Damage( damage, new FiendExplosion(), GetDamageType(AttackContext.AttackType.RANGED) );
 			}
 
 
@@ -83,17 +83,23 @@ public class Fiend extends Mob {
 		}
 	}
 
-	//used so resistances can differentiate between melee and magical attacks
-	public static class FiendExplosion{}
-
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
+	public void onDamage(AttackContext context, int damageDealt) {
 		if (Random.Int(3) == 0) {
 			Buff.affect(enemy, Slow.class, 5f);
 		}
-
-		return damage;
 	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	//used so resistances can differentiate between melee and magical attacks
+	public static class FiendExplosion{}
 }

@@ -37,6 +37,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM300;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Pylon;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -348,7 +349,10 @@ public class CavesBossLevel extends Level {
 	public void unseal() {
 		super.unseal();
 
-		blobs.get(PylonEnergy.class).fullyClear();
+		Blob e = blobs.get(PylonEnergy.class);
+		if (e != null) {
+			e.fullyClear();
+		}
 
 		set( entrance(), Terrain.ENTRANCE );
 		int i = gate.top*width();
@@ -869,7 +873,7 @@ public class CavesBossLevel extends Level {
 							}
 
 							Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
-							ch.damage( Random.NormalIntRange(6, 12), new Electricity());
+							ch.Damage( Random.NormalIntRange(6, 12), new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 							ch.sprite.flash();
 
 							if (ch == Dungeon.hero){

@@ -40,7 +40,7 @@ public class MagicImmune extends FlavourBuff {
 	}
 	
 	{
-		immunities.addAll(AntiMagic.RESISTS);
+		immunities.addAll(ChampionEnemy.AntiMagic.RESISTS);
 	}
 
 	@Override

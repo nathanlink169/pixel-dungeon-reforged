@@ -28,6 +28,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -39,59 +42,68 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class Shocking extends Weapon.Enchantment {
+public class Shocking extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
+	private static ItemSprite.Glowing WHITE = new ItemSprite.Glowing(0xFFFFFF, 0.5f);
 
-	private static ItemSprite.Glowing WHITE = new ItemSprite.Glowing( 0xFFFFFF, 0.5f );
+	// Reusable lists to avoid allocations
+	private ArrayList<Char> affected = new ArrayList<>();
+	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
 
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-		int level = Math.max( 0, weapon.buffedLvl() );
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
 
 		// lvl 0 - 25%
 		// lvl 1 - 40%
 		// lvl 2 - 50%
-		float procChance = (level+1f)/(level+4f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance) {
+		float procChance = (level + 1f) / (level + 4f) * procChanceMultiplier(context.attacker);
 
+		if (Random.Float() < procChance) {
 			float powerMulti = Math.max(1f, procChance);
-			
+
 			affected.clear();
 			arcs.clear();
-			
-			arc(attacker, defender, 2, affected, arcs);
-			
-			affected.remove(defender); //defender isn't hurt by lightning
+
+			// Arc lightning to nearby enemies (2 tile range)
+			arc(context.attacker, context.defender, 2, affected, arcs);
+
+			// Defender isn't hurt by lightning (they already took main damage)
+			affected.remove(context.defender);
+
+			// Deal 40% damage to chained targets
 			for (Char ch : affected) {
-				if (ch.alignment != attacker.alignment) {
-					ch.damage(Math.round(damage * 0.4f * powerMulti), this);
+				if (ch.alignment != context.attacker.alignment) {
+					ch.Damage(Math.round(finalDamage * 0.4f * powerMulti), this, DamageType.of(DamageType.ELECTRICITY));
 				}
 			}
 
-			attacker.sprite.parent.addToFront( new Lightning( arcs, null ) );
-			Sample.INSTANCE.play( Assets.Sounds.LIGHTNING );
-			
+			// Visual lightning effect
+			context.attacker.sprite.parent.addToFront(new Lightning(arcs, null));
+			Sample.INSTANCE.play(Assets.Sounds.LIGHTNING);
 		}
-
-		return damage;
-
 	}
 
 	@Override
-	public ItemSprite.Glowing glowing() {
-		return WHITE;
+	public int priority() {
+		return Priority.NORMAL;
 	}
 
-	private ArrayList<Char> affected = new ArrayList<>();
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
 
-	private ArrayList<Lightning.Arc> arcs = new ArrayList<>();
-	
-	public static void arc( Char attacker, Char defender, int dist, ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs ) {
-
+	/**
+	 * Recursive arc method - chains lightning to nearby enemies
+	 */
+	public static void arc(Char attacker, Char defender, int dist,
+						   ArrayList<Char> affected, ArrayList<Lightning.Arc> arcs) {
 		defender.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 		defender.sprite.flash();
 
 		ArrayList<Char> hitThisArc = new ArrayList<>();
-		PathFinder.buildDistanceMap( defender.pos, BArray.not( Dungeon.level.solid, null ), dist );
+		PathFinder.buildDistanceMap(defender.pos, BArray.not(Dungeon.level.solid, null), dist);
+
 		for (int i = 0; i < PathFinder.distance.length; i++) {
 			if (PathFinder.distance[i] < Integer.MAX_VALUE) {
 				Char n = Actor.findChar(i);
@@ -102,10 +114,15 @@ public class Shocking extends Weapon.Enchantment {
 		}
 
 		affected.addAll(hitThisArc);
-		for (Char hit : hitThisArc){
+		for (Char hit : hitThisArc) {
 			arcs.add(new Lightning.Arc(defender.sprite.center(), hit.sprite.center()));
+			// Chain further if in water (and not flying)
 			arc(attacker, hit, (Dungeon.level.water[hit.pos] && !hit.flying) ? 2 : 1, affected, arcs);
 		}
+	}
 
+	@Override
+	public ItemSprite.Glowing glowing() {
+		return WHITE;
 	}
 }

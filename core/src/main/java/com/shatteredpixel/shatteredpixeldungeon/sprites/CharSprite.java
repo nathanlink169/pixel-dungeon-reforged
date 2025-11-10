@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.DarkBlock;
 import com.shatteredpixel.shatteredpixeldungeon.effects.EmoIcon;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
@@ -209,6 +210,12 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 			} else {
 				FloatingText.show( x, y, -1, text, color, icon, true );
 			}
+		}
+	}
+
+	public void showStatusWithIcons( int color, String text, int[] icons ) {
+		if (visible) {
+			FloatingText.show( x + width * 0.5f, y, ch.pos, text, color, icons );
 		}
 	}
 	
@@ -830,7 +837,7 @@ public class CharSprite extends MovieClip implements Tweener.Listener, MovieClip
 			if (anim == attack) {
 				
 				idle();
-				ch.onAttackComplete(Char.AttackType.MELEE);
+				ch.onAttackComplete(AttackContext.AttackType.MELEE);
 				
 			} else if (anim == operate) {
 				

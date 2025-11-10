@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.FrozenCarpaccio;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
@@ -41,7 +43,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class Frost extends FlavourBuff {
+public class Frost extends FlavourBuff implements CombatModifier.OnHitEffect {
 
 	public static final float DURATION	= 10f;
 
@@ -87,13 +89,13 @@ public class Frost extends FlavourBuff {
 				
 			} else if (target instanceof Thief) {
 
-				Item item = ((Thief) target).item;
+				Item item = ((Thief) target).GetItem();
 
 				if (item instanceof Potion && !item.unique) {
-					((Potion) ((Thief) target).item).shatter(target.pos);
-					((Thief) target).item = null;
+					((Potion) ((Thief) target).GetItem()).shatter(target.pos);
+					((Thief) target).SetItem(null);
 				} else if (item instanceof MysteryMeat){
-					((Thief) target).item = new FrozenCarpaccio();
+					((Thief) target).SetItem(new FrozenCarpaccio());
 				}
 
 			}
@@ -144,4 +146,19 @@ public class Frost extends FlavourBuff {
 		immunities.add( Chill.class );
 	}
 
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		detach();
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
+	}
 }

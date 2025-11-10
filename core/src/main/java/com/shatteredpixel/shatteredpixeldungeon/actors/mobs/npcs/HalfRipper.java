@@ -32,6 +32,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.RipperDemon;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
@@ -48,7 +50,6 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HalfRipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHalfRipperRewards;
@@ -60,6 +61,7 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 
 public class HalfRipper extends NPC {
@@ -69,10 +71,18 @@ public class HalfRipper extends NPC {
         state = WANDERING;
     }
 
-    protected class Wandering extends Mob.Wandering{
+    private int GetTarget() {
+        return m_Target.Get();
+    }
+
+    private void SetTargetPosition(int pos) {
+        m_Target.Set(pos);
+    }
+
+    protected static class Wandering extends Mob.Wandering{
         @Override
-        protected int randomDestination() {
-            int pos = super.randomDestination();
+        protected int randomDestination(Mob mob) {
+            int pos = super.randomDestination(mob);
             //cannot wander onto heaps or the level exit
             if (Dungeon.level.heaps.get(pos) != null ||
                 pos == Dungeon.level.exit() ||
@@ -84,72 +94,72 @@ public class HalfRipper extends NPC {
         }
 
         @Override
-        public boolean act( boolean enemyInFOV, boolean justAlerted ) {
+        public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
             if (Quest.started() && !Quest.failed && !Quest.completed()) {
-                HalfRipper.this.state = new HalfRipper.Escaping();
-                HalfRipper.this.alignment = Alignment.ALLY;
+                mob.state = new HalfRipper.Escaping();
+                mob.alignment = Alignment.ALLY;
                 return true;
             }
-            return super.act(enemyInFOV, justAlerted);
+            return super.act(mob, enemyInFOV, justAlerted);
         }
     }
 
-    protected class Escaping implements AiState {
+    protected static class Escaping implements AiState {
 
         public static final String TAG	= "ESCAPING";
 
         private boolean goingForStairs = false;
 
         @Override
-        public boolean act( boolean enemyInFOV, boolean justAlerted ) {
+        public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
             int dungeonPosition = Dungeon.level.entrance();
-            if (pos == dungeonPosition) {
+            if (mob.pos == dungeonPosition) {
                 if (Quest.corrupted && Dungeon.depth != 24) {
-                    yell(Messages.get(HalfRipper.class, "ascend_corrupted"));
+                    mob.yell(Messages.get(HalfRipper.class, "ascend_corrupted"));
                 }
                 else {
-                    yell(Messages.get(HalfRipper.class, "ascend"));
+                    mob.yell(Messages.get(HalfRipper.class, "ascend"));
                 }
-                HalfRipper.this.ascend();
+                ((HalfRipper)mob).ascend();
                 return true;
             }
 
-            int oldPos = pos;
-            target = Dungeon.hero.pos;
+            int oldPos = mob.pos;
+            ((HalfRipper)mob).SetTargetPosition(Dungeon.hero.pos);
             PathFinder.buildDistanceMap(dungeonPosition, BArray.or(Dungeon.level.passable, Dungeon.level.avoid, null));
 
-            if (PathFinder.distance[pos] <= 5){
-                if (getCloser(dungeonPosition)) {
+            if (PathFinder.distance[mob.pos] <= 5){
+                if (mob.getCloser(dungeonPosition)) {
                     if (!goingForStairs) {
                         if (Quest.corrupted && Dungeon.depth != 24) {
-                            yell(Messages.get(HalfRipper.class, "stairs_corrupted"));
+                            mob.yell(Messages.get(HalfRipper.class, "stairs_corrupted"));
                         }
                         else {
-                            yell(Messages.get(HalfRipper.class, "stairs"));
+                            mob.yell(Messages.get(HalfRipper.class, "stairs"));
                         }
                         goingForStairs = true;
                     }
-                    spend( 1 / speed() );
-                    return moveSprite( oldPos, pos );
+                    mob.spend( 1 / mob.speed() );
+                    return mob.moveSprite( oldPos, mob.pos );
                 }
             }
 
             goingForStairs = false;
             // if we get here, we couldn't find or move towards the stairs. Follow the hero instead
-            if (getCloser( target )) {
-                spend( 1 / speed() );
-                return moveSprite( oldPos, pos );
+            if (mob.getCloser( ((HalfRipper) mob).GetTarget() )) {
+                mob.spend( 1 / mob.speed() );
+                return mob.moveSprite( oldPos, mob.pos );
             } else {
                 //if it can't move closer to hero, then try to attack something nearby
                 HashSet<Char> enemies = new HashSet<>();
-                for (Mob mob : Dungeon.level.mobs) {
-                    if (mob.alignment == Alignment.ENEMY && Dungeon.level.adjacent( pos, mob.pos )
-                            && mob.invisible <= 0 && !mob.isInvulnerable(getClass()) && !isCharmedBy(mob))
+                for (Mob otherMob : Dungeon.level.mobs) {
+                    if (otherMob.alignment == Alignment.ENEMY && Dungeon.level.adjacent( mob.pos, otherMob.pos )
+                            && otherMob.invisible <= 0 && !otherMob.isInvulnerable(getClass()) && !mob.isCharmedBy(otherMob))
                         //do not target passive mobs
                         //intelligent allies also don't target mobs which are wandering or asleep
-                        if (mob.state != mob.PASSIVE &&
-                                (!intelligentAlly || (mob.state != mob.SLEEPING && mob.state != mob.WANDERING))) {
-                            enemies.add(mob);
+                        if (otherMob.state != otherMob.PASSIVE &&
+                                (!mob.intelligentAlly || (otherMob.state != otherMob.SLEEPING && otherMob.state != otherMob.WANDERING))) {
+                            enemies.add(otherMob);
                         }
                 }
                 if (!enemies.isEmpty()) {
@@ -164,9 +174,9 @@ public class HalfRipper extends NPC {
                     }
 
                     if (halfRipperTarget != null)
-                        doAttack(halfRipperTarget);
+                        mob.doAttack(halfRipperTarget);
                 }
-                spend( TICK );
+                mob.spend( TICK );
             }
             return true;
         }
@@ -394,13 +404,13 @@ public class HalfRipper extends NPC {
     }
 
     @Override
-    public int damageRoll(AttackType type, boolean isMaxDamage) {
+    public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
         if (isMaxDamage) return 15;
         return Random.NormalIntRange( 10, 15 );
     }
 
     @Override
-    public int attackSkill( Char target ) {
+    public int attackSkill() {
         return 20;
     }
 
@@ -410,18 +420,20 @@ public class HalfRipper extends NPC {
     }
 
     @Override
-    public int drRoll() {
-        return super.drRoll() + Random.NormalIntRange(0, 4);
+    public int drRoll(EnumSet<DamageType> damageType) {
+        return super.drRoll(damageType) + Random.NormalIntRange(0, 4);
     }
 
     @Override
-    public void damage( int dmg, Object src, int damageType ) {
-        super.damage(dmg, src, damageType);
-        if (Quest.corrupted()) {
-            yell(Messages.get(this, "take_damage_corrupted"));
-        } else {
-            yell(Messages.get(this, "take_damage"));
+    public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
+        if (dmg > 0) {
+            if (Quest.corrupted() && Quest.depth != 24) {
+                yell(Messages.get(this, "take_damage_corrupted"));
+            } else {
+                yell(Messages.get(this, "take_damage"));
+            }
         }
+        return super.Damage(dmg, src, damageType);
     }
 
     @Override

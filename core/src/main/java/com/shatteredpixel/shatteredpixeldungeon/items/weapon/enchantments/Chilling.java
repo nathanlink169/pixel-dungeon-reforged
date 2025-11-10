@@ -24,48 +24,63 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
+import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Chilling extends Weapon.Enchantment {
+import java.util.ArrayList;
+
+public class Chilling extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing TEAL = new ItemSprite.Glowing( 0x00FFFF );
-	
+
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-		int level = Math.max( 0, weapon.buffedLvl() );
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
 
 		// lvl 0 - 25%
 		// lvl 1 - 40%
 		// lvl 2 - 50%
-		float procChance = (level+1f)/(level+4f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance) {
+		float procChance = (level + 1f) / (level + 4f) * procChanceMultiplier(context.attacker);
 
+		if (Random.Float() < procChance) {
 			float powerMulti = Math.max(1f, procChance);
 
-			//adds 3 turns of chill per proc, with a cap of 6 turns
+			// Adds 3 turns of chill per proc, with a cap of 6 turns
 			float durationToAdd = 3f * powerMulti;
-			Chill existing = defender.buff(Chill.class);
-			if (existing != null){
-				durationToAdd = Math.min(durationToAdd, (6f*powerMulti)-existing.cooldown());
+			Chill existing = context.defender.buff(Chill.class);
+			if (existing != null) {
+				durationToAdd = Math.min(durationToAdd, (6f * powerMulti) - existing.cooldown());
 			}
 
 			if (durationToAdd > 0) {
-				Buff.affect(defender, Chill.class, durationToAdd);
+				Buff.affect(context.defender, Chill.class, durationToAdd);
 			}
-			Splash.at( defender.sprite.center(), 0xFFB2D6FF, 5);
 
+			Splash.at(context.defender.sprite.center(), 0xFFB2D6FF, 5);
 		}
-
-		return damage;
 	}
-	
+
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
+
 	@Override
 	public Glowing glowing() {
 		return TEAL;

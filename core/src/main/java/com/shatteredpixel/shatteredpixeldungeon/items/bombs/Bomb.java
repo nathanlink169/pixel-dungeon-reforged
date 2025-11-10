@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
@@ -63,6 +64,7 @@ import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -195,10 +197,10 @@ public class Bomb extends Item {
 				}
 
 				int dmg = Random.NormalIntRange(4 + Dungeon.scalingDepth(), 12 + 3*Dungeon.scalingDepth());
-				dmg -= ch.drRoll();
+				dmg -= ch.drRoll(GetDamageType());
 
 				if (dmg > 0) {
-					ch.damage(dmg, this);
+					ch.Damage(dmg, this, GetDamageType());
 				}
 				
 				if (ch == Dungeon.hero && !ch.isAlive()) {
@@ -214,6 +216,10 @@ public class Bomb extends Item {
 				Dungeon.observe();
 			}
 		}
+	}
+
+	protected EnumSet<DamageType> GetDamageType() {
+		return DamageType.of(DamageType.EXPLOSIVE);
 	}
 	
 	@Override

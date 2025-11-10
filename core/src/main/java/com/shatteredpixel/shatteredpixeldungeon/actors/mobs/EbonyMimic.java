@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
@@ -41,8 +42,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWea
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 
@@ -79,7 +78,7 @@ public class EbonyMimic extends Mimic {
 		if (sprite != null) sprite.idle();
 		if (Actor.chars().contains(this) && Dungeon.level.heroFOV[pos]) {
 			enemy = Dungeon.hero;
-			target = Dungeon.hero.pos;
+			m_Target.Set(Dungeon.hero.pos);
 			GLog.w(Messages.get(this, "reveal") );
 			CellEmitter.get(pos).burst(Speck.factory(Speck.STAR), 10);
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC, 1, 0.85f);
@@ -90,7 +89,7 @@ public class EbonyMimic extends Mimic {
 	}
 
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		if (alignment == Alignment.NEUTRAL){
 			return Math.round(super.damageRoll(type, isMaxDamage)*2f); //BIG damage on surprise
 		} else {
@@ -102,10 +101,10 @@ public class EbonyMimic extends Mimic {
 	protected void generatePrize( boolean useDecks ) {
 		super.generatePrize( useDecks );
 		//add one extra random loot item, on top of the one granted by mimic tooth
-		items.add(Generator.randomUsingDefaults());
+		m_Items.Add(Generator.randomUsingDefaults());
 
 		//all existing prize items are guaranteed uncursed, and are always at least +1
-		for (Item i : items){
+		for (Item i : m_Items.Get()){
 			if (i instanceof EquipableItem || i instanceof Wand){
 				i.cursed = false;
 				i.cursedKnown = true;

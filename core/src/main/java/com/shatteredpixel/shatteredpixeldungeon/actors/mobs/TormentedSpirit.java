@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -35,8 +36,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.TormentedSpiritSprite;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
@@ -47,15 +46,15 @@ public class TormentedSpirit extends Wraith {
 
 	//50% more damage scaling than regular wraiths
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
-		if (isMaxDamage) return 2 + Math.round(1.5f*level);
-		return Random.NormalIntRange( 1 + Math.round(1.5f*level)/2, 2 + Math.round(1.5f*level) );
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
+		if (isMaxDamage) return 2 + Math.round(1.5f*m_Level.Get());
+		return Random.NormalIntRange( 1 + Math.round(1.5f*m_Level.Get())/2, 2 + Math.round(1.5f*m_Level.Get()) );
 	}
 
 	//50% more accuracy (and by extension evasion) scaling than regular wraiths
 	@Override
-	public int attackSkill( Char target ) {
-		return 10 + Math.round(1.5f*level);
+	public int attackSkill() {
+		return 10 + Math.round(1.5f*m_Level.Get());
 	}
 
 	public void cleanse(){

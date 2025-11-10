@@ -39,15 +39,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.EarthGuardianSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
@@ -57,6 +58,8 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.ColorMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class WandOfLivingEarth extends DamageWand {
 	
@@ -132,7 +135,7 @@ public class WandOfLivingEarth extends DamageWand {
 				ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl()/2);
 
 				wandProc(ch, chargesPerCast());
-				ch.damage(damage, this, DamageType.MAGIC);
+				ch.Damage(damage, this, DamageType.of(DamageType.BLUDGEONING));
 
 				int closest = -1;
 				boolean[] passable = Dungeon.level.passable;
@@ -178,7 +181,7 @@ public class WandOfLivingEarth extends DamageWand {
 				ch.sprite.centerEmitter().burst(MagicMissile.EarthParticle.BURST, 5 + buffedLvl() / 2);
 
 				wandProc(ch, chargesPerCast());
-				ch.damage(damage, this, DamageType.MAGIC);
+				ch.Damage(damage, this, DamageType.of(DamageType.BLUDGEONING));
 				Sample.INSTANCE.play( Assets.Sounds.HIT_MAGIC, 1, 0.8f * Random.Float(0.87f, 1.15f) );
 				
 				if (guardian == null) {
@@ -367,7 +370,7 @@ public class WandOfLivingEarth extends DamageWand {
 		}
 	}
 
-	public static class EarthGuardian extends NPC {
+	public static class EarthGuardian extends NPC implements CombatModifier.OnHitEffect {
 
 		{
 			alignment = Alignment.ALLY;
@@ -400,31 +403,25 @@ public class WandOfLivingEarth extends DamageWand {
 		}
 
 		@Override
-		public int GetDefenseSkillInternal() {
+		public int defenseSkill() {
 			return (Dungeon.hero.lvl + 4) / 2;
 		}
 
 		@Override
-		public int attackSkill(Char target) {
+		public int attackSkill() {
 			//same as the hero
-			return 2*GetDefenseSkillInternal() + 5;
+			return 2*defenseSkill() + 5;
 		}
 
 		@Override
-		public int attackProc(Char enemy, int damage) {
-			if (enemy instanceof Mob) ((Mob)enemy).aggro(this);
-			return super.attackProc(enemy, damage);
-		}
-
-		@Override
-		public int damageRoll(AttackType type, boolean isMaxDamage) {
+		public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 			if (isMaxDamage) return 4 + Dungeon.scalingDepth()/2;
 			return Random.NormalIntRange(2, 4 + Dungeon.scalingDepth()/2);
 		}
 
 		@Override
-		public int drRoll() {
-			int dr = super.drRoll();
+		public int drRoll(EnumSet<DamageType> damageType) {
+			int dr = super.drRoll(damageType);
 			if (Dungeon.isChallenged(Challenges.NO_ARMOR)){
 				return dr + Random.NormalIntRange(wandLevel, 2 + wandLevel);
 			} else {
@@ -466,21 +463,37 @@ public class WandOfLivingEarth extends DamageWand {
 			wandLevel = bundle.getInt(WAND_LEVEL);
 		}
 
-		private class Wandering extends Mob.Wandering{
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (context.defender instanceof Mob) ((Mob)context.defender).aggro(this);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == this;
+		}
+
+		private static class Wandering extends Mob.Wandering{
 
 			@Override
-			public boolean act(boolean enemyInFOV, boolean justAlerted) {
+			public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+				EarthGuardian e = (EarthGuardian)mob;
 				if (!enemyInFOV){
-					Buff.affect(Dungeon.hero, RockArmor.class).addArmor(wandLevel, HP);
-					if (buff(PowerOfMany.PowerBuff.class) != null){
-						Buff.affect(Dungeon.hero, RockArmor.class).powerOfManyTurns = buff(PowerOfMany.PowerBuff.class).cooldown()+1;
+					Buff.affect(Dungeon.hero, RockArmor.class).addArmor(e.wandLevel, e.HP);
+					if (e.buff(PowerOfMany.PowerBuff.class) != null){
+						Buff.affect(Dungeon.hero, RockArmor.class).powerOfManyTurns = e.buff(PowerOfMany.PowerBuff.class).cooldown()+1;
 					}
-					Dungeon.hero.sprite.centerEmitter().burst(MagicMissile.EarthParticle.ATTRACT, 8 + wandLevel/2);
-					destroy();
-					sprite.die();
+					Dungeon.hero.sprite.centerEmitter().burst(MagicMissile.EarthParticle.ATTRACT, 8 + e.wandLevel/2);
+					e.destroy();
+					e.sprite.die();
 					return true;
 				} else {
-					return super.act(enemyInFOV, justAlerted);
+					return super.act(e, enemyInFOV, justAlerted);
 				}
 			}
 

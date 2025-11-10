@@ -31,17 +31,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Adrenaline;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 
@@ -77,14 +73,14 @@ public class StoneOfBlight extends Runestone {
 							if (damage >= ch.HP) {
 								damage = ch.HP - 1;
 							}
-							ch.damage(damage, this);
+							ch.Damage(damage, this, DamageType.of(DamageType.NEGATIVE_ENERGY));
 						}
 					} else /*if (ch == curUser)*/ {
 						int damage = (int)Math.max(0.15f * ch.HP, 0.025f * ch.GetMaxHP());
 						if (damage >= ch.HP) {
 							damage = ch.HP - 1;
 						}
-						ch.damage(damage, this);
+						ch.Damage(damage, this, DamageType.of(DamageType.NEGATIVE_ENERGY));
 					}
 				}
 

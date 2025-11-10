@@ -25,10 +25,11 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class ThrowingKnife extends MissileWeapon {
@@ -43,7 +44,7 @@ public class ThrowingKnife extends MissileWeapon {
 		tier = 1;
 		baseUses = 5;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 	
 	@Override
@@ -53,9 +54,9 @@ public class ThrowingKnife extends MissileWeapon {
 	}
 	
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		if (owner instanceof Hero) {
-			Hero hero = (Hero)owner;
+	public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+		if (usedByHero) {
+			Hero hero = Dungeon.hero;
 			Char enemy = hero.enemy();
 			if (enemy instanceof Mob && ((Mob) enemy).surprisedBy(hero)) {
 				//deals 75% toward max to max on surprise, instead of min to max.
@@ -74,6 +75,6 @@ public class ThrowingKnife extends MissileWeapon {
 				return damage;
 			}
 		}
-		return super.damageRoll(owner, isMaxDamage);
+		return super.damageRoll(isMaxDamage, usedByHero);
 	}
 }

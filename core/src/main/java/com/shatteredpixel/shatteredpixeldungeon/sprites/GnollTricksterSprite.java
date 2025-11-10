@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.ParalyticDart;
 import com.watabou.noosa.MovieClip;
 import com.watabou.noosa.TextureFilm;
@@ -71,7 +72,7 @@ public class GnollTricksterSprite extends MobSprite {
 					reset( this, cell, new ParalyticDart(), new Callback() {
 						@Override
 						public void call() {
-							ch.onAttackComplete(Char.AttackType.MELEE);
+							ch.onAttackComplete(AttackContext.AttackType.RANGED);
 						}
 					} );
 

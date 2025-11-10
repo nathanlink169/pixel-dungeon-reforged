@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Healing;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -36,24 +37,21 @@ public class HealingDart extends TippedDart {
 		image = ItemSpriteSheet.HEALING_DART;
 		// usesTargeting = false; //you never want to throw this at an enemy
 	}
-	
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
 
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
 		//do nothing to the hero or enemies when processing charged shot
 		if (processingChargedShot && (defender == attacker || attacker.alignment != defender.alignment)){
-			return super.proc(attacker, defender, damage);
+			return;
 		}
-		
+
 		//heals 30 hp at base, scaling with enemy GetMaxHP()
 		PotionOfHealing.cure( defender );
 		Buff.affect( defender, Healing.class ).setHeal((int)(0.5f*defender.GetMaxHP() + 30), 0.25f, 0);
-		
-		if (attacker.alignment == defender.alignment){
-			return 0;
-		}
-		
-		return super.proc(attacker, defender, damage);
 	}
-	
+
+	@Override
+	public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+		return 0;
+	}
 }

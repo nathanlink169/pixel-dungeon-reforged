@@ -28,7 +28,6 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
@@ -37,11 +36,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PrismaticGuard;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfAccuracy;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfEvasion;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PrismaticSprite;
@@ -49,7 +50,9 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class PrismaticImage extends NPC {
+import java.util.EnumSet;
+
+public class PrismaticImage extends NPC implements CombatModifier.OnHitEffect {
 	
 	{
 		alignment = Alignment.ALLY;
@@ -155,7 +158,7 @@ public class PrismaticImage extends NPC {
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		if (hero != null) {
 			if (isMaxDamage) return 4 + hero.lvl/2;
 			return Random.NormalIntRange( 2 + hero.lvl/4, 4 + hero.lvl/2 );
@@ -166,7 +169,7 @@ public class PrismaticImage extends NPC {
 	}
 	
 	@Override
-	public int attackSkill( Char target ) {
+	public int attackSkill() {
 		if (hero != null) {
 			//same base attack skill as hero, benefits from accuracy ring
 			return (int)((9 + hero.lvl) * RingOfAccuracy.accuracyMultiplier(hero));
@@ -176,38 +179,27 @@ public class PrismaticImage extends NPC {
 	}
 	
 	@Override
-	public int defenseSkill(Char enemy) {
+	public int defenseSkill() {
 		if (hero != null) {
 			int baseEvasion = 4 + hero.lvl;
-			int heroEvasion = (int)((4 + hero.lvl) * RingOfEvasion.evasionMultiplier( hero ));
-			if (hero.belongings.armor() != null){
-				heroEvasion = (int)hero.belongings.armor().evasionFactor(this, heroEvasion);
-			}
+			int heroEvasion = (int)(4 + hero.lvl);
 
 			//if the hero has more/less evasion, 50% of it is applied
 			//includes ring of evasion and armor boosts
-			return super.defenseSkill(enemy) * (baseEvasion + heroEvasion) / 2;
+			return super.defenseSkill() * (baseEvasion + heroEvasion) / 2;
 		} else {
 			return 0;
 		}
 	}
 	
 	@Override
-	public int drRoll() {
-		int dr = super.drRoll();
+	public int drRoll(EnumSet<DamageType> damageType) {
+		int dr = super.drRoll(damageType);
 		if (hero != null){
-			return dr + hero.drRoll();
+			return dr + hero.drRoll(damageType);
 		} else {
 			return dr;
 		}
-	}
-	
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		if (hero != null && hero.belongings.armor() != null){
-			damage = hero.belongings.armor().proc( enemy, this, damage );
-		}
-		return super.defenseProc(enemy, damage);
 	}
 
 	@Override
@@ -219,16 +211,6 @@ public class PrismaticImage extends NPC {
 		}
 	}
 
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		
-		if (enemy instanceof Mob) {
-			((Mob)enemy).aggro( this );
-		}
-		
-		return super.attackProc( enemy, damage );
-	}
-	
 	@Override
 	public CharSprite sprite() {
 		CharSprite s = super.sprite();
@@ -249,20 +231,37 @@ public class PrismaticImage extends NPC {
 		immunities.add( Burning.class );
 		immunities.add( AllyBuff.class );
 	}
-	
-	private class Wandering extends Mob.Wandering{
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (context.defender instanceof Mob) {
+			((Mob)context.defender).aggro( this );
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	private static class Wandering extends Mob.Wandering{
 		
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
 			if (!enemyInFOV){
-				Buff.affect(hero, PrismaticGuard.class).set( PrismaticImage.this );
-				destroy();
-				CellEmitter.get(pos).start( Speck.factory(Speck.LIGHT), 0.2f, 3 );
-				sprite.die();
+				Buff.affect(((PrismaticImage)mob).hero, PrismaticGuard.class).set( (PrismaticImage)mob );
+				mob.destroy();
+				CellEmitter.get(mob.pos).start( Speck.factory(Speck.LIGHT), 0.2f, 3 );
+				mob.sprite.die();
 				Sample.INSTANCE.play( Assets.Sounds.TELEPORT );
 				return true;
 			} else {
-				return super.act(enemyInFOV, justAlerted);
+				return super.act(mob, enemyInFOV, justAlerted);
 			}
 		}
 		

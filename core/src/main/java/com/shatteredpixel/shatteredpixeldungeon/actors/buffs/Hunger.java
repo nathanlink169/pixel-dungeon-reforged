@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.SaltCube;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
@@ -39,8 +40,8 @@ import com.watabou.utils.Bundle;
 
 public class Hunger extends Buff implements Hero.Doom {
 
-	public static final float HUNGRY	= 400f;
-	public static final float STARVING	= 600f;
+	public static final float HUNGRY	= 350f;
+	public static final float STARVING	= HUNGRY + 175f;
 
 	private float level;
 	private float partialDamage;
@@ -89,7 +90,7 @@ public class Hunger extends Buff implements Hero.Doom {
 				partialDamage += target.GetMaxHP() * multiplier;
 
 				if (partialDamage > 1){
-					target.damage( (int)partialDamage, this);
+					target.Damage( (int)partialDamage, this, DamageType.of(DamageType.STARVATION));
 					partialDamage -= (int)partialDamage;
 				}
 				
@@ -105,7 +106,7 @@ public class Hunger extends Buff implements Hero.Doom {
 				if (newLevel >= STARVING) {
 
 					GLog.n( Messages.get(this, "onstarving") );
-					hero.damage( 1, this );
+					hero.Damage( 1, this, DamageType.of(DamageType.STARVATION) );
 
 					hero.interrupt();
 					newLevel = STARVING;
@@ -160,7 +161,7 @@ public class Hunger extends Buff implements Hero.Doom {
 			level = STARVING;
 			partialDamage += excess * (target.GetMaxHP()/1000f);
 			if (partialDamage > 1f){
-				target.damage( (int)partialDamage, this );
+				target.Damage( (int)partialDamage, this, DamageType.of(DamageType.STARVATION) );
 				partialDamage -= (int)partialDamage;
 			}
 		}
@@ -169,7 +170,7 @@ public class Hunger extends Buff implements Hero.Doom {
 			GLog.w( Messages.get(this, "onhungry") );
 		} else if (oldLevel < STARVING && level >= STARVING){
 			GLog.n( Messages.get(this, "onstarving") );
-			target.damage( 1, this );
+			target.Damage( 1, this, DamageType.of(DamageType.STARVATION) );
 		}
 
 		BuffIndicator.refreshHero();

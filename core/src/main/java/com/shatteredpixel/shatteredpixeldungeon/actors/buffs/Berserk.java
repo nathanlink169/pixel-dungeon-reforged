@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal.WarriorShield;
@@ -46,13 +48,28 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 
-public class Berserk extends ShieldBuff implements ActionIndicator.Action {
+public class Berserk extends ShieldBuff implements ActionIndicator.Action, CombatModifier.PreArmorDamageModifier {
 
 	{
 		type = buffType.POSITIVE;
 
 		detachesAtZero = false;
 		shieldUsePriority = -1; //other shielding buffs are always consumed first
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		return (int) damageFactor(currentDamage);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.LOW;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == target;
 	}
 
 	private enum State{

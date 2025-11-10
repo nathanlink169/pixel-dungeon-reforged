@@ -27,10 +27,12 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Succubus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
 
-public class Charm extends FlavourBuff {
+public class Charm extends FlavourBuff implements CombatModifier.OnHitEffect {
 
 	public int object = 0;
 	public boolean ignoreHeroAllies = false;
@@ -90,5 +92,20 @@ public class Charm extends FlavourBuff {
 		if (cooldown() <= 0){
 			detach();
 		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		recover(context.attacker);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.PoisonDart;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -114,8 +115,8 @@ public class PoisonDartTrap extends Trap {
 								reset(pos, finalTarget.sprite, new PoisonDart(), new Callback() {
 									@Override
 									public void call() {
-										int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll();
-										finalTarget.damage(dmg, PoisonDartTrap.this);
+										int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll(DamageType.of(DamageType.POISON));
+										finalTarget.Damage(dmg, PoisonDartTrap.this, DamageType.of(DamageType.POISON));
 										if (finalTarget == Dungeon.hero){
 											//for the poison dart traps in the Tengu fight
 											if (Dungeon.depth == 10) {
@@ -137,7 +138,7 @@ public class PoisonDartTrap extends Trap {
 								});
 						return false;
 					} else {
-						finalTarget.damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(), PoisonDartTrap.this);
+						finalTarget.Damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(DamageType.of(DamageType.POISON)), PoisonDartTrap.this, DamageType.of(DamageType.POISON));
 						Buff.affect( finalTarget, Poison.class ).set( poisonAmount() );
 						return true;
 					}

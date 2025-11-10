@@ -35,6 +35,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Degrade;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
@@ -43,33 +48,32 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WarlockSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
-public class Warlock extends Mob implements Callback {
+public class Warlock extends Mob implements Callback, CombatModifier.OnHitEffect {
 	
 	private static final float TIME_TO_ZAP	= 1f;
 	
 	{
 		WANDERING = new Wandering();
 	}
-
-	private boolean dancing = false;
-	private static final String DANCING = "dancing";
+	private BundleableProperty.Bool m_Dancing = new BundleableProperty.Bool("dancing", false);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put( DANCING, dancing);
+		m_Dancing.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		dancing = bundle.getBoolean(DANCING);
+		m_Dancing.Restore(bundle);
 	}
 
 	@Override
@@ -86,7 +90,7 @@ public class Warlock extends Mob implements Callback {
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
 	}
 	
-	protected boolean doAttack( Char enemy ) {
+	public boolean doAttack(Char enemy) {
 
 		if (Dungeon.level.adjacent( pos, enemy.pos )
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
@@ -104,7 +108,24 @@ public class Warlock extends Mob implements Callback {
 			}
 		}
 	}
-	
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (m_Dancing.Get()) {
+			setIsDancing(false);
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this;
+	}
+
 	//used so resistances can differentiate between melee and magical attacks
 	public static class DarkBolt{}
 	
@@ -117,7 +138,15 @@ public class Warlock extends Mob implements Callback {
 
 		Invisibility.dispel(this);
 		Char enemy = this.enemy;
-		if (hit( this, enemy, true )) {
+		// Build attack context
+		AttackContext context = new AttackContext.Builder(this, enemy)
+				.attackType(AttackContext.AttackType.RANGED)
+				.damageType(GetRangedDamageType())
+				.build();
+
+		// Resolve attack - this handles EVERYTHING internally
+		AttackResult result = CombatResolver.resolve(context);
+		if (result.result == AttackResult.ResultType.HIT) {
 			//TODO would be nice for this to work on ghost/statues too
 			if (enemy == Dungeon.hero && Random.Int( 2 ) == 0) {
 				Buff.prolong( enemy, Degrade.class, Degrade.DURATION ).poweredUp = getRandomizerEnabled(RandomTraits.ARCANE_MASTERY);
@@ -127,7 +156,7 @@ public class Warlock extends Mob implements Callback {
 				Sample.INSTANCE.play( Assets.Sounds.DEGRADE );
 			}
 			
-			int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
+			int dmg = damageRoll(AttackContext.AttackType.RANGED, false);
 			dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
 
 			//logic for DK taking 1/2 damage from aggression stoned minions
@@ -137,7 +166,7 @@ public class Warlock extends Mob implements Callback {
 				dmg *= 0.5f;
 			}
 
-			enemy.damage( dmg, new DarkBolt() );
+			enemy.Damage( dmg, new DarkBolt(), GetRangedDamageType() );
 			
 			if (enemy == Dungeon.hero && !enemy.isAlive()) {
 				Badges.validateDeathFromEnemyMagic();
@@ -149,35 +178,25 @@ public class Warlock extends Mob implements Callback {
 		}
 	}
 
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		if (dancing) {
-			setIsDancing(false);
-		}
-
-		return super.defenseProc(enemy, damage);
-	}
-
 	private void setIsDancing(boolean isDancing) {
+		m_Dancing.Set(isDancing);
 		if (isDancing) {
 			((WarlockSprite)sprite).dance();
-			dancing = true;
 		} else {
 			sprite.idle();
-			dancing = false;
 		}
 	}
 
 	@Override
 	public void beckon( int cell ) {
-		if (!dancing) {
+		if (!m_Dancing.Get()) {
 			super.beckon(cell);
 		}
 	}
 
 	@Override
 	public void notice() {
-		if (!dancing) {
+		if (!m_Dancing.Get()) {
 			super.notice();
 		}
 	}
@@ -209,33 +228,34 @@ public class Warlock extends Mob implements Callback {
 	}
 
 	@Override
-	protected boolean getCloser( int target ) {
+    public boolean getCloser(int target) {
 		if (state == HUNTING && getRandomizerEnabled(RandomTraits.COWARDLY_CASTER)) {
-			return enemySeen && getFurther( target );
+			return m_EnemySeen.Get() && getFurther( target );
 		} else {
 			return super.getCloser( target );
 		}
 	}
 
-	private class Wandering extends Mob.Wandering{
+	private static class Wandering extends Mob.Wandering{
 
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (!dancing) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			Warlock w = (Warlock) mob;
+			if (!w.m_Dancing.Get()) {
 				if (getRandomizerEnabled(RandomTraits.DANCE_FEVER)) {
 					if (!enemyInFOV && !justAlerted && Random.Int(50) == 0) {
-						setIsDancing(true);
-						spend( TICK );
+						w.setIsDancing(true);
+						w.spend( TICK );
 						return true;
 					}
-					return super.act(enemyInFOV, justAlerted);
+					return super.act(w, enemyInFOV, justAlerted);
 				}
-				return super.act(enemyInFOV, justAlerted);
+				return super.act(w, enemyInFOV, justAlerted);
 			}
-			if (!((WarlockSprite)sprite).isDancing()) {
-				((WarlockSprite) sprite).dance();
+			if (!((WarlockSprite)w.sprite).isDancing()) {
+				((WarlockSprite) w.sprite).dance();
 			}
-			spend( TICK );
+			w.spend( TICK );
 			return true;
 		}
 	}

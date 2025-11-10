@@ -24,10 +24,12 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
-public class Doom extends Buff {
+public class Doom extends Buff implements CombatModifier.PostArmorDamageModifier {
 	
 	{
 		type = buffType.NEGATIVE;
@@ -43,5 +45,20 @@ public class Doom extends Buff {
 	@Override
 	public int icon() {
 		return BuffIndicator.CORRUPT;
+	}
+
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		return (int) (currentDamage * (5.0f / 3.0f));
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

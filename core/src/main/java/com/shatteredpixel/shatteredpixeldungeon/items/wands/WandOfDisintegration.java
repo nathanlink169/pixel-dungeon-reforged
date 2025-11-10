@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
@@ -124,7 +125,7 @@ public class WandOfDisintegration extends DamageWand {
 		int lvl = level + (chars.size()-1) + terrainBonus;
 		for (Char ch : chars) {
 			wandProc(ch, chargesPerCast());
-			ch.damage( damageRoll(lvl), this );
+			ch.Damage( damageRoll(lvl), this, DamageType.of(DamageType.NEGATIVE_ENERGY) );
 			ch.sprite.centerEmitter().burst( PurpleParticle.BURST, Random.IntRange( 1, 2 ) );
 			ch.sprite.flash();
 		}

@@ -29,27 +29,26 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.HashSet;
 
-public class Ballista extends Mob {
+public class Ballista extends Mob implements CombatModifier.OnHitEffect, CombatModifier.OnMissEffect {
 	{
 		HUNTING = new Hunting();
 	}
-
-	private int ammo = ammoCapacity();
 
 	public static final HashSet<Class> RESISTS = new HashSet<>();
 	static {
@@ -67,33 +66,15 @@ public class Ballista extends Mob {
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
-		return !Dungeon.level.adjacent( pos, enemy.pos ) && ammo > 0
+		return !Dungeon.level.adjacent( pos, enemy.pos ) && m_Ammo.Get() > 0
 				&& (super.canAttack(enemy) || new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos);
-	}
-
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (damage > 0 && Random.Int( 2 ) == 0) {
-			int oppositeAdjacent = enemy.pos + (enemy.pos - pos);
-			Ballistica trajectory = new Ballistica(enemy.pos, oppositeAdjacent, Ballistica.MAGIC_BOLT);
-			WandOfBlastWave.throwChar(enemy, trajectory, 2, false, false, this);
-		}
-
-		return damage;
-	}
-
-	@Override
-	public void onAttackComplete(AttackType attackType) {
-		--ammo;
-		super.onAttackComplete(attackType);
 	}
 
 	protected int ammoCapacity() {
 		return 1;
 	}
 	private void reload() {
-		ammo = ammoCapacity();
+		m_Ammo.Set(ammoCapacity());
 		if (Dungeon.hero.getVisibleEnemies().contains(this)) {
 			Sample.INSTANCE.play(Assets.Sounds.BALLISTA_RELOAD);
 			yell(Messages.get(this, "loaded"));
@@ -110,29 +91,55 @@ public class Ballista extends Mob {
 		}
 	}
 
-	private class Hunting extends Mob.Hunting {
-
-		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
-			if (ammo <= 0) {
-				reload();
-				spend( attackDelay() );
-				return true;
-			}
-			return super.act(enemyInFOV, justAlerted);
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		m_Ammo.Set(m_Ammo.Get() - 1);
+		if (Random.Int( 4 ) == 0) {
+			int oppositeAdjacent = context.defenderPosition + (context.defenderPosition - context.attackerPosition);
+			Ballistica trajectory = new Ballistica(context.defenderPosition, oppositeAdjacent, Ballistica.MAGIC_BOLT);
+			WandOfBlastWave.throwChar(context.defender, trajectory, 2, false, false, this);
 		}
 	}
 
-	private static final String AMMO = "ammo";
+	@Override
+	public void onMiss(AttackContext context) {
+		m_Ammo.Set(m_Ammo.Get() - 1);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	private static class Hunting extends Mob.Hunting {
+
+		@Override
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
+			Ballista b = (Ballista) mob;
+			if (b.m_Ammo.Get() <= 0) {
+				b.reload();
+				b.spend( b.attackDelay() );
+				return true;
+			}
+			return super.act(b, enemyInFOV, justAlerted);
+		}
+	}
+
+	private BundleableProperty.Int m_Ammo = new BundleableProperty.Int("ammo", ammoCapacity());
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(AMMO, ammo);
+		m_Ammo.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		ammo = bundle.getInt(AMMO);
+		m_Ammo.Restore(bundle);
 	}
 }

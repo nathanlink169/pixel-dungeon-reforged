@@ -28,15 +28,17 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSapperSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class GnollSapper extends Mob {
 	{
@@ -50,18 +52,10 @@ public class GnollSapper extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnollsapper; }
 
-	public int spawnPos;
-	private int partnerID = -1;
-
-	private int abilityCooldown = Random.NormalIntRange(4, 6);
-	private boolean lastAbilityWasRockfall = false;
-
-	public int throwingRockFromPos = -1;
-	public int throwingRockToPos = -1;
 
 	public void linkPartner(Char c){
 		losePartner();
-		partnerID = c.id();
+		m_PartnerID.Set(c.id());
 		if (c instanceof GnollGuard) {
 			((GnollGuard) c).linkSapper(this);
 		} else if (c instanceof GnollGeomancer){
@@ -70,18 +64,18 @@ public class GnollSapper extends Mob {
 	}
 
 	public void losePartner(){
-		if (partnerID != -1){
-			if (Actor.findById(partnerID) instanceof GnollGuard) {
-				((GnollGuard) Actor.findById(partnerID)).loseSapper();
-			} else if (Actor.findById(partnerID) instanceof GnollGeomancer) {
-				((GnollGeomancer) Actor.findById(partnerID)).loseSapper();
+		if (m_PartnerID.Get() != -1){
+			if (Actor.findById(m_PartnerID.Get()) instanceof GnollGuard) {
+				((GnollGuard) Actor.findById(m_PartnerID.Get())).loseSapper();
+			} else if (Actor.findById(m_PartnerID.Get()) instanceof GnollGeomancer) {
+				((GnollGeomancer) Actor.findById(m_PartnerID.Get())).loseSapper();
 			}
-			partnerID = -1;
+			m_PartnerID.Set(-1);
 		}
 	}
 
 	public Actor getPartner(){
-		return Actor.findById(partnerID);
+		return Actor.findById(m_PartnerID.Get());
 	}
 
 	@Override
@@ -91,9 +85,9 @@ public class GnollSapper extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		super.damage(dmg, src, damageType);
-		abilityCooldown -= dmg/10f;
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+		m_AbilityCooldown.Subtract((int) (dmg/10f));
+		return super.Damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -108,16 +102,20 @@ public class GnollSapper extends Mob {
 
 	@Override
 	protected boolean act() {
-		if (throwingRockFromPos != -1){
+		if (m_SpawnPosition.Get() == -1) {
+			m_SpawnPosition.Set(pos);
+		}
 
-			boolean attacked = Dungeon.level.map[throwingRockFromPos] == Terrain.MINE_BOULDER;
+		if (m_ThrowingRocksFromPosition.Get() != -1){
+
+			boolean attacked = Dungeon.level.map[m_ThrowingRocksFromPosition.Get()] == Terrain.MINE_BOULDER;
 
 			if (attacked) {
-				GnollGeomancer.doRockThrowAttack(this, throwingRockFromPos, throwingRockToPos);
+				GnollGeomancer.doRockThrowAttack(this, m_ThrowingRocksFromPosition.Get(), m_ThrowingRocksToPosition.Get());
 			}
 
-			throwingRockFromPos = -1;
-			throwingRockToPos = -1;
+			m_ThrowingRocksFromPosition.Set(-1);
+			m_ThrowingRocksToPosition.Set(-1);
 
 			spend(TICK);
 			return !attacked;
@@ -127,41 +125,43 @@ public class GnollSapper extends Mob {
 
 	}
 
-	public class Hunting extends Mob.Hunting {
+	public static class Hunting extends Mob.Hunting {
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			GnollSapper g = (GnollSapper)mob;
 			if (!enemyInFOV) {
-				if (Dungeon.level.distance(spawnPos, target) > 3){
+				if (Dungeon.level.distance(g.m_SpawnPosition.Get(), g.m_Target.Get()) > 3){
 					//don't chase something more than a few tiles out of spawning position
-					target = pos;
+					g.m_Target.Set(g.pos);
 				}
-				return super.act(enemyInFOV, justAlerted);
+				return super.act(g, enemyInFOV, justAlerted);
 			} else {
-				enemySeen = true;
+				g.m_EnemySeen.Set(true);
 
-				if (getPartner() != null
-						&& getPartner() instanceof Mob
-						&& ((Mob) getPartner()).alignment != alignment){
-					losePartner();
+				if (g.getPartner() != null
+						&& g.getPartner() instanceof Mob
+						&& ((Mob) g.getPartner()).alignment != g.alignment){
+					g.losePartner();
 				}
 
-				if (Actor.findById(partnerID) != null
-						&& Dungeon.level.distance(pos, enemy.pos) <= 3){
-					Mob partner = (Mob) Actor.findById(partnerID);
+				if (Actor.findById(g.m_PartnerID.Get()) != null
+						&& Dungeon.level.distance(g.pos, g.enemy.pos) <= 3){
+					Mob partner = (Mob) Actor.findById(g.m_PartnerID.Get());
 					if (partner.state == partner.SLEEPING){
 						partner.notice();
 					}
-					if (enemy != partner) {
-						partner.target = enemy.pos;
-						partner.aggro(enemy);
+					if (g.enemy != partner) {
+						partner.m_Target.Set(g.enemy.pos);
+						partner.aggro(g.enemy);
 					}
 				}
 
-				if (abilityCooldown-- <= 0){
+				g.m_AbilityCooldown.Decrement();
+				if (g.m_AbilityCooldown.Get() <= 0){
 					boolean targetNextToBarricade = false;
 					for (int i : PathFinder.NEIGHBOURS8){
-						if (Dungeon.level.map[enemy.pos+i] == Terrain.BARRICADE
-							|| Dungeon.level.map[enemy.pos+i] == Terrain.ENTRANCE){
+						if (Dungeon.level.map[g.enemy.pos+i] == Terrain.BARRICADE
+							|| Dungeon.level.map[g.enemy.pos+i] == Terrain.ENTRANCE){
 							targetNextToBarricade = true;
 							break;
 						}
@@ -170,81 +170,87 @@ public class GnollSapper extends Mob {
 					// 50/50 to either throw a rock or do rockfall, but never do rockfall twice
 					// unless target is next to a barricade, then always try to throw
 					// unless nothing to throw, then always rockfall
-					Ballistica aim = GnollGeomancer.prepRockThrowAttack(enemy, GnollSapper.this);
-					if (aim != null && (targetNextToBarricade || lastAbilityWasRockfall || Random.Int(2) == 0)) {
+					Ballistica aim = GnollGeomancer.prepRockThrowAttack(g.enemy, g);
+					if (aim != null && (targetNextToBarricade || g.m_LastAbilityWasRockfall.Get() || Random.Int(2) == 0)) {
 
-						lastAbilityWasRockfall = false;
-						throwingRockFromPos = aim.sourcePos;
-						throwingRockToPos = aim.collisionPos;
+						g.m_LastAbilityWasRockfall.Set(false);
+						g.m_ThrowingRocksFromPosition.Set(aim.sourcePos);
+						g.m_ThrowingRocksToPosition.Set(aim.collisionPos);
 
 						Ballistica warnPath = new Ballistica(aim.sourcePos, aim.collisionPos, Ballistica.STOP_SOLID);
 						for (int i : warnPath.subPath(0, warnPath.dist)){
-							sprite.parent.add(new TargetedCell(i, 0xFF0000));
+							g.sprite.parent.add(new TargetedCell(i, 0xFF0000));
 						}
 
 						Dungeon.hero.interrupt();
-						abilityCooldown = Random.NormalIntRange(4, 6);
-						spend(GameMath.gate(TICK, (int)Math.ceil(enemy.cooldown()), 3*TICK));
+						g.m_AbilityCooldown.Set(Random.NormalIntRange(4, 6));
+						g.spend(GameMath.gate(TICK, (int)Math.ceil(g.enemy.cooldown()), 3*TICK));
 						return true;
-					} else if (GnollGeomancer.prepRockFallAttack(enemy, GnollSapper.this, 2, true)) {
-						lastAbilityWasRockfall = true;
+					} else if (GnollGeomancer.prepRockFallAttack(g.enemy, g, 2, true)) {
+						g.m_LastAbilityWasRockfall.Set(true);
 						Dungeon.hero.interrupt();
-						spend(GameMath.gate(TICK, (int)Math.ceil(enemy.cooldown()), 3*TICK));
-						abilityCooldown = Random.NormalIntRange(4, 6);
+						g.spend(GameMath.gate(TICK, (int)Math.ceil(g.enemy.cooldown()), 3*TICK));
+						g.m_AbilityCooldown.Set(Random.NormalIntRange(4, 6));
 						return true;
 					}
 				}
 
 				//does not approach an enemy it can see, but does melee if in range
-				if (canAttack(enemy)){
-					return super.act(enemyInFOV, justAlerted);
+				if (g.canAttack(g.enemy)){
+					return super.act(g, enemyInFOV, justAlerted);
 				} else {
-					spend(TICK);
+					g.spend(TICK);
 					return true;
 				}
 			}
 		}
 	}
 
-	public class Wandering extends Mob.Wandering {
+	public static class Wandering extends Mob.Wandering {
 		@Override
-		protected int randomDestination() {
-			return spawnPos;
+		protected int randomDestination(Mob mob) {
+			return ((GnollSapper)mob).m_SpawnPosition.Get();
 		}
 	}
 
-	private static final String SPAWN_POS = "spawn_pos";
-	private static final String PARTNER_ID = "partner_id";
+	public int SpawnPosition() {
+		return m_SpawnPosition.Get();
+	}
 
-	private static final String ABILITY_COOLDOWN = "ability_cooldown";
-	private static final String LAST_ABILITY_WAS_ROCKFALL = "last_ability_was_rockfall";
+	public void SetSpawnPosition(int pos) {
+		m_SpawnPosition.Set(pos);
+	}
 
-	private static final String ROCK_FROM_POS = "rock_from_pos";
-	private static final String ROCK_TO_POS = "rock_to_pos";
+	public int ThrowingRocksFromPosition() {
+		return m_ThrowingRocksFromPosition.Get();
+	}
+
+	private BundleableProperty.Int m_SpawnPosition = new BundleableProperty.Int("spawn_pos", -1);
+	private BundleableProperty.Int m_PartnerID = new BundleableProperty.Int("partner_id", -1);
+	private BundleableProperty.Int m_AbilityCooldown = new BundleableProperty.Int("ability_cooldown", Random.NormalIntRange(4, 6));
+	private BundleableProperty.Bool m_LastAbilityWasRockfall = new BundleableProperty.Bool("last_ability_was_rockfall", false);
+	private BundleableProperty.Int m_ThrowingRocksFromPosition = new BundleableProperty.Int("rock_from_pos", -1);
+	private BundleableProperty.Int m_ThrowingRocksToPosition = new BundleableProperty.Int("rock_to_pos", -1);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(PARTNER_ID, partnerID);
-		bundle.put(SPAWN_POS, spawnPos);
-
-		bundle.put(ABILITY_COOLDOWN, abilityCooldown);
-		bundle.put(LAST_ABILITY_WAS_ROCKFALL, lastAbilityWasRockfall);
-
-		bundle.put(ROCK_FROM_POS, throwingRockFromPos);
-		bundle.put(ROCK_TO_POS, throwingRockToPos);
+		m_SpawnPosition.Store(bundle);
+		m_PartnerID.Store(bundle);
+		m_AbilityCooldown.Store(bundle);
+		m_LastAbilityWasRockfall.Store(bundle);
+		m_ThrowingRocksFromPosition.Store(bundle);
+		m_ThrowingRocksToPosition.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		partnerID = bundle.getInt(PARTNER_ID);
-		spawnPos = bundle.getInt(SPAWN_POS);
-
-		abilityCooldown = bundle.getInt(ABILITY_COOLDOWN);
-		lastAbilityWasRockfall = bundle.getBoolean(LAST_ABILITY_WAS_ROCKFALL);
-
-		throwingRockFromPos = bundle.getInt(ROCK_FROM_POS);
-		throwingRockToPos = bundle.getInt(ROCK_TO_POS);
+		m_SpawnPosition.Restore(bundle);
+		m_PartnerID.Restore(bundle);
+		m_AbilityCooldown.Restore(bundle);
+		m_LastAbilityWasRockfall.Restore(bundle);
+		m_ThrowingRocksFromPosition.Restore(bundle);
+		m_ThrowingRocksToPosition.Restore(bundle);
 	}
 }

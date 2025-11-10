@@ -53,11 +53,11 @@ import com.watabou.noosa.Game;
 import com.watabou.utils.FileUtils;
 
 public class AndroidLauncher extends AndroidApplication {
-	
+
 	public static AndroidApplication instance;
-	
+
 	private static AndroidPlatformSupport support;
-	
+
 	@SuppressLint("SetTextI18n")
 	@Override
 	protected void onCreate (Bundle savedInstanceState) {
@@ -124,19 +124,19 @@ public class AndroidLauncher extends AndroidApplication {
 
 		//we manage this ourselves
 		config.useImmersiveMode = false;
-		
+
 		config.useCompass = false;
 		config.useAccelerometer = false;
-		
+
 		if (support == null) support = new AndroidPlatformSupport();
 		else                 support.reloadGenerators();
-		
+
 		support.updateSystemUI();
 
 		Button.longClick = ViewConfiguration.getLongPressTimeout()/1000f;
-		
+
 		initialize(new ShatteredPixelDungeon(support), config);
-		
+
 	}
 
 	@Override
@@ -148,7 +148,7 @@ public class AndroidLauncher extends AndroidApplication {
 	protected void onResume() {
 		//prevents weird rare cases where the app is running twice
 		if (instance != this){
-				finishAndRemoveTask();
+			finishAndRemoveTask();
 		}
 		super.onResume();
 	}
@@ -163,7 +163,7 @@ public class AndroidLauncher extends AndroidApplication {
 		super.onWindowFocusChanged(hasFocus);
 		support.updateSystemUI();
 	}
-	
+
 	@Override
 	public void onMultiWindowModeChanged(boolean isInMultiWindowMode) {
 		super.onMultiWindowModeChanged(isInMultiWindowMode);

@@ -25,7 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class ThrowingSpike extends MissileWeapon {
@@ -39,7 +39,7 @@ public class ThrowingSpike extends MissileWeapon {
 
 		tier = 1;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 }

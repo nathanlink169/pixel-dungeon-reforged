@@ -24,11 +24,14 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.armor;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
@@ -41,6 +44,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.AuraOfProtect
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.BodyForm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWard;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.LifeLinkSpell;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
@@ -85,6 +91,7 @@ import com.watabou.noosa.BitmapText;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.Visual;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -93,8 +100,9 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 
-public abstract class Armor extends EquipableItem {
+public abstract class Armor extends EquipableItem implements CombatModifier.EvasionModifier, CombatModifier.OnHitEffect {
 
 	protected static final String AC_DETACH       = "DETACH";
 	
@@ -395,6 +403,17 @@ public abstract class Armor extends EquipableItem {
 		return hero != null && hero.belongings.armor() == this;
 	}
 
+	public int drRoll(EnumSet<DamageType> damageType) {
+		float toReturn = 0;
+		for (DamageType dt : damageType) {
+			AntiMagic antiMagic = glyph instanceof AntiMagic ? (AntiMagic) glyph : null;
+			if (DamageType.IsDamagePhysical(dt) || (antiMagic != null && antiMagic.GetDamageTypes().contains(dt))) {
+				toReturn += Random.NormalIntRange(DRMin(), DRMax()) / (float)damageType.size();
+			}
+		}
+		return (int) toReturn;
+	}
+
 	public final int DRMax(){
 		return DRMax(buffedLvl());
 	}
@@ -468,24 +487,30 @@ public abstract class Armor extends EquipableItem {
 			return lvl + artificerDamageReduction;
 		}
 	}
-	
-	public float evasionFactor( Char owner, float evasion ){
-		
-		if (hasGlyph(Stone.class, owner) && !Stone.testingEvasion()){
-			return 0;
-		}
-		
-		if (owner instanceof Hero){
-			int aEnc = STRReq() - ((Hero) owner).STR();
-			if (aEnc > 0) evasion /= Math.pow(1.5, aEnc);
-			
-			Momentum momentum = owner.buff(Momentum.class);
+
+	@Override
+	public float modifyEvasion(AttackContext context, float currentEvasion) {
+		if (context.defender instanceof Hero){
+			int aEnc = STRReq() - ((Hero) context.defender).STR();
+			if (aEnc > 0) currentEvasion /= Math.pow(1.5, aEnc);
+
+			Momentum momentum = context.defender.buff(Momentum.class);
 			if (momentum != null){
-				evasion += momentum.evasionBonus(((Hero) owner).lvl, Math.max(0, -aEnc));
+				currentEvasion += momentum.evasionBonus(((Hero) context.defender).lvl, Math.max(0, -aEnc));
 			}
 		}
-		
-		return evasion + augment.evasionFactor(buffedLvl());
+
+		return currentEvasion + augment.evasionFactor(buffedLvl());
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == Dungeon.hero;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
 	}
 	
 	public float speedFactor( Char owner, float speed ){
@@ -552,50 +577,10 @@ public abstract class Armor extends EquipableItem {
 
 		return super.upgrade();
 	}
-	
-	public int proc( Char attacker, Char defender, int damage ) {
 
-		if (defender.buff(MagicImmune.class) == null) {
-			Glyph trinityGlyph = null;
-			if (Dungeon.hero.buff(BodyForm.BodyFormBuff.class) != null){
-				trinityGlyph = Dungeon.hero.buff(BodyForm.BodyFormBuff.class).glyph();
-				if (glyph != null && trinityGlyph != null && trinityGlyph.getClass() == glyph.getClass()){
-					trinityGlyph = null;
-				}
-			}
-
-			if (defender instanceof Hero && isEquipped((Hero) defender)
-					&& defender.buff(HolyWard.HolyArmBuff.class) != null){
-				if (glyph != null &&
-						(((Hero) defender).subClass == HeroSubClass.PALADIN || hasCurseGlyph())){
-					damage = glyph.proc( this, attacker, defender, damage );
-				}
-				if (trinityGlyph != null){
-					damage = trinityGlyph.proc( this, attacker, defender, damage );
-				}
-				int blocking = ((Hero) defender).subClass == HeroSubClass.PALADIN ? 3 : 1;
-				damage -= Math.round(blocking * Glyph.genericProcChanceMultiplier(defender));
-
-			} else {
-				if (glyph != null) {
-					damage = glyph.proc(this, attacker, defender, damage);
-				}
-				if (trinityGlyph != null){
-					damage = trinityGlyph.proc( this, attacker, defender, damage );
-				}
-				//so that this effect procs for allies using this armor via aura of protection
-				if (defender.alignment == Dungeon.hero.alignment
-						&& Dungeon.hero.buff(AuraOfProtection.AuraBuff.class) != null
-						&& (Dungeon.level.distance(defender.pos, Dungeon.hero.pos) <= 2 || defender.buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null)
-						&& Dungeon.hero.buff(HolyWard.HolyArmBuff.class) != null) {
-					int blocking = Dungeon.hero.subClass == HeroSubClass.PALADIN ? 3 : 1;
-					damage -= Math.round(blocking * Glyph.genericProcChanceMultiplier(defender));
-				}
-			}
-			damage = Math.max(damage, 0);
-		}
-		
-		if (!levelKnown && defender == Dungeon.hero) {
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (!levelKnown && context.defender == Dungeon.hero) {
 			float uses = Math.min( availableUsesToID, Talent.itemIDSpeedFactor(Dungeon.hero, this) );
 			availableUsesToID -= uses;
 			usesLeftToID -= uses;
@@ -612,8 +597,6 @@ public abstract class Armor extends EquipableItem {
 				}
 			}
 		}
-		
-		return damage;
 	}
 	
 	@Override
@@ -848,27 +831,25 @@ public abstract class Armor extends EquipableItem {
 	public static abstract class Glyph implements Bundlable {
 		
 		public static final Class<?>[] common = new Class<?>[]{
-				Obfuscation.class, Swiftness.class, Viscosity.class, Potential.class };
+				Obfuscation.class, Swiftness.class, Viscosity.class, Potential.class, AntiMagic.class };
 
 		public static final Class<?>[] uncommon = new Class<?>[]{
 				Brimstone.class, Stone.class, Entanglement.class,
 				Repulsion.class, Camouflage.class, Flow.class };
 
 		public static final Class<?>[] rare = new Class<?>[]{
-				Affection.class, AntiMagic.class, Thorns.class };
+				Affection.class, Thorns.class };
 
 		public static final float[] typeChances = new float[]{
-				50, //12.5% each
+				50, //10% each
 				40, //6.67% each
-				10  //3.33% each
+				10  //5% each
 		};
 
 		public static final Class<?>[] curses = new Class<?>[]{
 				AntiEntropy.class, Corrosion.class, Displacement.class, Metabolism.class,
 				Multiplicity.class, Stench.class, Overgrowth.class, Bulk.class
 		};
-		
-		public abstract int proc( Armor armor, Char attacker, Char defender, int damage );
 
 		protected float procChanceMultiplier( Char defender ){
 			return genericProcChanceMultiplier( defender );

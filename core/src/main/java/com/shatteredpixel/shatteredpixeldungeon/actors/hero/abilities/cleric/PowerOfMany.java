@@ -45,6 +45,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.LifeLinkSpell
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.DirectableAlly;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -202,7 +204,9 @@ public class PowerOfMany extends ArmorAbility {
 		return null;
 	}
 
-	public static class PowerBuff extends FlavourBuff {
+	public static class PowerBuff extends FlavourBuff
+			implements CombatModifier.PreArmorDamageModifier,
+			CombatModifier.PostArmorDamageModifier {
 
 		public static float DURATION = 100f;
 
@@ -243,6 +247,57 @@ public class PowerOfMany extends ArmorAbility {
 			Dungeon.observe();
 			GameScene.updateFog();
 		}
+
+		@Override
+		public int priority() {
+			return CombatModifier.Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			// Only applies when the buffed character is the attacker (for damage boost)
+			// or defender (for damage reduction)
+			return context.attacker == target || context.defender == target;
+		}
+
+		// Damage Boost: When attacking
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			// Only boost if we're the attacker
+			if (context.attacker != target) {
+				return currentDamage;
+			}
+
+			// Check if we have BeamingRay boost on this specific enemy
+			BeamingRay.BeamingRayBoost beamingBoost = target.buff(BeamingRay.BeamingRayBoost.class);
+			if (beamingBoost != null && beamingBoost.object == context.defender.id()) {
+				// Enhanced damage: 1.3x + 0.05x per talent level
+				float multiplier = 1.3f + 0.05f * Dungeon.hero.pointsInTalent(Talent.BEAMING_RAY);
+				return Math.round(currentDamage * multiplier);
+			}
+
+			// Base damage boost: 1.25x
+			return Math.round(currentDamage * 1.25f);
+		}
+
+		// Damage Reduction: When defending
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			// Only reduce if we're the defender
+			if (context.defender != target) {
+				return currentDamage;
+			}
+
+			// Check if we have LifeLink active
+			if (target.buff(LifeLinkSpell.LifeLinkSpellBuff.class) != null) {
+				// Enhanced reduction: 0.70 - 0.05 per talent level
+				float multiplier = 0.70f - 0.05f * Dungeon.hero.pointsInTalent(Talent.LIFE_LINK);
+				return Math.round(currentDamage * multiplier);
+			}
+
+			// Base damage reduction: 0.75x (25% reduction)
+			return Math.round(currentDamage * 0.75f);
+		}
 	}
 
 	public static class LightAlly extends DirectableAlly {
@@ -267,7 +322,7 @@ public class PowerOfMany extends ArmorAbility {
 		}
 
 		@Override
-		public int GetDefenseSkillInternal() {
+		public int defenseSkill() {
 			return m_HeroLevel + 4;
 		}
 
@@ -280,7 +335,7 @@ public class PowerOfMany extends ArmorAbility {
 			int oldPos = pos;
 			boolean result = super.act();
 			//partially simulates how the hero switches to idle animation
-			if ((pos == target || oldPos == pos) && sprite.looping()){
+			if ((pos == m_Target.Get() || oldPos == pos) && sprite.looping()){
 				sprite.idle();
 			}
 			return result;
@@ -305,8 +360,8 @@ public class PowerOfMany extends ArmorAbility {
 		}
 
 		@Override
-		public int attackSkill(Char target) {
-			return GetDefenseSkillInternal()+5; //equal to base hero attack skill
+		public int attackSkill() {
+			return defenseSkill()+5; //equal to base hero attack skill
 		}
 
 		@Override

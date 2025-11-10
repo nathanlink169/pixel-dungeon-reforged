@@ -37,6 +37,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mimic;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -119,7 +121,7 @@ public class Shockwave extends ArmorAbility {
 								int scalingStr = hero.STR()-10;
 								int damage = Hero.heroDamageIntRange(5 + scalingStr, 10 + 2*scalingStr);
 								damage = Math.round(damage * (1f + 0.2f*hero.pointsInTalent(Talent.SHOCK_FORCE)));
-								damage -= ch.drRoll();
+								damage -= ch.drRoll(DamageType.of(DamageType.EXPLOSIVE));
 
 								if (hero.pointsInTalent(Talent.STRIKING_WAVE) == 4){
 									Buff.affect(hero, Talent.StrikingWaveTracker.class, 0f);
@@ -128,13 +130,14 @@ public class Shockwave extends ArmorAbility {
 								if (Random.Int(10) < 3*hero.pointsInTalent(Talent.STRIKING_WAVE)){
 									boolean wasEnemy = ch.alignment == Char.Alignment.ENEMY
 											|| (ch instanceof Mimic && ch.alignment == Char.Alignment.NEUTRAL);
-									damage = hero.attackProc(ch, damage);
-									ch.damage(damage, hero);
+									AttackContext context = new AttackContext.Builder(hero, ch).build();
+									damage = hero.damageRoll(context);
+									ch.Damage(damage, hero, DamageType.of(DamageType.EXPLOSIVE));
 									if (hero.subClass == HeroSubClass.GLADIATOR && wasEnemy){
 										Buff.affect( hero, Combo.class ).hit( ch );
 									}
 								} else {
-									ch.damage(damage, hero);
+									ch.Damage(damage, hero, DamageType.of(DamageType.EXPLOSIVE));
 								}
 								if (ch.isAlive()){
 									if (Random.Int(4) < hero.pointsInTalent(Talent.SHOCK_FORCE)){

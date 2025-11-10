@@ -28,7 +28,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -41,9 +43,8 @@ public class Scimitar extends MeleeWeapon {
 		hitSoundPitch = 1.2f;
 
 		tier = 3;
-		DLY = 0.8f; //1.25x speed
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	@Override
@@ -76,7 +77,12 @@ public class Scimitar extends MeleeWeapon {
 		return Integer.toString(4+level);
 	}
 
-	public static class SwordDance extends FlavourBuff {
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 0.8f;
+	}
+
+	public static class SwordDance extends FlavourBuff implements CombatModifier.AccuracyModifier {
 
 		{
 			announced = true;
@@ -92,6 +98,20 @@ public class Scimitar extends MeleeWeapon {
 		public float iconFadePercent() {
 			return Math.max(0, (4 - visualcooldown()) / 4);
 		}
-	}
 
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return currentAccuracy * 1.5f;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
+	}
 }

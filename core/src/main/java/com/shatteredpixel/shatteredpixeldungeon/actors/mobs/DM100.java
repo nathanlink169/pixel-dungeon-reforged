@@ -31,24 +31,25 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.DM100Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
 
 public class DM100 extends Mob implements Callback {
 
@@ -57,28 +58,28 @@ public class DM100 extends Mob implements Callback {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm100; }
 
-	private boolean seenPlayer = false;
-	private boolean hasZapped = false;
+	private BundleableProperty.Bool m_SeenPlayer = new BundleableProperty.Bool("seen_player", false);
+	private BundleableProperty.Bool m_HasZapped = new BundleableProperty.Bool("has_zapped", false);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( SEEN_PLAYER, seenPlayer);
-		bundle.put( HAS_ZAPPED, hasZapped );
+		m_SeenPlayer.Store(bundle);
+		m_HasZapped.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		seenPlayer = bundle.getBoolean( SEEN_PLAYER );
-		hasZapped = bundle.getBoolean( HAS_ZAPPED );
+		m_SeenPlayer.Restore(bundle);
+		m_HasZapped.Restore(bundle);
 	}
 
 	public void notice() {
 		super.notice();
-		if (!seenPlayer && getRandomizerEnabled(RandomTraits.SECURITY_NETWORK)) {
+		if (!m_SeenPlayer.Get() && getRandomizerEnabled(RandomTraits.SECURITY_NETWORK)) {
 			if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
-				seenPlayer = true;
+				m_SeenPlayer.Set(true);
 				CellEmitter.center( pos ).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
 				Sample.INSTANCE.play( Assets.Sounds.ALERT );
 
@@ -88,9 +89,6 @@ public class DM100 extends Mob implements Callback {
 			}
 		}
 	}
-
-	private static final String SEEN_PLAYER = "seen_player";
-	private static final String HAS_ZAPPED = "has_zapped";
 
 	{
 		if (getRandomizerEnabled(RandomTraits.COMBAT_READY)) {
@@ -105,7 +103,7 @@ public class DM100 extends Mob implements Callback {
 		}
 
 		boolean canRanged = new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
-		if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && hasZapped) {
+		if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && m_HasZapped.Get()) {
 			canRanged = false;
 		}
 
@@ -117,7 +115,7 @@ public class DM100 extends Mob implements Callback {
 	public static class LightningBolt{}
 	
 	@Override
-	protected boolean doAttack( Char enemy ) {
+    public boolean doAttack(Char enemy) {
 
 		if (Dungeon.level.adjacent( pos, enemy.pos )
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
@@ -125,7 +123,7 @@ public class DM100 extends Mob implements Callback {
 			return super.doAttack( enemy );
 			
 		} else {
-			if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && hasZapped) {
+			if (getRandomizerEnabled(RandomTraits.POWER_CONSERVATION) && m_HasZapped.Get()) {
 				return false;
 			}
 			
@@ -134,33 +132,38 @@ public class DM100 extends Mob implements Callback {
 			if (getRandomizerEnabled(RandomTraits.FAULTY_BATTERIES) && HP > 1) {
 				HP /= 2;
 			}
-			hasZapped = true;
-
+			m_HasZapped.Set(true);
 			Invisibility.dispel(this);
-			if (hit( this, enemy, true )) {
-				int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
-				dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
-				enemy.damage( dmg, new LightningBolt() );
 
+			// Build attack context
+			AttackContext context = new AttackContext.Builder(this, enemy)
+					.attackType(AttackContext.AttackType.RANGED)
+					.damageType(GetRangedDamageType())
+					.build();
+
+			// Resolve attack - this handles everything internally
+			AttackResult result = CombatResolver.resolve(context);
+
+			// Check result type for UI/feedback
+			if (result.result == AttackResult.ResultType.MISS) {
+				enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
+			}
+			else if (result.result == AttackResult.ResultType.HIT) {
 				if (enemy.sprite.visible) {
 					enemy.sprite.centerEmitter().burst(SparkParticle.FACTORY, 3);
 					enemy.sprite.flash();
 				}
-				
 				if (enemy == Dungeon.hero) {
-					
 					PixelScene.shake( 2, 0.3f );
-					
-					if (!enemy.isAlive()) {
+
+					if (result.killed) {
 						Badges.validateDeathFromEnemyMagic();
 						Dungeon.fail( this );
 						GLog.n( Messages.get(this, "zap_kill") );
 					}
 				}
-			} else {
-				enemy.sprite.showStatus( CharSprite.NEUTRAL,  enemy.defenseVerb() );
 			}
-			
+
 			if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 				sprite.zap( enemy.pos );
 				return false;
@@ -190,8 +193,8 @@ public class DM100 extends Mob implements Callback {
 					continue;
 				}
 
-				int damage = damageRoll(AttackType.RANGED_MAGICAL, false);
-				enemy.damage( damage, new LightningBolt() );
+				int damage = damageRoll(AttackContext.AttackType.RANGED, false);
+				enemy.Damage( damage, new LightningBolt(), DamageType.of(DamageType.ELECTRICITY));
 			}
 		}
 	}

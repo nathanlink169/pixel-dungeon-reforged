@@ -30,9 +30,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageBonus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -49,10 +55,13 @@ public class Spear extends MeleeWeapon {
 		hitSoundPitch = 0.9f;
 
 		tier = 2;
-		DLY = 1.5f; //0.67x speed
-		RCH = 2;    //extra reach
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
+	}
+
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 1.5f;
 	}
 
 	@Override
@@ -114,7 +123,19 @@ public class Spear extends MeleeWeapon {
 				AttackIndicator.target(enemy);
 				int oldPos = enemy.pos;
 				//do not push if enemy has moved, or another push is active (e.g. elastic)
-				if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING, Char.AttackType.MELEE)) {
+				InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+				iam.attachTo(hero);
+				GenericPreArmourDamageBonus db = GenericPreArmourDamageBonus.AttackerModifier(wep.augment.damageFactor(15 + 2*wep.buffedLvl()));
+				db.attachTo(hero);
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.RANGED)
+						.damageType(DamageType.of(DamageType.PIERCING))
+						.build();
+
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					if (enemy.isAlive() && enemy.pos == oldPos && !Pushing.pushingExistsForChar(enemy)){
 						//trace a ballistica to our target (which will also extend past them
 						Ballistica trajectory = new Ballistica(hero.pos, enemy.pos, Ballistica.STOP_TARGET);
@@ -122,11 +143,12 @@ public class Spear extends MeleeWeapon {
 						trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size() - 1), Ballistica.PROJECTILE);
 						//knock them back along that ballistica
 						WandOfBlastWave.throwChar(enemy, trajectory, 1, true, false, hero);
-					} else if (!enemy.isAlive()) {
-						wep.onAbilityKill(hero, enemy);
 					}
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
+
+				iam.detach();
+				db.detach();
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
 				wep.afterAbilityUsed(hero);
@@ -134,4 +156,8 @@ public class Spear extends MeleeWeapon {
 		});
 	}
 
+	@Override
+	public int GetWeaponReach() {
+		return 2;
+	}
 }

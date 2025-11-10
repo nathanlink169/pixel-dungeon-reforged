@@ -28,40 +28,40 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class Swarm extends Mob {
+public class Swarm extends Mob implements CombatModifier.OnDamageEffect, CombatModifier.PreArmorDamageModifier {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.swarm; }
 	
 	private static final float SPLIT_DELAY	= 1f;
-	
-	int generation	= 0;
-	
-	private static final String GENERATION	= "generation";
+
+	private BundleableProperty.Int m_Generation = new BundleableProperty.Int("generation", 0);
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( GENERATION, generation );
+		m_Generation.Store(bundle);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		generation = bundle.getInt( GENERATION );
+		m_Generation.Restore(bundle);
 	}
 
 	@Override
@@ -82,79 +82,14 @@ public class Swarm extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (getRandomizerEnabled(RandomTraits.DAMAGE_RESISTANCE)) {
-			if (DamageType.getIsDamageType(damageType, DamageType.SLASHING) || DamageType.getIsDamageType(damageType, DamageType.PIERCING)) {
-				dmg /= 2;
-			}
-		}
-		if (getRandomizerEnabled(RandomTraits.MAGIC_VULNERABILITY)) {
-			if (DamageType.getIsDamageType(damageType, DamageType.MAGIC)) {
-				dmg *= 3;
-			}
-		}
-		super.damage(dmg, src, damageType);
-	}
-	
-	@Override
-	public int defenseProc( Char enemy, int damage ) {
-
-		if (HP >= damage + 2) {
-			if (!(getRandomizerEnabled(RandomTraits.DEPLETED_NUMBERS) && Random.Float() > 0.5f)) {
-				ArrayList<Integer> candidates = new ArrayList<>();
-
-				int[] neighbours = {pos + 1, pos - 1, pos + Dungeon.level.width(), pos - Dungeon.level.width()};
-				for (int n : neighbours) {
-					if (!Dungeon.level.solid[n]
-							&& Actor.findChar(n) == null
-							&& (Dungeon.level.passable[n] || Dungeon.level.avoid[n])
-							&& (!properties().contains(Property.LARGE) || Dungeon.level.openSpace[n])) {
-						candidates.add(n);
-					}
-				}
-
-				if (candidates.size() > 0) {
-
-					Swarm clone = split();
-					clone.pos = Random.element(candidates);
-					clone.state = clone.HUNTING;
-					GameScene.add(clone, SPLIT_DELAY); //we add before assigning HP due to ascension
-
-					clone.HP = (HP - damage) / 2;
-					Actor.add(new Pushing(clone, pos, clone.pos));
-
-					Dungeon.level.occupyCell(clone);
-
-					HP -= clone.HP;
-				}
-			}
-		}
-		
-		return super.defenseProc(enemy, damage);
-	}
-
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
-		if (getRandomizerEnabled(RandomTraits.BLOODSUCKERS)) {
-			if (damage > 0 && Random.Int(2) == 0) {
-				Buff.affect(enemy, Bleeding.class).set(3);
-			}
-		}
-
-		return damage;
-	}
-
-	@Override
 	public int GetXP() {
-		if (generation == 0) return super.GetXP();
+		if (m_Generation.Get() == 0) return super.GetXP();
 		return 0;
 	}
 	
 	private Swarm split() {
 		Swarm clone = new Swarm();
-		clone.generation = generation + 1;
+		clone.m_Generation.Set(m_Generation.Get() + 1);
 		if (buff( Burning.class ) != null) {
 			Buff.affect( clone, Burning.class ).reignite( clone );
 		}
@@ -179,6 +114,119 @@ public class Swarm extends Mob {
 	public Item createLoot(int itemSlot){
 		Dungeon.LimitedDrops.SWARM_HP.count++;
 		return super.createLoot(itemSlot);
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.defender == this) {
+			// Swarms have generation limit and randomizer checks
+			if (!isAlive() || HP < 2 || m_Generation.Get() > 5) {
+				return;
+			}
+
+			// Randomizer can prevent splitting
+			if (getRandomizerEnabled(RandomTraits.DEPLETED_NUMBERS)
+					&& Random.Float() > 0.5f) {
+				return;
+			}
+
+			// Find valid positions (swarms can fly over gaps)
+			ArrayList<Integer> candidates = new ArrayList<>();
+			int[] neighbours = {
+					pos + 1, pos - 1,
+					pos + Dungeon.level.width(),
+					pos - Dungeon.level.width()
+			};
+
+			for (int n : neighbours) {
+				if (!Dungeon.level.solid[n] && Actor.findChar(n) == null
+						&& (Dungeon.level.passable[n] || Dungeon.level.avoid[n])) {
+					candidates.add(n);
+				}
+			}
+
+			if (candidates.isEmpty()) {
+				return;
+			}
+
+			// Create and split
+			Swarm clone = createClone();
+			clone.pos = Random.element(candidates);
+			clone.state = clone.HUNTING;
+
+			GameScene.add(clone, SPLIT_DELAY);
+
+			int splitHP = HP / 2;
+			clone.HP = splitHP;
+			this.HP -= splitHP;
+
+			Actor.add(new Pushing(clone, pos, clone.pos));
+			Dungeon.level.occupyCell(clone);
+		}
+		else if (context.attacker == this) {
+			if (getRandomizerEnabled(RandomTraits.BLOODSUCKERS)) {
+				if (damageDealt > 0 && Random.Int(2) == 0) {
+					Buff.affect(enemy, Bleeding.class).set(3);
+				}
+			}
+		}
+	}
+
+	private Swarm createClone() {
+		Swarm clone = new Swarm();
+		clone.m_Generation.Set(this.m_Generation.Get() + 1);
+
+		// Copy buffs
+		if (buff(Burning.class) != null) {
+			Buff.affect(clone, Burning.class).reignite(clone);
+		}
+		if (buff(Poison.class) != null) {
+			Buff.affect(clone, Poison.class).set(2);
+		}
+
+		// Copy persistent buffs
+		for (Buff b : buffs()) {
+			if (b.revivePersists) {
+				Buff.affect(clone, b.getClass());
+			}
+		}
+
+		return clone;
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender == this) {
+			float damage = 0.0f;
+			float damagePerType = (float) currentDamage / context.damageType.size();
+
+			for (DamageType type : context.damageType) {
+				if (getRandomizerEnabled(RandomTraits.DAMAGE_RESISTANCE)) {
+					if (type == DamageType.PIERCING || type == DamageType.SLASHING) {
+						damage += damagePerType / 2;
+					}
+				} else if (getRandomizerEnabled(RandomTraits.MAGIC_VULNERABILITY)) {
+					if (DamageType.IsDamageEnergy(type)) {
+						damage += damagePerType * 3.0f;
+					}
+				} else {
+					damage += damagePerType;
+				}
+			}
+
+			return (int) damage;
+		}
+		return currentDamage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
 	}
 
 	public enum RandomTraits {

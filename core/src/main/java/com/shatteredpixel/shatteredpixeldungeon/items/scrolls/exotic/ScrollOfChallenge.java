@@ -29,6 +29,8 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ChallengeParticle;
@@ -73,7 +75,7 @@ public class ScrollOfChallenge extends ExoticScroll {
 	}
 
 
-	public static class ChallengeArena extends Buff {
+	public static class ChallengeArena extends Buff implements CombatModifier.PostArmorDamageModifier {
 
 		private ArrayList<Integer> arenaPositions = new ArrayList<>();
 		private ArrayList<Emitter> arenaEmitters = new ArrayList<>();
@@ -211,6 +213,21 @@ public class ScrollOfChallenge extends ExoticScroll {
 			}
 
 			left = bundle.getInt(LEFT);
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * (2.0f / 3.0f));
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
 		}
 	}
 	

@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Elemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.RotHeart;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -60,6 +61,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class Wandmaker extends NPC {
 	@Override
@@ -80,13 +82,14 @@ public class Wandmaker extends NPC {
 	}
 	
 	@Override
-	public int defenseSkill( Char enemy ) {
+	public int defenseSkill(  ) {
 		return INFINITE_EVASION;
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 		//do nothing
+		return 0;
 	}
 
 	@Override

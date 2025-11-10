@@ -27,6 +27,8 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.curses;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.PinCushion;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
@@ -38,6 +40,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Statue;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -49,19 +54,18 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
-public class Multiplicity extends Armor.Glyph {
+public class Multiplicity extends Armor.Glyph implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc(Armor armor, Char attacker, Char defender, int damage) {
-
-		float procChance = 1/20f * procChanceMultiplier(defender);
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/20f * procChanceMultiplier(context.defender);
 		if ( Random.Float() < procChance ) {
 			ArrayList<Integer> spawnPoints = new ArrayList<>();
 
 			for (int i = 0; i < PathFinder.NEIGHBOURS8.length; i++) {
-				int p = defender.pos + PathFinder.NEIGHBOURS8[i];
+				int p = context.defender.pos + PathFinder.NEIGHBOURS8[i];
 				if (Actor.findChar( p ) == null && (Dungeon.level.passable[p] || Dungeon.level.avoid[p])) {
 					spawnPoints.add( p );
 				}
@@ -70,15 +74,15 @@ public class Multiplicity extends Armor.Glyph {
 			if (spawnPoints.size() > 0) {
 
 				Mob m = null;
-				if (Random.Int(2) == 0 && defender instanceof Hero){
+				if (Random.Int(2) == 0 && context.defender instanceof Hero){
 					m = new MirrorImage();
-					((MirrorImage)m).duplicate( (Hero)defender );
+					((MirrorImage)m).duplicate( (Hero)context.defender );
 
 				} else {
-					Char toDuplicate = attacker;
+					Char toDuplicate = context.attacker;
 
 					if (toDuplicate instanceof Ratmogrify.TransmogRat){
-						toDuplicate = ((Ratmogrify.TransmogRat)attacker).getOriginal();
+						toDuplicate = ((Ratmogrify.TransmogRat)context.attacker).getOriginal();
 					}
 
 					//FIXME should probably have a mob property for this
@@ -90,11 +94,11 @@ public class Multiplicity extends Armor.Glyph {
 						Actor.fixTime();
 
 						m = (Mob)Reflection.newInstance(toDuplicate.getClass());
-						
+
 						if (m != null) {
-							
+
 							Bundle store = new Bundle();
-							attacker.storeInBundle(store);
+							context.attacker.storeInBundle(store);
 							m.restoreFromBundle(store);
 							m.pos = 0;
 							m.HP = m.GetMaxHP();
@@ -105,10 +109,10 @@ public class Multiplicity extends Armor.Glyph {
 							m.remove(DwarfKing.KingDamager.class);
 							//don't duplicate downed ghouls
 							m.remove(Ghoul.GhoulLifeLink.class);
-							
+
 							//If a thief has stolen an item, that item is not duplicated.
 							if (m instanceof Thief) {
-								((Thief) m).item = null;
+								((Thief) m).SetItem(null);
 							}
 						}
 					}
@@ -134,8 +138,16 @@ public class Multiplicity extends Armor.Glyph {
 
 			}
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

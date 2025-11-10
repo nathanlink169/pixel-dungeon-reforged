@@ -30,7 +30,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageBonus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -47,7 +53,7 @@ public class Greataxe extends MeleeWeapon {
 
 		tier = 5;
 
-		damageType = DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.SLASHING);
 	}
 
 	@Override
@@ -101,17 +107,27 @@ public class Greataxe extends MeleeWeapon {
 				beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
 
-				//+(15+(2*lvl)) damage, roughly +60% base damage, +55% scaling
-				int dmgBoost = augment.damageFactor(15 + 2*buffedLvl());
+				InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+				iam.attachTo(hero);
+				GenericPreArmourDamageBonus db = GenericPreArmourDamageBonus.AttackerModifier(augment.damageFactor(15 + 2*buffedLvl()));
+				db.attachTo(hero);
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.RANGED)
+						.damageType(DamageType.of(DamageType.SLASHING))
+						.build();
 
-				if (hero.attack(enemy, 1, dmgBoost, Char.INFINITE_ACCURACY, damageType, Char.AttackType.MELEE)){
+				// Resolve attack - this handles EVERYTHING internally
+				AttackResult result = CombatResolver.resolve(context);
+				if (result.result == AttackResult.ResultType.HIT) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
+				iam.detach();
+				db.detach();
 
 				Invisibility.dispel();
 				if (!enemy.isAlive()){
 					hero.next();
-					onAbilityKill(hero, enemy);
 				} else {
 					hero.spendAndNext(hero.attackDelay());
 				}

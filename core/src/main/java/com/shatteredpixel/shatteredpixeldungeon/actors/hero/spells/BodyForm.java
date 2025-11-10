@@ -29,9 +29,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.Trinity;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -75,7 +78,7 @@ public class BodyForm extends ClericSpell {
 		return Math.round(13.33f + 6.67f* Dungeon.hero.pointsInTalent(Talent.BODY_FORM));
 	}
 
-	public static class BodyFormBuff extends FlavourBuff {
+	public static class BodyFormBuff extends FlavourBuff implements CombatModifier.OnHitEffect, CombatModifier.PostArmorDamageModifier {
 
 		{
 			type = buffType.POSITIVE;
@@ -124,6 +127,51 @@ public class BodyForm extends ClericSpell {
 				return Messages.get(this, "desc", Messages.titleCase(glyph().name()), dispTurns());
 			}
 			return super.desc();
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			Armor armor = context.defender.getArmor();
+
+			if (armor != null && armor.glyph instanceof PostArmorDamageModifier) {
+				return ((CombatModifier.PostArmorDamageModifier) armor.glyph)
+						.modifyPostArmorDamage(context, currentDamage);
+			}
+			return currentDamage;
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (!(context.attacker instanceof Hero)) return;
+			Hero hero = (Hero) context.attacker;
+
+			BodyForm.BodyFormBuff bodyForm = hero.buff(BodyForm.BodyFormBuff.class);
+			if (bodyForm == null || bodyForm.enchant() == null) return;
+
+			// Only proc if defender is still alive
+			if (!context.defender.isAlive()) return;
+
+			// Proc the trinity enchantment
+			if (bodyForm.enchant() instanceof OnHitEffect)
+				((OnHitEffect)bodyForm.enchant()).onHit(context, finalDamage);
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			if (!(context.attacker instanceof Hero)) return false;
+			Hero hero = (Hero) context.attacker;
+
+			// Check if BodyForm buff exists and provides an enchantment
+			BodyForm.BodyFormBuff bodyForm = hero.buff(BodyForm.BodyFormBuff.class);
+			if (bodyForm == null || bodyForm.enchant() == null) return false;
+
+			// Check if using a melee weapon (not missile)
+			return hero.belongings.attackingWeapon() instanceof MeleeWeapon;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.LOW - 1; // After HolyWeapon
 		}
 
 		private static final String EFFECT = "effect";

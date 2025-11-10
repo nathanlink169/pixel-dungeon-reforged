@@ -27,32 +27,43 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Random;
 
-public class Thorns extends Armor.Glyph {
+public class Thorns extends Armor.Glyph implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing RED = new ItemSprite.Glowing( 0x660022 );
 
 	@Override
-	public int proc(Armor armor, Char attacker, Char defender, int damage) {
-
-		int level = Math.max(0, armor.buffedLvl());
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.defender.getArmor().buffedLvl());
 
 		// lvl 0 - 16.7%
 		// lvl 1 - 23.1%
 		// lvl 2 - 28.5%
-		float procChance = (level+2f)/(level+12f) * procChanceMultiplier(defender);
-		if ( attacker.alignment != defender.alignment && Random.Float() < procChance ) {
+		float procChance = (level+2f)/(level+12f) * procChanceMultiplier(context.defender);
+		if ( context.attacker.alignment != context.defender.alignment && Random.Float() < procChance ) {
 
 			float powerMulti = Math.max(1f, procChance);
 
-			Buff.affect( attacker, Bleeding.class).set( Math.round((4 + level)*powerMulti) );
+			Buff.affect( context.attacker, Bleeding.class).set( Math.round((4 + level)*powerMulti) );
 
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

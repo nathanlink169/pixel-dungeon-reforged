@@ -30,10 +30,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRemoveCurse;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.SpectralNecromancerSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
@@ -51,8 +51,8 @@ public class SpectralNecromancer extends Necromancer {
 
 	@Override
 	protected boolean act() {
-		if (summoning && state != HUNTING){
-			summoning = false;
+		if (m_Summoning.Get() && state != HUNTING){
+			m_Summoning.Set(false);
 			if (sprite instanceof SpectralNecromancerSprite) {
 				((SpectralNecromancerSprite) sprite).cancelSummoning();
 			}
@@ -106,26 +106,26 @@ public class SpectralNecromancer extends Necromancer {
 
 	@Override
 	public void summonMinion() {
-		if (Actor.findChar(summoningPos) != null) {
+		if (Actor.findChar(m_SummoningPosition.Get()) != null) {
 
 			int pushPos = pos;
 			for (int c : PathFinder.NEIGHBOURS8) {
-				if (Actor.findChar(summoningPos + c) == null
-						&& Dungeon.level.passable[summoningPos + c]
-						&& (Dungeon.level.openSpace[summoningPos + c] || !hasProp(Actor.findChar(summoningPos), Property.LARGE))
-						&& Dungeon.level.trueDistance(pos, summoningPos + c) > Dungeon.level.trueDistance(pos, pushPos)) {
-					pushPos = summoningPos + c;
+				if (Actor.findChar(m_SummoningPosition.Get() + c) == null
+						&& Dungeon.level.passable[m_SummoningPosition.Get() + c]
+						&& (Dungeon.level.openSpace[m_SummoningPosition.Get() + c] || !hasProp(Actor.findChar(m_SummoningPosition.Get()), Property.LARGE))
+						&& Dungeon.level.trueDistance(pos, m_SummoningPosition.Get() + c) > Dungeon.level.trueDistance(pos, pushPos)) {
+					pushPos = m_SummoningPosition.Get() + c;
 				}
 			}
 
 			//no push if char is immovable
-			if (Char.hasProp(Actor.findChar(summoningPos), Property.IMMOVABLE)){
+			if (Char.hasProp(Actor.findChar(m_SummoningPosition.Get()), Property.IMMOVABLE)){
 				pushPos = pos;
 			}
 
 			//push enemy, or wait a turn if there is no valid pushing position
 			if (pushPos != pos) {
-				Char ch = Actor.findChar(summoningPos);
+				Char ch = Actor.findChar(m_SummoningPosition.Get());
 				Actor.add( new Pushing( ch, ch.pos, pushPos ) );
 
 				ch.pos = pushPos;
@@ -133,9 +133,9 @@ public class SpectralNecromancer extends Necromancer {
 
 			} else {
 
-				Char blocker = Actor.findChar(summoningPos);
+				Char blocker = Actor.findChar(m_SummoningPosition.Get());
 				if (blocker.alignment != alignment){
-					blocker.damage( Random.NormalIntRange(2, 10), new SummoningBlockDamage() );
+					blocker.Damage( Random.NormalIntRange(2, 10), new SummoningBlockDamage(), DamageType.of(DamageType.BLUDGEONING));
 					if (blocker == Dungeon.hero && !blocker.isAlive()){
 						Badges.validateDeathFromEnemyMagic();
 						Dungeon.fail(this);
@@ -148,9 +148,10 @@ public class SpectralNecromancer extends Necromancer {
 			}
 		}
 
-		summoning = firstSummon = false;
+		m_FirstSummon.Set(false);
+		m_Summoning.Set(false);
 
-		Wraith wraith = Wraith.spawnAt(summoningPos, Wraith.class);
+		Wraith wraith = Wraith.spawnAt(m_SummoningPosition.Get(), Wraith.class);
 		if (wraith == null){
 			spend(TICK);
 			return;

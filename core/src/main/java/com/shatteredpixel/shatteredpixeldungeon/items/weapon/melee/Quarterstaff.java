@@ -25,11 +25,14 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -43,18 +46,13 @@ public class Quarterstaff extends MeleeWeapon {
 
 		tier = 2;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
 	public int max(int lvl) {
 		return  4*(tier+1) +    //12 base, down from 15
 				lvl*(tier+1);   //scaling unchanged
-	}
-
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 2;	//2 extra defence
 	}
 
 	@Override
@@ -81,7 +79,19 @@ public class Quarterstaff extends MeleeWeapon {
 		return Integer.toString(4+level);
 	}
 
-	public static class DefensiveStance extends FlavourBuff {
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender.getWeapon() == this) {
+			currentDamage -= 2;
+			if (currentDamage < 0) {
+				currentDamage = 0;
+			}
+		}
+
+		return super.modifyPreArmorDamage(context, currentDamage);
+	}
+
+	public static class DefensiveStance extends FlavourBuff implements CombatModifier.EvasionModifier {
 
 		{
 			announced = true;
@@ -96,6 +106,21 @@ public class Quarterstaff extends MeleeWeapon {
 		@Override
 		public float iconFadePercent() {
 			return Math.max(0, (4 - visualcooldown()) / 4);
+		}
+
+		@Override
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			return currentEvasion * 3.0f;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
 		}
 	}
 

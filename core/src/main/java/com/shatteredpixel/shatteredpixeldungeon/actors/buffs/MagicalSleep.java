@@ -27,12 +27,14 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 
-public class MagicalSleep extends Buff {
+public class MagicalSleep extends Buff implements CombatModifier.OnHitEffect {
 
 	private static final float STEP = 1f;
 
@@ -104,5 +106,20 @@ public class MagicalSleep extends Buff {
 			//in case the character has visual paralysis from another source
 			target.sprite.remove(CharSprite.State.PARALYSED);
 		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		detach();
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

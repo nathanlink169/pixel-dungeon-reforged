@@ -24,37 +24,23 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.artificer;
 
-import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Awareness;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.warrior.Endure;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.effects.CheckedCell;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
-import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfHaste;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
-import com.shatteredpixel.shatteredpixeldungeon.mechanics.ShadowCaster;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
 import com.watabou.noosa.Image;
-import com.watabou.noosa.audio.Sample;
-import com.watabou.utils.Bundle;
-import com.watabou.utils.Point;
-import com.watabou.utils.Random;
 
 public class Reflection extends ArmorAbility {
 
@@ -77,11 +63,13 @@ public class Reflection extends ArmorAbility {
 		hero.spendAndNext(Actor.TICK);
 	}
 
-	public static class ReflectionTracker extends FlavourBuff {
+	public static class ReflectionTracker extends FlavourBuff implements CombatModifier.PreArmorDamageModifier, CombatModifier.OnDamageEffect {
 
 		{
 			type = buffType.POSITIVE;
 		}
+
+		private int m_LastDamage;
 
 		@Override
 		public int icon() {
@@ -108,7 +96,7 @@ public class Reflection extends ArmorAbility {
 			if (enemy == null) return damage;
 
 			float reflectionAmount = 0.2f + 0.1f * Dungeon.hero.pointsInTalent(Talent.POWERFUL_REFLECTION);
-			enemy.damage((int) (damage * reflectionAmount), Dungeon.hero, DamageType.MAGIC);
+			enemy.Damage((int) (damage * reflectionAmount), Dungeon.hero, DamageType.of(DamageType.NONE));
 
 			float damageMultiplier = 1.0f;
 			switch (Dungeon.hero.pointsInTalent(Talent.ENDURANCE)) {
@@ -118,6 +106,36 @@ public class Reflection extends ArmorAbility {
 				case 4: damageMultiplier = 0.5f; break;
 			}
 			return damage * damageMultiplier;
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			m_LastDamage = currentDamage; // don't modify, just store
+			return currentDamage;
+		}
+
+		@Override
+		public void onDamage(AttackContext context, int damageDealt) {
+			int reflectedDamage = calculateReflection(m_LastDamage);
+			context.attacker.Damage(reflectedDamage, this, DamageType.of(DamageType.NONE));
+			context.attacker.sprite.burst(0x8B00FF, m_LastDamage);
+			m_LastDamage = 0;
+		}
+
+		private int calculateReflection(int damageDealt) {
+			// Reflect X% of actual damage taken
+			float reflectionAmount = 0.2f + 0.1f * Dungeon.hero.pointsInTalent(Talent.POWERFUL_REFLECTION);
+			return Math.round(damageDealt * reflectionAmount);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.LOWEST; // Always go lowest, as we want all other things to have priority before we record this damage
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
 		}
 	}
 

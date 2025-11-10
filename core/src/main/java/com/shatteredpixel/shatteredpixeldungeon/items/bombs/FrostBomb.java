@@ -31,15 +31,23 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Freezing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
 
+import java.util.EnumSet;
+
 public class FrostBomb extends Bomb {
 	
 	{
 		image = ItemSpriteSheet.FROST_BOMB;
+	}
+
+	@Override
+	protected EnumSet<DamageType> GetDamageType() {
+		return DamageType.of(DamageType.COLD);
 	}
 
 	@Override

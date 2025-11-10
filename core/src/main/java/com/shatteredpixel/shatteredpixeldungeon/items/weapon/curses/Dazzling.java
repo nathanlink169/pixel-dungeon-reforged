@@ -30,35 +30,49 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class Dazzling extends Weapon.Enchantment {
+public class Dazzling extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage ) {
-
-		float procChance = 1/10f * procChanceMultiplier(attacker);
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/10f * procChanceMultiplier(context.attacker);
 		if (Random.Float() < procChance) {
 			for (Char ch : Actor.chars()){
-				if (ch.fieldOfView != null && ch.fieldOfView[defender.pos]){
-					Buff.prolong(ch, Blindness.class, ch == attacker ? Blindness.DURATION : Blindness.DURATION/2f);
+				if (ch.fieldOfView != null && ch.fieldOfView[context.defender.pos]){
+					Buff.prolong(ch, Blindness.class, ch == context.attacker ? Blindness.DURATION : Blindness.DURATION/2f);
 					if (ch == Dungeon.hero){
 						GameScene.flash(0x80FFFFFF);
 					}
 				}
 			}
-			if (Dungeon.level.heroFOV[attacker.pos] || Dungeon.level.heroFOV[defender.pos]){
+			if (Dungeon.level.heroFOV[context.attacker.pos] || Dungeon.level.heroFOV[context.defender.pos]){
 				Sample.INSTANCE.play( Assets.Sounds.BLAST );
 			}
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 
 	@Override

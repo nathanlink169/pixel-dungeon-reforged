@@ -330,6 +330,10 @@ public class Badges {
 	}
 
 	public static void validateMonstersSlain() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.MONSTERS_SLAIN_1 ) && Statistics.enemiesSlain >= 10) {
@@ -361,6 +365,10 @@ public class Badges {
 	}
 	
 	public static void validateGoldCollected() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.GOLD_COLLECTED_1 ) && Statistics.goldCollected >= 250) {
@@ -393,6 +401,10 @@ public class Badges {
 	}
 	
 	public static void validateLevelReached() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.LEVEL_REACHED_1 ) && Dungeon.hero.lvl >= 6) {
@@ -424,6 +436,10 @@ public class Badges {
 	}
 	
 	public static void validateStrengthAttained() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.STRENGTH_ATTAINED_1 ) && Dungeon.hero.STR >= 12) {
@@ -455,6 +471,10 @@ public class Badges {
 	}
 	
 	public static void validateFoodEaten() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.FOOD_EATEN_1 ) && Statistics.foodEaten >= 10) {
@@ -486,6 +506,10 @@ public class Badges {
 	}
 	
 	public static void validateItemsCrafted() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.ITEMS_CRAFTED_1 ) && Statistics.itemsCrafted >= 3) {
@@ -517,6 +541,10 @@ public class Badges {
 	}
 
 	public static void validateHazardAssists() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!local.contains( Badge.ENEMY_HAZARDS ) && Statistics.hazardAssistedKills >= 10) {
 			local.add( Badge.ENEMY_HAZARDS );
 			displayBadge( Badge.ENEMY_HAZARDS );
@@ -524,6 +552,10 @@ public class Badges {
 	}
 	
 	public static void validatePiranhasKilled() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		
 		if (!local.contains( Badge.PIRANHAS ) && Statistics.piranhasKilled >= 6) {
@@ -535,7 +567,11 @@ public class Badges {
 	}
 	
 	public static void validateItemLevelAquired( Item item ) {
-		
+		if (SPDSettings.creative()) {
+			return;
+		}
+
+
 		// This method should be called:
 		// 1) When an item is obtained (Item.collect)
 		// 2) When an item is upgraded (ScrollOfUpgrade, ScrollOfWeaponUpgrade, ShortSword, WandOfMagicMissile)
@@ -580,7 +616,11 @@ public class Badges {
 	}
 	
 	public static void validateAllBagsBought( Item bag ) {
-		
+		if (SPDSettings.creative()) {
+			return;
+		}
+
+
 		Badge badge = null;
 		if (bag instanceof ScrollHolder) {
 			badge = Badge.BAG_BOUGHT_SCROLL_HOLDER;
@@ -608,6 +648,10 @@ public class Badges {
 
 	//several badges all tie into catalog completion
 	public static void validateCatalogBadges(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 
 		int totalSeen = 0;
 		int totalThings = 0;
@@ -688,6 +732,10 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromFire() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_FIRE;
 		local.add( badge );
 		displayBadge( badge );
@@ -696,6 +744,10 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromPoison() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_POISON;
 		local.add( badge );
 		displayBadge( badge );
@@ -704,6 +756,10 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromGas() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_GAS;
 		local.add( badge );
 		displayBadge( badge );
@@ -712,6 +768,10 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromHunger() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_HUNGER;
 		local.add( badge );
 		displayBadge( badge );
@@ -720,6 +780,10 @@ public class Badges {
 	}
 
 	public static void validateDeathFromFalling() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_FALLING;
 		local.add( badge );
 		displayBadge( badge );
@@ -728,6 +792,10 @@ public class Badges {
 	}
 
 	public static void validateDeathFromEnemyMagic() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_ENEMY_MAGIC;
 		local.add( badge );
 		displayBadge( badge );
@@ -736,6 +804,10 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromFriendlyMagic() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_FRIENDLY_MAGIC;
 		local.add( badge );
 		displayBadge( badge );
@@ -744,6 +816,10 @@ public class Badges {
 	}
 
 	public static void validateDeathFromSacrifice() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_SACRIFICE;
 		local.add( badge );
 		displayBadge( badge );
@@ -752,6 +828,10 @@ public class Badges {
 	}
 
 	public static void validateDeathFromGrimOrDisintTrap() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = Badge.DEATH_FROM_GRIM_TRAP;
 		local.add( badge );
 		displayBadge( badge );
@@ -760,6 +840,10 @@ public class Badges {
 	}
 	
 	private static void validateDeathFromAll() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (isUnlocked( Badge.DEATH_FROM_FIRE ) &&
 				isUnlocked( Badge.DEATH_FROM_POISON ) &&
 				isUnlocked( Badge.DEATH_FROM_GAS ) &&
@@ -818,6 +902,10 @@ public class Badges {
 	}
 	
 	public static void validateBossSlain(Mob m) {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		if (m instanceof Goo) badge = Badge.BOSS_SLAIN_GOO;
 		if (m instanceof RatUsurper) badge = Badge.BOSS_SLAIN_RAT;
@@ -881,6 +969,10 @@ public class Badges {
 	}
 
 	public static void validateBossChallengeCompleted(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		switch (Dungeon.depth) {
 			case 5:
@@ -911,7 +1003,11 @@ public class Badges {
 	}
 	
 	public static void validateMastery() {
-		
+		if (SPDSettings.creative()) {
+			return;
+		}
+
+
 		Badge badge = null;
 		switch (Dungeon.hero.heroClass) {
 			case WARRIOR:
@@ -941,28 +1037,48 @@ public class Badges {
 	}
 
 	public static void validateRatmogrify(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		unlock(Badge.FOUND_RATMOGRIFY);
 	}
 	
 	public static void validateMageUnlock(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (Statistics.upgradesUsed >= 1 && !isUnlocked(Badge.UNLOCK_MAGE)){
 			displayBadge( Badge.UNLOCK_MAGE );
 		}
 	}
 	
 	public static void validateRogueUnlock(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (Statistics.sneakAttacks >= 10 && !isUnlocked(Badge.UNLOCK_ROGUE)){
 			displayBadge( Badge.UNLOCK_ROGUE );
 		}
 	}
 	
 	public static void validateHuntressUnlock(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (Statistics.thrownAttacks >= 10 && !isUnlocked(Badge.UNLOCK_HUNTRESS)){
 			displayBadge( Badge.UNLOCK_HUNTRESS );
 		}
 	}
 
 	public static void validateDuelistUnlock(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!isUnlocked(Badge.UNLOCK_DUELIST) && Dungeon.hero != null
 				&& Dungeon.hero.belongings.weapon instanceof MeleeWeapon
 				&& ((MeleeWeapon) Dungeon.hero.belongings.weapon).tier >= 2
@@ -980,18 +1096,30 @@ public class Badges {
 	}
 
 	public static void validateClericUnlock(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!isUnlocked(Badge.UNLOCK_CLERIC)){
 			displayBadge( Badge.UNLOCK_CLERIC );
 		}
 	}
 
 	public static void validateArtificerUnlock() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!isUnlocked(Badge.UNLOCK_ARTIFICER)) {
 			displayBadge( Badge.UNLOCK_ARTIFICER );
 		}
 	}
 	
 	public static void validateMasteryCombo( int n ) {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!local.contains( Badge.MASTERY_COMBO ) && n == 10) {
 			Badge badge = Badge.MASTERY_COMBO;
 			local.add( badge );
@@ -1000,6 +1128,10 @@ public class Badges {
 	}
 	
 	public static void validateVictory() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 
 		Badge badge = Badge.VICTORY;
 		local.add( badge );
@@ -1024,6 +1156,10 @@ public class Badges {
 	}
 
 	public static void validateTakingTheMick(Object cause){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (cause == Dungeon.hero &&
 				Dungeon.hero.belongings.attackingWeapon() instanceof Pickaxe
 				&& Dungeon.hero.belongings.attackingWeapon().level() >= 20){
@@ -1033,6 +1169,10 @@ public class Badges {
 	}
 
 	public static void validateNoKilling() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!local.contains( Badge.NO_MONSTERS_SLAIN ) && Statistics.completedWithNoKilling) {
 			Badge badge = Badge.NO_MONSTERS_SLAIN;
 			local.add( badge );
@@ -1042,6 +1182,10 @@ public class Badges {
 	}
 	
 	public static void validateGrimWeapon() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!local.contains( Badge.GRIM_WEAPON )) {
 			Badge badge = Badge.GRIM_WEAPON;
 			local.add( badge );
@@ -1050,6 +1194,10 @@ public class Badges {
 	}
 
 	public static void validateManyBuffs(){
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (!local.contains( Badge.MANY_BUFFS )) {
 			Badge badge = Badge.MANY_BUFFS;
 			local.add( badge );
@@ -1058,6 +1206,10 @@ public class Badges {
 	}
 	
 	public static void validateGamesPlayed() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		Badge badge = null;
 		if (Rankings.INSTANCE.totalNumber >= 10 || Rankings.INSTANCE.wonNumber >= 1) {
 			badge = Badge.GAMES_PLAYED_1;
@@ -1117,6 +1269,10 @@ public class Badges {
 	}
 	
 	public static void validateHappyEnd() {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		local.add( Badge.HAPPY_END );
 		displayBadge( Badge.HAPPY_END );
 
@@ -1132,6 +1288,10 @@ public class Badges {
 	}
 
 	public static void validateChampion( int challenges ) {
+		if (SPDSettings.creative()) {
+			return;
+		}
+
 		if (challenges == 0) return;
 		Badge badge = null;
 		if (challenges >= 1) {
@@ -1151,7 +1311,7 @@ public class Badges {
 	
 	private static void displayBadge( Badge badge ) {
 
-		if (!SPDSettings.creative() || badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
+		if (SPDSettings.creative() || badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
 			return;
 		}
 		

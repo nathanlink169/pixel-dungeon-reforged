@@ -3,6 +3,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
@@ -22,9 +23,9 @@ public class Spitter extends Mob {
     }
 
     @Override
-    protected boolean getCloser( int target ) {
+    public boolean getCloser(int target) {
         if (state == HUNTING) {
-            return enemySeen && getFurther( target );
+            return m_EnemySeen.Get() && getFurther( target );
         } else {
             return super.getCloser( target );
         }

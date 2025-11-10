@@ -30,8 +30,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Enchanting;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -70,7 +73,8 @@ public class HolyWard extends ClericSpell {
 		return desc + "\n\n" + Messages.get(this, "charge_cost", (int)chargeUse(Dungeon.hero));
 	}
 
-	public static class HolyArmBuff extends FlavourBuff {
+	public static class HolyArmBuff extends FlavourBuff implements
+			CombatModifier.PostArmorDamageModifier {
 
 		public static final float DURATION	= 50f;
 
@@ -109,6 +113,24 @@ public class HolyWard extends ClericSpell {
 			} else {
 				postpone(2*DURATION);
 			}
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
+		}
+
+		@Override
+		public int priority() {
+			return CombatModifier.Priority.NORMAL;
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			Hero hero = (Hero) target;
+			int blocking = hero.subClass == HeroSubClass.PALADIN ? 3 : 1;
+			int reduction = Math.round(blocking * Armor.Glyph.genericProcChanceMultiplier(context.attacker));
+			return Math.max(0, currentDamage - reduction);
 		}
 	}
 

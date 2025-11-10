@@ -34,6 +34,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
@@ -42,6 +44,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.PylonSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -49,6 +52,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class Pylon extends Mob {
 
@@ -63,8 +67,6 @@ public class Pylon extends Mob {
 	public int GetMaxHP() {
 		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.6f : 1.0f));
 	}
-
-	private int targetNeighbor = Random.Int(8);
 
 	@Override
 	protected boolean act() {
@@ -82,7 +84,7 @@ public class Pylon extends Mob {
 		//mob logic
 		enemy = chooseEnemy();
 
-		enemySeen = enemy != null && enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0;
+		m_EnemySeen.Set(enemy != null && enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0);
 		//end of char/mob logic
 
 		if (alignment == Alignment.NEUTRAL){
@@ -92,13 +94,13 @@ public class Pylon extends Mob {
 
 		ArrayList<Integer> shockCells = new ArrayList<>();
 
-		shockCells.add(pos + PathFinder.CIRCLE8[targetNeighbor]);
+		shockCells.add(pos + PathFinder.CIRCLE8[m_TargetNeighbour.Get()]);
 
 		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-			shockCells.add(pos + PathFinder.CIRCLE8[(targetNeighbor+3)%8]);
-			shockCells.add(pos + PathFinder.CIRCLE8[(targetNeighbor+5)%8]);
+			shockCells.add(pos + PathFinder.CIRCLE8[(m_TargetNeighbour.Get()+3)%8]);
+			shockCells.add(pos + PathFinder.CIRCLE8[(m_TargetNeighbour.Get()+5)%8]);
 		} else {
-			shockCells.add(pos + PathFinder.CIRCLE8[(targetNeighbor+4)%8]);
+			shockCells.add(pos + PathFinder.CIRCLE8[(m_TargetNeighbour.Get()+4)%8]);
 		}
 
 		sprite.flash();
@@ -123,7 +125,7 @@ public class Pylon extends Mob {
 			shockChar(Actor.findChar(cell));
 		}
 
-		targetNeighbor = (targetNeighbor+1)%8;
+		m_TargetNeighbour.Set((m_TargetNeighbour.Get()+1)%8);
 
 		spend(TICK);
 
@@ -133,7 +135,7 @@ public class Pylon extends Mob {
 	private void shockChar( Char ch ){
 		if (ch != null && !(ch instanceof DM300)){
 			ch.sprite.flash();
-			ch.damage(damageRoll(AttackType.RANGED_MAGICAL, false), new Electricity());
+			ch.Damage(damageRoll(AttackContext.AttackType.RANGED, false), new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 
 			if (ch == Dungeon.hero) {
 				Statistics.qualifiedForBossChallengeBadge = false;
@@ -194,7 +196,7 @@ public class Pylon extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (dmg >= 15){
 			//takes 15/16/17/18/19/20 dmg at 15/17/20/24/29/36 incoming dmg
 			dmg = 14 + (int)(Math.sqrt(8*(dmg - 14) + 1) - 1)/2;
@@ -205,7 +207,7 @@ public class Pylon extends Mob {
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmg/2f);
 			else                                                    lock.addTime(dmg);
 		}
-		super.damage(dmg, src, damageType);
+		return super.Damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -215,20 +217,20 @@ public class Pylon extends Mob {
 	}
 
 	private static final String ALIGNMENT = "alignment";
-	private static final String TARGET_NEIGHBOUR = "target_neighbour";
+	private BundleableProperty.Int m_TargetNeighbour = new BundleableProperty.Int("target_neighbour", 0, Random.Int(8));
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
 		bundle.put(ALIGNMENT, alignment);
-		bundle.put(TARGET_NEIGHBOUR, targetNeighbor);
+		m_TargetNeighbour.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		alignment = bundle.getEnum(ALIGNMENT, Alignment.class);
 		super.restoreFromBundle(bundle);
-		targetNeighbor = bundle.getInt(TARGET_NEIGHBOUR);
+		m_TargetNeighbour.Restore(bundle);
 	}
 
 }

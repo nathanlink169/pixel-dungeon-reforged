@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.watabou.noosa.TextureFilm;
@@ -83,7 +84,7 @@ public class BallistaSprite extends MobSprite {
                     reset( this, cellToAttack, new BallistaShot(), new Callback() {
                         @Override
                         public void call() {
-                            ch.onAttackComplete(Char.AttackType.RANGED_PHYSICAL);
+                            ch.onAttackComplete(AttackContext.AttackType.RANGED);
                         }
                     } );
         } else if (anim == die) {

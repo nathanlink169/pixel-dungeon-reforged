@@ -26,12 +26,14 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
 
-public class PhysicalEmpower extends Buff {
+public class PhysicalEmpower extends Buff implements CombatModifier.PreArmorDamageModifier, CombatModifier.OnHitEffect {
 
 	{
 		type = buffType.POSITIVE;
@@ -90,4 +92,26 @@ public class PhysicalEmpower extends Buff {
 		left = bundle.getInt( LEFT );
 	}
 
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		return currentDamage + dmgBoost;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == target;
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		left--;
+		if (left <= 0) {
+			detach();
+		}
+	}
 }

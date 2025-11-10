@@ -24,30 +24,47 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class Sacrificial extends Weapon.Enchantment {
+public class Sacrificial extends Weapon.Enchantment implements CombatModifier.OnDamageEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage ) {
-
-		float procChance = 1/10f * procChanceMultiplier(attacker);
+	public void onDamage(AttackContext context, int finalDamage) {
+		float procChance = 1/10f * procChanceMultiplier(context.attacker);
 		if (Random.Float() < procChance) {
-			float missingPercent = attacker.HP/(float)attacker.GetMaxHP();
-			float bleedAmt = (float)(Math.pow(missingPercent, 2) * attacker.GetMaxHP())/8f;
+			float missingPercent = context.attacker.HP/(float)context.attacker.GetMaxHP();
+			float bleedAmt = (float)(Math.pow(missingPercent, 2) * context.attacker.GetMaxHP())/8f;
 			if (Random.Float() < bleedAmt) {
-				Buff.affect(attacker, Bleeding.class).set(Math.max(1, bleedAmt), getClass());
+				Buff.affect(context.attacker, Bleeding.class).set(Math.max(1, bleedAmt), getClass());
 			}
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 
 	@Override

@@ -32,6 +32,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericAccuracyMultiplier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageMultiplier;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.Shuriken;
@@ -117,12 +121,20 @@ public class SpectralBlades extends ArmorAbility {
 					if (hero.hasTalent(Talent.SPIRIT_BLADES)){
 						Buff.affect(hero, Talent.SpiritBladesTracker.class, 0f);
 					}
-					hero.attack( ch, dmgMulti, 0, accmulti );
+					GenericAccuracyMultiplier accuracyMultiplier = GenericAccuracyMultiplier.AttackerModifier(accmulti);
+					GenericPreArmourDamageMultiplier damageMultiplier = GenericPreArmourDamageMultiplier.AttackerModifier(dmgMulti);
+					accuracyMultiplier.attachTo(hero);
+					damageMultiplier.attachTo(hero);
+
+					hero.Attack( ch, AttackContext.AttackType.RANGED, DamageType.of(DamageType.SLASHING));
 					callbacks.remove( this );
 					if (callbacks.isEmpty()) {
 						Invisibility.dispel();
 						hero.spendAndNext( hero.attackDelay() );
 					}
+					
+					accuracyMultiplier.detach();
+					damageMultiplier.detach();
 				}
 			};
 

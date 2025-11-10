@@ -27,31 +27,27 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.DemonGooSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class DemonGoo extends Mob {
-	private int demonGooGeneration = 0;
-
+public class DemonGoo extends Mob implements CombatModifier.OnDamageEffect {
 	private static final float SPLIT_DELAY = 1f;
-	private static final String DEMONGOOGENERATION = "demonGooGeneration";
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.demongoo; }
 
@@ -67,51 +63,18 @@ public class DemonGoo extends Mob {
 		return result;
 	}
 
+	private BundleableProperty.Int m_DemonGooGeneration = new BundleableProperty.Int("demonGooGeneration", 0);
+
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(DEMONGOOGENERATION, demonGooGeneration);
+		m_DemonGooGeneration.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		demonGooGeneration = bundle.getInt(DEMONGOOGENERATION);
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-
-		if (HP >= damage + 2) {
-			ArrayList<Integer> candidates = new ArrayList<Integer>();
-			boolean[] passable = Dungeon.level.passable;
-
-			int[] neighbours = { pos + 1, pos - 1, pos + Dungeon.level.width(),
-					pos - Dungeon.level.width() };
-			for (int n : neighbours) {
-				if (passable[n] && Actor.findChar(n) == null) {
-					candidates.add(n);
-				}
-			}
-
-			if (candidates.size() > 0) {
-				DemonGoo clone = split();
-				clone.pos = Random.element(candidates);
-				clone.state = clone.HUNTING;
-
-				if (Dungeon.level.map[clone.pos] == Terrain.DOOR) {
-					Door.enter(clone.pos);
-				}
-
-				GameScene.add(clone, SPLIT_DELAY);
-				clone.HP = (HP - damage) / 2;
-				Actor.add(new Pushing(clone, pos, clone.pos));
-
-				HP -= clone.HP;
-			}
-		}
-
-		return damage;
+		m_DemonGooGeneration.Restore(bundle);
 	}
 
 	@Override
@@ -126,24 +89,81 @@ public class DemonGoo extends Mob {
 		return super.createLoot(itemSlot);
 	}
 
-	private DemonGoo split() {
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.defender == this) {
+			// Check if we survived with enough HP to split
+			if (!isAlive() || HP < 2) {
+				return;
+			}
+
+			// Find valid adjacent positions
+			ArrayList<Integer> candidates = new ArrayList<>();
+			boolean[] passable = Dungeon.level.passable;
+
+			int[] neighbours = {
+					pos + 1, pos - 1,
+					pos + Dungeon.level.width(),
+					pos - Dungeon.level.width()
+			};
+
+			for (int n : neighbours) {
+				if (passable[n] && Actor.findChar(n) == null) {
+					candidates.add(n);
+				}
+			}
+
+			if (candidates.isEmpty()) {
+				return;
+			}
+
+			// Create and position the clone
+			DemonGoo clone = createClone();
+			clone.pos = Random.element(candidates);
+			clone.state = clone.HUNTING;
+
+			if (Dungeon.level.map[clone.pos] == Terrain.DOOR) {
+				Door.enter(clone.pos);
+			}
+
+			// Add to game
+			GameScene.add(clone, SPLIT_DELAY);
+			Actor.add(new Pushing(clone, pos, clone.pos));
+
+			// Split HP between original and clone
+			int splitHP = HP / 2;
+			clone.HP = splitHP;
+			this.HP -= splitHP;
+		} else if (context.attacker == this) {
+			if (Random.Int(3) == 0) {
+				Buff.affect(enemy, Ooze.class).set(Ooze.DURATION);
+				enemy.sprite.burst(0x000000, 5);
+			}
+		}
+	}
+
+	private DemonGoo createClone() {
 		DemonGoo clone = new DemonGoo();
-		clone.demonGooGeneration = demonGooGeneration + 1;
+		clone.m_DemonGooGeneration.Set(this.m_DemonGooGeneration.Get() + 1);
+
+		// Copy persistent buffs
 		if (buff(Burning.class) != null) {
 			Buff.affect(clone, Burning.class).reignite(clone);
 		}
 		if (buff(Poison.class) != null) {
 			Buff.affect(clone, Poison.class).set(2);
 		}
+
 		return clone;
 	}
 
 	@Override
-	public int attackProc(Char enemy, int damage) {
-		if (Random.Int(3) == 0) {
-			Buff.affect(enemy, Ooze.class);
-			enemy.sprite.burst(0x000000, 5);
-		}
-		return damage;
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this || context.attacker == this;
 	}
 }

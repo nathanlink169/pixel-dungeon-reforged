@@ -27,7 +27,11 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.EarthParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor.Glyph;
@@ -37,27 +41,34 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite.Glowing;
 import com.watabou.utils.Random;
 
-public class Entanglement extends Glyph {
+public class Entanglement extends Glyph implements CombatModifier.OnHitEffect {
 	
 	private static ItemSprite.Glowing BROWN = new ItemSprite.Glowing( 0x663300 );
-	
-	@Override
-	public int proc(Armor armor, Char attacker, final Char defender, final int damage ) {
 
-		final int level = Math.max( 0, armor.buffedLvl() );
-		float procChance = 1/4f * procChanceMultiplier(defender);
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		final int level = Math.max( 0, context.defender.getArmor().buffedLvl() );
+		float procChance = 1/4f * procChanceMultiplier(context.defender);
 
 		if (Random.Float() < procChance) {
 
 			float powerMulti = Math.max(1f, procChance);
 
-			Buff.affect( defender, Earthroot.Armor.class ).level( Math.round((5 + 2 * level)*powerMulti) );
-			CellEmitter.bottom( defender.pos ).start( EarthParticle.FACTORY, 0.05f, 8 );
-			if (defender == Dungeon.hero) PixelScene.shake( 1, 0.4f );
-			
-		}
+			Buff.affect( context.defender, Earthroot.Armor.class ).level( Math.round((5 + 2 * level)*powerMulti) );
+			CellEmitter.bottom( context.defender.pos ).start( EarthParticle.FACTORY, 0.05f, 8 );
+			if (context.defender == Dungeon.hero) PixelScene.shake( 1, 0.4f );
 
-		return damage;
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

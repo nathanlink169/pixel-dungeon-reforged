@@ -35,6 +35,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -71,7 +73,7 @@ public class Endure extends ArmorAbility {
 		hero.spendAndNext(3f);
 	}
 
-	public static class EndureTracker extends FlavourBuff {
+	public static class EndureTracker extends FlavourBuff implements CombatModifier.PreArmorDamageModifier, CombatModifier.PostArmorDamageModifier {
 
 		{
 			type = buffType.POSITIVE;
@@ -177,6 +179,49 @@ public class Endure extends ArmorAbility {
 			enduring = bundle.getBoolean(ENDURING);
 			damageBonus = bundle.getInt(DAMAGE_BONUS);
 			hitsLeft = bundle.getInt(HITS_LEFT);
+		}
+
+		private float calculateReduction() {
+			float multiplier = 0.5f;
+			if (target instanceof Hero) {
+				Hero hero = (Hero) target;
+				if (hero.hasTalent(Talent.SHRUG_IT_OFF)) {
+					multiplier *= (float) Math.pow(0.8f, hero.pointsInTalent(Talent.SHRUG_IT_OFF));
+				}
+			}
+			return multiplier;
+		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			// Reduce damage when defending (Phase 1)
+			if (context.defender == target && enduring) {
+				damageBonus += currentDamage / 2;
+				float reduction = calculateReduction();
+				return Math.round(currentDamage * reduction);
+			}
+			return currentDamage;
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			// Add bonus damage when attacking (Phase 2)
+			if (context.attacker == target && !enduring && hitsLeft > 0) {
+				hitsLeft--;
+				if (hitsLeft <= 0) detach();
+				return currentDamage + damageBonus;
+			}
+			return currentDamage;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.HIGH;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target || context.attacker == target;
 		}
 	};
 

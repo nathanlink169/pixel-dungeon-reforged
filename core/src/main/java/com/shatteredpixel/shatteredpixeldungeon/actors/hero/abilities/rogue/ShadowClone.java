@@ -37,13 +37,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.SpiritHawk;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.DirectableAlly;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
+import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CityLevel;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.HeroIcon;
@@ -58,6 +62,7 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class ShadowClone extends ArmorAbility {
 
@@ -178,7 +183,7 @@ public class ShadowClone extends ArmorAbility {
 		}
 
 		@Override
-		public int GetDefenseSkillInternal() {
+		public int defenseSkill() {
 			return m_HeroLevel + 4;
 		}
 
@@ -187,7 +192,7 @@ public class ShadowClone extends ArmorAbility {
 			int oldPos = pos;
 			boolean result = super.act();
 			//partially simulates how the hero switches to idle animation
-			if ((pos == target || oldPos == pos) && sprite.looping()){
+			if ((pos == m_Target.Get() || oldPos == pos) && sprite.looping()){
 				sprite.idle();
 			}
 			return result;
@@ -212,15 +217,20 @@ public class ShadowClone extends ArmorAbility {
 		}
 
 		@Override
-		public int attackSkill(Char target) {
-			return GetDefenseSkillInternal()+5; //equal to base hero attack skill
+		public int attackSkill() {
+			return defenseSkill()+5; //equal to base hero attack skill
 		}
 
 		@Override
-		public int damageRoll(AttackType type, boolean isMaxDamage) {
+		public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 			int damage = super.damageRoll(type, isMaxDamage);
 			if (isMaxDamage) damage = 20;
-			float heroDamage = Dungeon.hero.damageRoll(AttackType.MELEE, isMaxDamage);
+			AttackContext.Builder builder = new AttackContext.Builder(this, null);
+			if (isMaxDamage) {
+				builder.forceMaxDamage();
+			}
+			AttackContext context = builder.build();
+			float heroDamage = Dungeon.hero.damageRoll(context);
 			heroDamage /= Dungeon.hero.attackDelay(); //normalize hero damage based on atk speed
 			heroDamage = Math.round(0.08f * Dungeon.hero.pointsInTalent(Talent.SHADOW_BLADE) * heroDamage);
 			if (heroDamage > 0){
@@ -229,21 +239,31 @@ public class ShadowClone extends ArmorAbility {
 			return damage;
 		}
 
+		// TODO: Chance to use glyphs
 		@Override
-		public int attackProc( Char enemy, int damage ) {
-			damage = super.attackProc( enemy, damage );
-			if (Random.Int(4) < Dungeon.hero.pointsInTalent(Talent.SHADOW_BLADE)
-					&& Dungeon.hero.belongings.weapon() != null){
-				return Dungeon.hero.belongings.weapon().proc( this, enemy, damage );
-			} else {
-				return damage;
-			}
+		public Weapon getWeapon() {
+			return Dungeon.hero.getWeapon();
 		}
 
 		@Override
-		public int drRoll() {
-			int dr = super.drRoll();
-			int heroRoll = Dungeon.hero.drRoll();
+		public Armor getArmor() {
+			return Dungeon.hero.getArmor();
+		}
+
+		@Override
+		public Item getMisc() {
+			return Dungeon.hero.getMisc();
+		}
+
+		@Override
+		public Ring getRing() {
+			return Dungeon.hero.getRing();
+		}
+
+		@Override
+		public int drRoll(EnumSet<DamageType> damageType) {
+			int dr = super.drRoll(damageType);
+			int heroRoll = Dungeon.hero.drRoll(damageType);
 			heroRoll = Math.round(0.12f * Dungeon.hero.pointsInTalent(Talent.CLONED_ARMOR) * heroRoll);
 			if (heroRoll > 0){
 				dr += heroRoll;
@@ -257,17 +277,6 @@ public class ShadowClone extends ArmorAbility {
 				return Math.max(super.glyphLevel(cls), Dungeon.hero.glyphLevel(cls));
 			} else {
 				return super.glyphLevel(cls);
-			}
-		}
-
-		@Override
-		public int defenseProc(Char enemy, int damage) {
-			damage = super.defenseProc(enemy, damage);
-			if (Random.Int(4) < Dungeon.hero.pointsInTalent(Talent.CLONED_ARMOR)
-					&& Dungeon.hero.belongings.armor() != null){
-				return Dungeon.hero.belongings.armor().proc( enemy, this, damage );
-			} else {
-				return damage;
 			}
 		}
 

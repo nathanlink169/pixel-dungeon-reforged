@@ -37,6 +37,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
@@ -49,7 +51,6 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalGuardianSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalSpireSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -59,9 +60,9 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class CrystalSpire extends Mob {
 	{
@@ -78,11 +79,11 @@ public class CrystalSpire extends Mob {
 
 	@Override
 	public Class<? extends CharSprite> GetSpriteName() {
-		if (m_SpriteVariant == -1) {
-			m_SpriteVariant = Random.Int(3);
+		if (m_SpriteVariant.Get() == -1) {
+			m_SpriteVariant.Set(Random.Int(3));
 		}
 
-		switch (m_SpriteVariant){
+		switch (m_SpriteVariant.Get()){
 			case 0: default:
 				return CrystalSpireSprite.Blue.class;
 			case 1:
@@ -116,7 +117,7 @@ public class CrystalSpire extends Mob {
 		enemy = Dungeon.hero;
 
 		//crystal can still track an invisible hero
-		enemySeen = enemy.isAlive() && fieldOfView[enemy.pos];
+		m_EnemySeen.Set(enemy.isAlive() && fieldOfView[enemy.pos]);
 		//end of char/mob logic
 
 		if (!targetedCells.isEmpty()){
@@ -140,7 +141,7 @@ public class CrystalSpire extends Mob {
 				Char ch = Actor.findChar(i);
 
 				if (ch != null && !(ch instanceof CrystalWisp || ch instanceof CrystalSpire)){
-					int dmg = damageRoll(AttackType.MELEE, false);
+					int dmg = damageRoll(AttackContext.AttackType.MELEE, false);
 
 					// guardians are hit harder by the attack
 					if (ch instanceof CrystalGuardian) {
@@ -149,7 +150,7 @@ public class CrystalSpire extends Mob {
 					} else if (ch == Dungeon.hero){
 						Statistics.questScores[2] -= 100;
 					}
-					ch.damage(dmg, new SpireSpike());
+					ch.Damage(dmg, new SpireSpike(), GetMeleeDamageType());
 
 					int movePos = i;
 					//crystal guardians get knocked away from the hero, others get knocked away from the spire
@@ -193,7 +194,7 @@ public class CrystalSpire extends Mob {
 
 		}
 
-		if (hits < 3 || !enemySeen){
+		if (hits < 3 || !m_EnemySeen.Get()){
 			spend(TICK);
 			return true;
 		} else {
@@ -292,11 +293,11 @@ public class CrystalSpire extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (!(src instanceof Pickaxe) ){
 			dmg = 0;
 		}
-		super.damage(dmg, src, damageType);
+		return super.Damage(dmg, src, damageType);
 	}
 
 	@Override
@@ -325,9 +326,9 @@ public class CrystalSpire extends Mob {
 				public void call() {
 					//does its own special damage calculation that's only influenced by pickaxe level and augment
 					//we pretend the spire is the owner here so that properties like hero str or or other equipment do not factor in
-					int dmg = p.damageRoll(CrystalSpire.this, false);
+					int dmg = p.damageRoll(false, true);
 
-					damage(dmg, p);
+					Damage(dmg, p, DamageType.of(DamageType.PIERCING));
 					abilityCooldown -= dmg/10f;
 					sprite.bloodBurstA(Dungeon.hero.sprite.center(), dmg);
 					sprite.flash();
@@ -363,7 +364,7 @@ public class CrystalSpire extends Mob {
 						for (Char ch : Actor.chars()){
 							if (fieldOfView[ch.pos]) {
 								if (ch instanceof CrystalGuardian) {
-									ch.damage(ch.GetMaxHP(), new SpireSpike());
+									ch.Damage(ch.GetMaxHP(), new SpireSpike(), DamageType.of(DamageType.PIERCING));
 								}
 								if (ch instanceof CrystalWisp) {
 									Buff.affect(ch, Blindness.class, 5f);
@@ -394,11 +395,11 @@ public class CrystalSpire extends Mob {
 						boolean affectingGuardians = false;
 						for (Char ch : Actor.chars()) {
 							if (ch instanceof CrystalWisp) {
-								if (((CrystalWisp) ch).state != ((CrystalWisp)ch).HUNTING && ((CrystalWisp) ch).target != pos) {
+								if (((CrystalWisp) ch).state != ((CrystalWisp)ch).HUNTING && ((CrystalWisp) ch).m_Target.Get() != pos) {
 									((CrystalWisp) ch).beckon(pos);
 								}
 							} else if (ch instanceof CrystalGuardian) {
-								if (((CrystalGuardian) ch).state != ((CrystalGuardian)ch).HUNTING && ((CrystalGuardian) ch).target != pos) {
+								if (((CrystalGuardian) ch).state != ((CrystalGuardian)ch).HUNTING && ((CrystalGuardian) ch).m_Target.Get() != pos) {
 									affectingGuardians = true;
 								}
 							}
@@ -428,7 +429,7 @@ public class CrystalSpire extends Mob {
 											Buff.affect(ch, Paralysis.class, 20-PathFinder.distance[ch.pos]);
 										}
 
-									} else if (((CrystalGuardian) ch).state != ((CrystalGuardian) ch).HUNTING && ((CrystalGuardian) ch).target != pos){
+									} else if (((CrystalGuardian) ch).state != ((CrystalGuardian) ch).HUNTING && ((CrystalGuardian) ch).m_Target.Get() != pos){
 										((CrystalGuardian) ch).beckon(pos);
 										if (((CrystalGuardian) ch).state != HUNTING) {
 											((CrystalGuardian) ch).aggro(Dungeon.hero);
@@ -445,7 +446,7 @@ public class CrystalSpire extends Mob {
 					}
 
 					Invisibility.dispel(Dungeon.hero);
-					Dungeon.hero.spendAndNext(p.delayFactor(CrystalSpire.this));
+					Dungeon.hero.spendAndNext(p.timeToUse());
 				}
 			});
 			return false;

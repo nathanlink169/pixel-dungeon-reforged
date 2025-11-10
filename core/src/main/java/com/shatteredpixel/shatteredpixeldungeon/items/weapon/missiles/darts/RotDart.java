@@ -36,10 +36,9 @@ public class RotDart extends TippedDart {
 	{
 		image = ItemSpriteSheet.ROT_DART;
 	}
-	
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
 
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
 		//when processing charged shot, only corrode enemies
 		if (processingChargedShot && attacker.alignment == defender.alignment) {
 			//do nothing
@@ -49,10 +48,8 @@ public class RotDart extends TippedDart {
 		} else {
 			Buff.affect(defender, Corrosion.class).set(10f, Dungeon.scalingDepth());
 		}
-		
-		return super.proc(attacker, defender, damage);
 	}
-	
+
 	@Override
 	public float durabilityPerUse() {
 		return MAX_DURABILITY/5f; //always 5 uses

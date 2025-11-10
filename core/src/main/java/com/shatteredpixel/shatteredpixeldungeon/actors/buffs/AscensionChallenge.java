@@ -33,13 +33,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Ballista;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Bat;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Brute;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Crab;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM100;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM200;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DemonGoo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Elemental;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Eye;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Fiend;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Ghoul;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Gnoll;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Golem;
@@ -63,6 +66,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.UnholyPriest;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Shopkeeper;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Amulet;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
@@ -74,7 +80,7 @@ import com.watabou.utils.Bundle;
 
 import java.util.HashMap;
 
-public class AscensionChallenge extends Buff {
+public class AscensionChallenge extends Buff implements CombatModifier.AccuracyModifier, CombatModifier.EvasionModifier {
 
 	private static HashMap<Class<?extends Mob>, Float> modifiers = new HashMap<>();
 	static {
@@ -84,7 +90,7 @@ public class AscensionChallenge extends Buff {
 		modifiers.put(Swarm.class,          8.5f);
 		modifiers.put(Crab.class,           8f);
 		modifiers.put(Slime.class,          8f);
-		modifiers.put(Spitter.class, 		9f);
+		modifiers.put(Spitter.class, 		12f);
 
 		modifiers.put(Skeleton.class,       5f);
 		modifiers.put(Thief.class,          5f);
@@ -98,17 +104,20 @@ public class AscensionChallenge extends Buff {
 		modifiers.put(Shaman.class,         2.25f);
 		modifiers.put(Spinner.class,        2f);
 		modifiers.put(DM200.class,          2f);
+		modifiers.put(Ballista.class, 		2f);
 
 		modifiers.put(Ghoul.class,          1.67f);
 		modifiers.put(Elemental.class,      1.67f);
 		modifiers.put(Warlock.class,        1.5f);
 		modifiers.put(Monk.class,           1.5f);
 		modifiers.put(Golem.class,          1.33f);
+		modifiers.put(Fiend.class,			1.5f);
 
 		modifiers.put(RipperDemon.class,    1.2f);
 		modifiers.put(Succubus.class,       1.2f);
 		modifiers.put(Eye.class,            1.1f);
 		modifiers.put(Scorpio.class,        1.1f);
+		modifiers.put(DemonGoo.class,		1.1f);
 	}
 
 	public static float statModifier(Char ch){
@@ -335,7 +344,7 @@ public class AscensionChallenge extends Buff {
 		if (stacks >= 8 && !Dungeon.bossLevel()){
 			damageInc += (stacks-4)/4f;
 			if (damageInc >= 1){
-				target.damage((int)damageInc, this);
+				target.Damage((int)damageInc, this, DamageType.of(DamageType.AMULET));
 				damageInc -= (int)damageInc;
 
 				if (target == Dungeon.hero && !target.isAlive()){
@@ -416,6 +425,26 @@ public class AscensionChallenge extends Buff {
 		} else {
 			stacksLowered = true;
 		}
+	}
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		return currentAccuracy * AscensionChallenge.statModifier(context.attacker);
+	}
+
+	@Override
+	public float modifyEvasion(AttackContext context, float currentEvasion) {
+		return currentEvasion * AscensionChallenge.statModifier(context.defender);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.HIGH;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return true;
 	}
 
 	//chars with this buff are not boosted by the ascension challenge

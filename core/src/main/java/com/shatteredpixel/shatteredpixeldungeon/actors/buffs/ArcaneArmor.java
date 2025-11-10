@@ -25,13 +25,17 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
 //A magical version of barkskin, essentially
-public class ArcaneArmor extends Buff {
+public class ArcaneArmor extends Buff implements CombatModifier.ArmorModifier {
 	
 	{
 		type = buffType.POSITIVE;
@@ -102,6 +106,29 @@ public class ArcaneArmor extends Buff {
 	@Override
 	public String desc() {
 		return Messages.get(this, "desc", level, dispTurns(visualcooldown()));
+	}
+
+	@Override
+	public int modifyArmor(AttackContext context, int currentArmor) {
+		return currentArmor + Random.NormalIntRange( 0 , Barkskin.currentLevel(context.defender) );
+	}
+
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	// TODO: Check if we need to check for Antimagic glyph
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		if (context.defender == target) {
+			for (DamageType dt : context.damageType) {
+				if (DamageType.IsDamageEnergy(dt)) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 	
 	private static final String LEVEL	    = "level";

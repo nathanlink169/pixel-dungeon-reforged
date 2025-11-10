@@ -39,6 +39,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Stasis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
@@ -57,6 +58,8 @@ import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class WandOfWarding extends Wand {
 
@@ -339,12 +342,12 @@ public class WandOfWarding extends Wand {
 		}
 
 		@Override
-		protected int GetDefenseSkillInternal() {
+		public int defenseSkill() {
 			return 4 + Dungeon.scalingDepth();
 		}
 
 		@Override
-		public int getMaxDR() { // min dr is already 0
+		public int getMaxDR(EnumSet<DamageType> damageType) { // min dr is already 0
 			if (tier > 3) {
 				return (int) ((3 + Dungeon.scalingDepth() / 2.0f) / (7f - tier));
 			}
@@ -357,7 +360,7 @@ public class WandOfWarding extends Wand {
 		}
 
 		@Override
-		protected boolean doAttack(Char enemy) {
+        public boolean doAttack(Char enemy) {
 			boolean visible = fieldOfView[pos] || fieldOfView[enemy.pos];
 			if (visible) {
 				sprite.zap( enemy.pos );
@@ -374,7 +377,7 @@ public class WandOfWarding extends Wand {
 			//always hits
 			int dmg = Hero.heroDamageIntRange( 2 + wandLevel, 8 + 4*wandLevel );
 			Char enemy = this.enemy;
-			enemy.damage( dmg, this );
+			enemy.Damage( dmg, this, DamageType.of(DamageType.NEGATIVE_ENERGY) );
 			if (enemy.isAlive()){
 				Wand.wandProc(enemy, wandLevel, 1);
 			}
@@ -393,13 +396,13 @@ public class WandOfWarding extends Wand {
 					}
 					break;
 				case 4:
-					damage(5, this);
+					Damage(5, this, DamageType.of(DamageType.NONE));
 					break;
 				case 5:
-					damage(6, this);
+					Damage(6, this, DamageType.of(DamageType.NONE));
 					break;
 				case 6:
-					damage(7, this);
+					Damage(7, this, DamageType.of(DamageType.NONE));
 					break;
 			}
 		}
@@ -410,7 +413,7 @@ public class WandOfWarding extends Wand {
 		}
 
 		@Override
-		protected boolean getCloser(int target) {
+        public boolean getCloser(int target) {
 			return false;
 		}
 

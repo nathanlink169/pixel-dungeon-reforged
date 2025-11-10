@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.audio.Sample;
 
@@ -52,7 +53,7 @@ public class FlashingTrap extends Trap {
 		Char c = Actor.findChar( pos );
 		
 		if (c != null) {
-			int damage = Math.max( 0,  (4 + scalingDepth()/2) - c.drRoll()/2 );
+			int damage = Math.max( 0,  (4 + scalingDepth()/2) - c.drRoll(DamageType.of(DamageType.PIERCING))/2 );
 			Buff.affect( c, Bleeding.class ).set( damage );
 			Buff.prolong( c, Blindness.class, Blindness.DURATION );
 			Buff.prolong( c, Cripple.class, Cripple.DURATION*2f );

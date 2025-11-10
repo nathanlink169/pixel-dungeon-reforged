@@ -26,10 +26,12 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class RingOfAccuracy extends Ring {
+public class RingOfAccuracy extends Ring implements CombatModifier.AccuracyModifier {
 
 	{
 		icon = ItemSpriteSheet.Icons.RING_ACCURACY;
@@ -56,14 +58,29 @@ public class RingOfAccuracy extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Accuracy();
 	}
 	
 	public static float accuracyMultiplier( Char target ){
 		return (float)Math.pow(1.3f, getBuffedBonus(target, Accuracy.class));
 	}
-	
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		return currentAccuracy * (context.attacker == Dungeon.hero ? accuracyMultiplier(Dungeon.hero) : 1.0f);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == Dungeon.hero;
+	}
+
 	public class Accuracy extends RingBuff {
 	}
 }

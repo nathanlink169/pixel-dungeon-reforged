@@ -34,7 +34,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Honeypot;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindofMisc;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -108,27 +107,27 @@ public class Belongings implements Iterable<Item> {
 		backpack.owner = owner;
 	}
 
-	public KindOfWeapon weapon = null;
+	public Weapon weapon = null;
 	public Armor armor = null;
 	public Artifact artifact = null;
 	public KindofMisc misc = null;
 	public Ring ring = null;
 
 	//used when thrown weapons temporary become the current weapon
-	public KindOfWeapon thrownWeapon = null;
+	public Weapon thrownWeapon = null;
 
 	//used to ensure that the duelist always uses the weapon she's using the ability of
-	public KindOfWeapon abilityWeapon = null;
+	public Weapon abilityWeapon = null;
 
 	//used by the champion subclass
-	public KindOfWeapon secondWep = null;
+	public Weapon secondWep = null;
 
 	//*** these accessor methods are so that worn items can be affected by various effects/debuffs
 	// we still want to access the raw equipped items in cases where effects should be ignored though,
 	// such as when equipping something, showing an interface, or dealing with items from a dead hero
 
 	//normally the primary equipped weapon, but can also be a thrown weapon or an ability's weapon
-	public KindOfWeapon attackingWeapon(){
+	public Weapon attackingWeapon(){
 		if (thrownWeapon != null) return thrownWeapon;
 		if (abilityWeapon != null) return abilityWeapon;
 		return weapon();
@@ -144,7 +143,7 @@ public class Belongings implements Iterable<Item> {
 		return lostInvent;
 	}
 
-	public KindOfWeapon weapon(){
+	public Weapon weapon(){
 		if (!lostInventory() || (weapon != null && weapon.keptThroughLostInventory())){
 			return weapon;
 		} else {
@@ -184,7 +183,7 @@ public class Belongings implements Iterable<Item> {
 		}
 	}
 
-	public KindOfWeapon secondWep(){
+	public Weapon secondWep(){
 		if (!lostInventory() || (secondWep != null && secondWep.keptThroughLostInventory())){
 			return secondWep;
 		} else {
@@ -219,7 +218,7 @@ public class Belongings implements Iterable<Item> {
 		backpack.clear();
 		backpack.restoreFromBundle( bundle );
 		
-		weapon = (KindOfWeapon) bundle.get(WEAPON);
+		weapon = (Weapon) bundle.get(WEAPON);
 		if (weapon() != null)       weapon().activate(owner);
 		
 		armor = (Armor)bundle.get( ARMOR );
@@ -234,7 +233,7 @@ public class Belongings implements Iterable<Item> {
 		ring = (Ring) bundle.get(RING);
 		if (ring() != null)         ring().activate( owner );
 
-		secondWep = (KindOfWeapon) bundle.get(SECOND_WEP);
+		secondWep = (Weapon) bundle.get(SECOND_WEP);
 		if (secondWep() != null)    secondWep().activate(owner);
 	}
 	
@@ -353,16 +352,16 @@ public class Belongings implements Iterable<Item> {
 	
 	public void observe() {
 		if (weapon() != null) {
-			if (ShardOfOblivion.passiveIDDisabled() && weapon() instanceof Weapon){
-				((Weapon) weapon()).setIDReady();
+			if (ShardOfOblivion.passiveIDDisabled()){
+				weapon().setIDReady();
 			} else {
 				weapon().identify();
 				Badges.validateItemLevelAquired(weapon());
 			}
 		}
 		if (secondWep() != null){
-			if (ShardOfOblivion.passiveIDDisabled() && secondWep() instanceof Weapon){
-				((Weapon) secondWep()).setIDReady();
+			if (ShardOfOblivion.passiveIDDisabled()){
+				secondWep().setIDReady();
 			} else {
 				secondWep().identify();
 				Badges.validateItemLevelAquired(secondWep());
@@ -424,7 +423,7 @@ public class Belongings implements Iterable<Item> {
 		Item toReturn = null;
 
 		if (Thief.getRandomizerEnabled(Thief.RandomTraits.BOLD_FINGERS)) {
-			if (Random.Int(2) == 0 || true) { // 50% chance to steal something equipped
+			if (Random.Int(2) == 0) { // 50% chance to steal something equipped
 				int attempts = 0;
 				do {
 					int itemToUnequip = Random.Int(5);

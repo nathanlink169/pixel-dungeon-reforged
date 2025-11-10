@@ -26,11 +26,13 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class Cudgel extends MeleeWeapon {
+public class Cudgel extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.CUDGEL;
@@ -38,11 +40,10 @@ public class Cudgel extends MeleeWeapon {
 		hitSoundPitch = 1.2f;
 
 		tier = 1;
-		ACC = 1.40f; //40% boost to accuracy
 
 		bones = false;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -60,7 +61,7 @@ public class Cudgel extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(3+1.5*lvl) damage, roughly +67% base dmg, +100% scaling
 		int dmgBoost = augment.damageFactor(3 + Math.round(1.5f*buffedLvl()));
-		Mace.heavyBlowAbility(hero, target, 1, dmgBoost, this);
+		Mace.heavyBlowAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -78,4 +79,11 @@ public class Cudgel extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 1.4f;
+		}
+		return currentAccuracy;
+	}
 }

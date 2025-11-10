@@ -25,9 +25,10 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
 public class Shuriken extends MissileWeapon {
@@ -40,7 +41,7 @@ public class Shuriken extends MissileWeapon {
 		tier = 2;
 		baseUses = 5;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 	
 	@Override
@@ -48,10 +49,10 @@ public class Shuriken extends MissileWeapon {
 		return  4 * tier +                      //8 base, down from 10
 				(tier == 1 ? 2*lvl : tier*lvl); //scaling unchanged
 	}
-	
+
 	@Override
-	public float delayFactor(Char owner) {
-		if (owner instanceof Hero && ((Hero) owner).justMoved)  return 0;
-		else                                                    return super.delayFactor(owner);
+	public float timeToUse() {
+		if (Dungeon.hero.justMoved)  return 0;
+		else                         return super.timeToUse();
 	}
 }

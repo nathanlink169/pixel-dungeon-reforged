@@ -33,9 +33,14 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
@@ -86,7 +91,7 @@ public class GuidingLight extends TargetedClericSpell {
 
 				Char ch = Actor.findChar( aim.collisionPos );
 				if (ch != null) {
-					ch.damage(Random.NormalIntRange(2, 8), GuidingLight.this);
+					ch.Damage(Random.NormalIntRange(2, 8), GuidingLight.this, DamageType.of(DamageType.POSITIVE_ENERGY));
 					Sample.INSTANCE.play(Assets.Sounds.HIT_MAGIC, 1, Random.Float(0.87f, 1.15f));
 					ch.sprite.burst(0xFFFFFF44, 3);
 					if (ch.isAlive()){
@@ -149,8 +154,10 @@ public class GuidingLight extends TargetedClericSpell {
 		}
 	}
 
-	public static class Illuminated extends Buff {
-
+	public static class Illuminated extends Buff implements
+			CombatModifier.AccuracyModifier,
+			CombatModifier.OnHitEffect,
+			CombatModifier.OnMissEffect {
 		{
 			type = buffType.NEGATIVE;
 		}
@@ -177,6 +184,56 @@ public class GuidingLight extends TargetedClericSpell {
 			}
 
 			return desc;
+		}
+
+		@Override
+		public int priority() {
+			return CombatModifier.Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			// Only applies to attacks against this illuminated target
+			if (context.defender != target) return false;
+
+			// Only applies to physical attacks
+			boolean isPhysical = false;
+			for (DamageType dt : context.damageType) {
+				if (DamageType.IsDamagePhysical(dt)) {
+					isPhysical = true;
+					break;
+				}
+			}
+			if (!isPhysical) return false;
+
+			// Check if attack is encumbered
+			if (context.attacker instanceof Hero) {
+				Hero hero = (Hero) context.attacker;
+				// Check if weapon is too heavy
+				if (hero.belongings.weapon() != null) {
+					Weapon weapon = hero.belongings.weapon();
+					if (weapon.STRReq() > hero.STR()) {
+						return false; // Encumbered, doesn't apply
+					}
+				}
+			}
+
+			return true;
+		}
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return Char.INFINITE_ACCURACY;
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			detach();
+		}
+
+		@Override
+		public void onMiss(AttackContext context) {
+			detach();
 		}
 	}
 

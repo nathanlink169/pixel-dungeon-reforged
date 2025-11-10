@@ -50,6 +50,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -279,7 +280,7 @@ public class ElementalBlast extends ArmorAbility {
 									* damageFactors.get(finalWandCls));
 
 							if (mob != null && damage > 0 && mob.alignment != Char.Alignment.ALLY){
-								mob.damage(damage, Reflection.newInstance(finalWandCls));
+								mob.Damage(damage, Reflection.newInstance(finalWandCls), DamageType.of(DamageType.FORCE));
 								charsHit++;
 							}
 
@@ -367,7 +368,7 @@ public class ElementalBlast extends ArmorAbility {
 											mob.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 3);
 										} else {
 											damage = Math.round(Hero.heroDamageIntRange(15, 25) * effectMulti);
-											mob.damage(damage, Reflection.newInstance(finalWandCls));
+											mob.Damage(damage, Reflection.newInstance(finalWandCls), DamageType.of(DamageType.FORCE));
 											mob.sprite.emitter().start(ShadowParticle.UP, 0.05f, 10);
 										}
 									}

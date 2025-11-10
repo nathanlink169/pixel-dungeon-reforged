@@ -56,17 +56,28 @@ public class WndHeroSelection extends Window {
     private void CreateCheckbox(int i) {
         HeroClass heroClass = HeroClass.Get(i);
 
-        String className = Messages.get(HeroClass.class,heroClass.name()).toLowerCase();
-        className = className.substring(0, 1).toUpperCase() + className.substring(1);
+        String className;
+
+        if (heroClass.isUnlocked()) {
+            className = Messages.get(HeroClass.class, heroClass.name()).toLowerCase();
+            className = className.substring(0, 1).toUpperCase() + className.substring(1);
+        }
+        else {
+            className = Messages.get(HeroClass.class, "locked");
+        }
         CheckBox cb = new CheckBox( className ) {
             @Override
             protected void onClick() {
-                if (checked()) {
-                    // If we are currently checked, do not allow us to be unchecked
-                    return;
+                if (heroClass.isUnlocked()) {
+                    if (checked()) {
+                        // If we are currently checked, do not allow us to be unchecked
+                        return;
+                    }
+                    super.onClick();
+                    handleTap(this);
+                } else {
+                    ShatteredPixelDungeon.scene().addToFront( new WndMessage(heroClass.unlockMsg()));
                 }
-                super.onClick();
-                handleTap(this);
             }
         };
         cb.checked( GamesInProgress.selectedClass == heroClass );

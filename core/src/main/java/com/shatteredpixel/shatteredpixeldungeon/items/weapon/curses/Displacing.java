@@ -24,39 +24,54 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses;
 
+import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
+import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class Displacing extends Weapon.Enchantment {
+public class Displacing extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage ) {
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/12f * procChanceMultiplier(context.attacker);
+		if (Random.Float() < procChance && !context.defender.properties().contains(Char.Property.IMMOVABLE)){
 
-		float procChance = 1/12f * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance && !defender.properties().contains(Char.Property.IMMOVABLE)){
-
-			int oldpos = defender.pos;
-			if (ScrollOfTeleportation.teleportChar(defender)){
+			int oldpos = context.defender.pos;
+			if (ScrollOfTeleportation.teleportChar(context.defender)){
 				if (Dungeon.level.heroFOV[oldpos]) {
 					CellEmitter.get( oldpos ).start( Speck.factory( Speck.LIGHT ), 0.2f, 3 );
 				}
 
-				if (defender instanceof Mob && ((Mob) defender).state == ((Mob) defender).HUNTING){
-					((Mob) defender).state = ((Mob) defender).WANDERING;
+				if (context.defender instanceof Mob && ((Mob) context.defender).state == ((Mob) context.defender).HUNTING){
+					((Mob) context.defender).state = ((Mob) context.defender).WANDERING;
 				}
 			}
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 
 	@Override

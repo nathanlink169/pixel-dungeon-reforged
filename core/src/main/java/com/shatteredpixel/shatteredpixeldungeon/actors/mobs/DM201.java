@@ -29,14 +29,18 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.CorrosiveGas;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.MetalShard;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM201Sprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class DM201 extends DM200 {
+public class DM201 extends DM200 implements CombatModifier.OnDamageEffect {
 	{
 		HUNTING = new Hunting();
 	}
@@ -44,16 +48,8 @@ public class DM201 extends DM200 {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm201; }
 
-	private boolean threatened = false;
+	private BundleableProperty.Bool m_Threatened = new BundleableProperty.Bool("threatened", false);
 
-	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if ((src instanceof Char && !Dungeon.level.adjacent(pos, ((Char)src).pos))
-				|| enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)){
-			threatened = true;
-		}
-		super.damage(dmg, src, damageType);
-	}
 
 	public void onZapComplete(){
 		zap();
@@ -61,7 +57,7 @@ public class DM201 extends DM200 {
 	}
 
 	private void zap( ){
-		threatened = false;
+		m_Threatened.Set(false);
 		spend(TICK);
 
 		GameScene.add(Blob.seed(enemy.pos, 15, CorrosiveGas.class).setStrength(8));
@@ -79,7 +75,7 @@ public class DM201 extends DM200 {
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		return false;
 	}
 
@@ -101,25 +97,51 @@ public class DM201 extends DM200 {
 		Dungeon.level.drop( new MetalShard(), pos + ofs ).sprite.drop( pos );
 	}
 
-	private class Hunting extends Mob.Hunting {
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if ((!Dungeon.level.adjacent(context.defenderPosition, context.attackerPosition))
+				|| enemy == null || !Dungeon.level.adjacent(pos, enemy.pos)){
+			m_Threatened.Set(true);
+		}
+	}
 
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this;
+	}
+
+	@Override
+	public void storeInBundle(Bundle bundle) {
+		super.storeInBundle(bundle);
+		m_Threatened.Store(bundle);
+	}
+
+	@Override
+	public void restoreFromBundle(Bundle bundle) {
+		super.restoreFromBundle(bundle);
+		m_Threatened.Restore(bundle);
+	}
+
+	private static class Hunting extends Mob.Hunting {
 		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
-
-			if (threatened && enemyInFOV){
-				if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-					sprite.zap( enemy.pos );
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
+			DM201 dm = (DM201) mob;
+			if (dm.m_Threatened.Get() && enemyInFOV){
+				if (dm.sprite != null && (dm.sprite.visible || dm.enemy.sprite.visible)) {
+					dm.sprite.zap( dm.enemy.pos );
 					return false;
 				} else {
-					zap();
+					dm.zap();
 					return true;
 				}
 			} else {
-				return super.act( enemyInFOV, justAlerted );
+				return super.act( dm, enemyInFOV, justAlerted );
 			}
-
 		}
-
 	}
-
 }

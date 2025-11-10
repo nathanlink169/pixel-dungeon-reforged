@@ -26,7 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -38,10 +38,8 @@ public class Glaive extends MeleeWeapon {
 		hitSoundPitch = 0.8f;
 
 		tier = 5;
-		DLY = 1.5f; //0.67x speed
-		RCH = 2;    //extra reach
 
-		damageType = DamageType.PIERCING | DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.PIERCING, DamageType.SLASHING);
 	}
 
 	@Override
@@ -77,4 +75,13 @@ public class Glaive extends MeleeWeapon {
 		}
 	}
 
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 1.5f;
+	}
+
+	@Override
+	public int GetWeaponReach() {
+		return 2;
+	}
 }

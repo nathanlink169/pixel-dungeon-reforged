@@ -27,16 +27,20 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Rotberry;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.utils.PathFinder;
 
-public class RotHeart extends Mob {
+import java.util.EnumSet;
+
+public class RotHeart extends Mob implements CombatModifier.OnDamageEffect {
 
 	{
 		state = PASSIVE;
@@ -51,29 +55,15 @@ public class RotHeart extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		//TODO: when effect properties are done, change this to FIRE
-		if (src instanceof Burning) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+		if (src instanceof Burning || damageType.contains(DamageType.FIRE)) {
+			int hp = HP;
 			destroy();
 			sprite.die();
+			return hp;
 		} else {
-			super.damage(dmg, src, damageType);
+			return super.Damage(dmg, src, damageType);
 		}
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		//rot heart spreads less gas in enclosed spaces
-		int openNearby = 0;
-		for (int i : PathFinder.NEIGHBOURS8){
-			if (!Dungeon.level.solid[pos+i]){
-				openNearby++;
-			}
-		}
-
-		GameScene.add(Blob.seed(pos, 5 + 3*openNearby, ToxicGas.class));
-
-		return super.defenseProc(enemy, damage);
 	}
 
 	@Override
@@ -82,7 +72,7 @@ public class RotHeart extends Mob {
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		return false;
 	}
 
@@ -115,4 +105,26 @@ public class RotHeart extends Mob {
 		immunities.add( ToxicGas.class );
 	}
 
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		//rot heart spreads less gas in enclosed spaces
+		int openNearby = 0;
+		for (int i : PathFinder.NEIGHBOURS8){
+			if (!Dungeon.level.solid[pos+i]){
+				openNearby++;
+			}
+		}
+
+		GameScene.add(Blob.seed(pos, 5 + 3*openNearby, ToxicGas.class));
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this;
+	}
 }

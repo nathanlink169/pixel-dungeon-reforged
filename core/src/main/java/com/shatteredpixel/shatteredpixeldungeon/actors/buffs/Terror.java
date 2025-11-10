@@ -24,10 +24,12 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
 
-public class Terror extends FlavourBuff {
+public class Terror extends FlavourBuff implements CombatModifier.OnHitEffect {
 
 	public int object = 0;
 
@@ -73,5 +75,20 @@ public class Terror extends FlavourBuff {
 		if (cooldown() <= 0){
 			detach();
 		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		recover();
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

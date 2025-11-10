@@ -24,33 +24,29 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Corruption;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.ClericSpell;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.PhantomMeat;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.PhantomPiranhaSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class PhantomPiranha extends Piranha {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.phantompiranha; }
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		Char dmgSource = null;
 		if (src instanceof Char) dmgSource = (Char)src;
 		if (src instanceof Wand || src instanceof ClericSpell) dmgSource = Dungeon.hero;
@@ -58,7 +54,7 @@ public class PhantomPiranha extends Piranha {
 		if (dmgSource == null || !Dungeon.level.adjacent(pos, dmgSource.pos)){
 			dmg = Math.round(dmg/2f); //halve damage taken if we are going to teleport
 		}
-		super.damage(dmg, src, damageType);
+		int toReturn = super.Damage(dmg, src, damageType);
 
 		if (isAlive() && !(src instanceof Corruption)) {
 			if (dmgSource != null) {
@@ -80,11 +76,7 @@ public class PhantomPiranha extends Piranha {
 				teleportAway();
 			}
 		}
-	}
-
-	@Override
-	public int defenseProc(Char enemy, int damage) {
-		return super.defenseProc(enemy, damage);
+		return toReturn;
 	}
 
 	@Override

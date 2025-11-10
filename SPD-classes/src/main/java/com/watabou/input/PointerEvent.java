@@ -72,15 +72,15 @@ public class PointerEvent {
 		handled = false;
 		this.button = button;
 	}
-	
+
 	public void update( PointerEvent other ){
 		this.current = other.current;
 	}
-	
+
 	public void update( int x, int y ){
 		current.set( x, y );
 	}
-	
+
 	public PointerEvent up() {
 		if (type == Type.DOWN) type = Type.UP;
 		return this;
@@ -95,25 +95,25 @@ public class PointerEvent {
 		handled = true;
 		return this;
 	}
-	
+
 	// **********************
 	// *** Static members ***
 	// **********************
-	
+
 	private static Signal<PointerEvent> pointerSignal = new Signal<>( true );
-	
+
 	public static void addPointerListener( Signal.Listener<PointerEvent> listener ){
 		pointerSignal.add(listener);
 	}
-	
+
 	public static void removePointerListener( Signal.Listener<PointerEvent> listener ){
 		pointerSignal.remove(listener);
 	}
-	
+
 	public static void clearListeners(){
 		pointerSignal.removeAll();
 	}
-	
+
 	// Accumulated pointer events
 	private static ArrayList<PointerEvent> pointerEvents = new ArrayList<>();
 	private static HashMap<Integer, PointerEvent> activePointers = new HashMap<>();
@@ -131,7 +131,7 @@ public class PointerEvent {
 	public static void setHoverPos(PointF pos){
 		lastHoverPos.set(pos);
 	}
-	
+
 	public static synchronized void addPointerEvent( PointerEvent event ){
 		pointerEvents.add( event );
 	}
@@ -143,7 +143,7 @@ public class PointerEvent {
 	}
 
 	public static boolean clearKeyboardThisPress = true;
-	
+
 	public static synchronized void processPointerEvents(){
 		if (pointerEvents.isEmpty()){
 			return;

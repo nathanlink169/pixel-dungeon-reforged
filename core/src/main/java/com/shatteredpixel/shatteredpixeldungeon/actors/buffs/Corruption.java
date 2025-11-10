@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -58,7 +59,7 @@ public class Corruption extends AllyBuff {
 		buildToDamage -= damage;
 
 		if (damage > 0)
-			target.damage(damage, this);
+			target.Damage(damage, this, DamageType.of(DamageType.NEGATIVE_ENERGY));
 
 		spend(TICK);
 

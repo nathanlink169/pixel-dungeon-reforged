@@ -35,6 +35,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
@@ -46,13 +49,16 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GooSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.GameMath;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Goo extends Mob {
+import java.util.EnumSet;
+
+public class Goo extends Mob implements CombatModifier.OnHitEffect {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.goo; }
 
@@ -61,15 +67,12 @@ public class Goo extends Mob {
 		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.2f : 1.0f));
 	}
 
-	private int pumpedUp = 0;
-	private int healInc = 1;
-
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		int min = 1;
 		int max = (HP*2 <= GetMaxHP()) ? 12 : 8;
-		if (pumpedUp > 0) {
-			pumpedUp = 0;
+		if (m_PumpedUp.Get() > 0) {
+			m_PumpedUp.Set(0);
 			if (enemy == Dungeon.hero) {
 				Statistics.qualifiedForBossChallengeBadge = false;
 				Statistics.bossScores[0] -= 100;
@@ -83,41 +86,41 @@ public class Goo extends Mob {
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		int attack = super.attackSkill(target);
+	public int attackSkill() {
+		int attack = super.attackSkill();
 		if (HP*2 <= GetMaxHP()) attack = (int) (attack * 1.5f);
-		if (pumpedUp > 0) attack *= 2;
+		if (m_PumpedUp.Get() > 0) attack *= 2;
 		return attack;
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
-		return (int)(super.defenseSkill(enemy) * ((HP*2 <= GetMaxHP())? 1.5 : 1));
+	public int defenseSkill() {
+		return (int)(super.defenseSkill() * ((HP*2 <= GetMaxHP())? 1.5 : 1));
 	}
 
 	@Override
 	public boolean act() {
 
-		if (state != HUNTING && pumpedUp > 0){
-			pumpedUp = 0;
+		if (state != HUNTING && m_PumpedUp.Get() > 0){
+			m_PumpedUp.Set(0);
 			sprite.idle();
 		}
 
 		if (!flying && Dungeon.level.water[pos] && HP < GetMaxHP()) {
-			HP += healInc;
+			HP += m_HealInc.Get();
 			Statistics.qualifiedForBossChallengeBadge = false;
 
 			LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
 			if (lock != null){
-				if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.removeTime(healInc);
-				else                                                    lock.removeTime(healInc*1.5f);
+				if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.removeTime(m_HealInc.Get());
+				else                                                    lock.removeTime(m_HealInc.Get()*1.5f);
 			}
 
 			if (Dungeon.level.heroFOV[pos] ){
-				sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(healInc), FloatingText.HEALING );
+				sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(m_HealInc.Get()), FloatingText.HEALING );
 			}
-			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) && healInc < 3) {
-				healInc++;
+			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) && m_HealInc.Get() < 3) {
+				m_HealInc.Increment();
 			}
 			if (HP*2 > GetMaxHP()) {
 				BossHealthBar.bleed(false);
@@ -125,7 +128,7 @@ public class Goo extends Mob {
 				HP = Math.min(HP, GetMaxHP());
 			}
 		} else {
-			healInc = 1;
+			m_HealInc.Set(1);
 		}
 		
 		if (state != SLEEPING){
@@ -137,7 +140,7 @@ public class Goo extends Mob {
 
 	@Override
 	protected boolean canAttack( Char enemy ) {
-		if (pumpedUp > 0){
+		if (m_PumpedUp.Get() > 0){
 			//we check both from and to in this case as projectile logic isn't always symmetrical.
 			//this helps trim out BS edge-cases
 			return Dungeon.level.distance(enemy.pos, pos) <= 2
@@ -149,53 +152,38 @@ public class Goo extends Mob {
 	}
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (Random.Int( 3 ) == 0) {
-			Buff.affect( enemy, Ooze.class ).set( Ooze.DURATION );
-			enemy.sprite.burst( 0x000000, 5 );
-		}
-
-		if (pumpedUp > 0) {
-			PixelScene.shake( 3, 0.2f );
-		}
-
-		return damage;
-	}
-
-	@Override
 	public void updateSpriteState() {
 		super.updateSpriteState();
 
-		if (pumpedUp > 0){
-			((GooSprite)sprite).pumpUp( pumpedUp );
+		if (m_PumpedUp.Get() > 0){
+			((GooSprite)sprite).pumpUp( m_PumpedUp.Get() );
 		}
 	}
 
 	@Override
-	protected boolean doAttack( Char enemy ) {
-		if (pumpedUp == 1) {
-			pumpedUp++;
-			((GooSprite)sprite).pumpUp( pumpedUp );
+    public boolean doAttack(Char enemy) {
+		if (m_PumpedUp.Get() == 1) {
+			m_PumpedUp.Increment();
+			((GooSprite)sprite).pumpUp( m_PumpedUp.Get() );
 
 			spend( attackDelay() );
 
 			return true;
-		} else if (pumpedUp >= 2 || Random.Int( (HP*2 <= GetMaxHP()) ? 2 : 5 ) > 0) {
+		} else if (m_PumpedUp.Get() >= 2 || Random.Int( (HP*2 <= GetMaxHP()) ? 2 : 5 ) > 0) {
 
 			boolean visible = Dungeon.level.heroFOV[pos];
 
 			if (visible) {
-				if (pumpedUp >= 2) {
+				if (m_PumpedUp.Get() >= 2) {
 					((GooSprite) sprite).pumpAttack();
 				} else {
 					sprite.attack(enemy.pos);
 				}
 			} else {
-				if (pumpedUp >= 2){
+				if (m_PumpedUp.Get() >= 2){
 					((GooSprite)sprite).triggerEmitters();
 				}
-				attack( enemy, AttackType.MELEE );
+				Attack(enemy, AttackContext.AttackType.MELEE, DamageType.of(DamageType.ACID));
 				Invisibility.dispel(this);
 				spend( attackDelay() );
 			}
@@ -205,15 +193,15 @@ public class Goo extends Mob {
 		} else {
 
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-				pumpedUp += 2;
+				m_PumpedUp.Add(2);
 				//don't want to overly punish players with slow move or attack speed
 				spend(GameMath.gate(attackDelay(), (int)Math.ceil(enemy.cooldown()), 3*attackDelay()));
 			} else {
-				pumpedUp++;
+				m_PumpedUp.Increment();
 				spend( attackDelay() );
 			}
 
-			((GooSprite)sprite).pumpUp( pumpedUp );
+			((GooSprite)sprite).pumpUp( m_PumpedUp.Get() );
 
 			if (Dungeon.level.heroFOV[pos]) {
 				sprite.showStatus( CharSprite.WARNING, Messages.get(this, "!!!") );
@@ -225,10 +213,10 @@ public class Goo extends Mob {
 	}
 
 	@Override
-	public boolean attack( Char enemy, float dmgMulti, float dmgBonus, float accMulti ) {
-		boolean result = super.attack( enemy, dmgMulti, dmgBonus, accMulti );
-		if (pumpedUp > 0) {
-			pumpedUp = 0;
+	public boolean Attack(Char enemy, AttackContext.AttackType attackType, EnumSet<DamageType> damageType) {
+		boolean result = super.Attack(enemy, attackType, damageType);
+		if (m_PumpedUp.Get() > 0) {
+			m_PumpedUp.Set(0);
 			if (enemy == Dungeon.hero) {
 				Statistics.qualifiedForBossChallengeBadge = false;
 				Statistics.bossScores[0] -= 100;
@@ -238,9 +226,9 @@ public class Goo extends Mob {
 	}
 
 	@Override
-	protected boolean getCloser( int target ) {
-		if (pumpedUp != 0) {
-			pumpedUp = 0;
+    public boolean getCloser(int target) {
+		if (m_PumpedUp.Get() != 0) {
+			m_PumpedUp.Set(0);
 			sprite.idle();
 		}
 		return super.getCloser( target );
@@ -248,21 +236,21 @@ public class Goo extends Mob {
 
 	@Override
 	protected boolean getFurther(int target) {
-		if (pumpedUp != 0) {
-			pumpedUp = 0;
+		if (m_PumpedUp.Get() != 0) {
+			m_PumpedUp.Set(0);
 			sprite.idle();
 		}
 		return super.getFurther( target );
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (!BossHealthBar.isAssigned()){
 			BossHealthBar.assignBoss( this );
 			Dungeon.level.seal();
 		}
 		boolean bleeding = (HP*2 <= GetMaxHP());
-		super.damage(dmg, src, damageType);
+		int toReturn = super.Damage(dmg, src, damageType);
 		if ((HP*2 <= GetMaxHP()) && !bleeding){
 			BossHealthBar.bleed(true);
 			sprite.showStatus(CharSprite.WARNING, Messages.get(this, "enraged"));
@@ -276,6 +264,7 @@ public class Goo extends Mob {
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmg);
 			else                                                    lock.addTime(dmg*1.5f);
 		}
+		return toReturn;
 	}
 
 	@Override
@@ -322,28 +311,44 @@ public class Goo extends Mob {
 		}
 	}
 
-	private final String PUMPEDUP = "pumpedup";
-	private final String HEALINC = "healinc";
+	private BundleableProperty.Int m_PumpedUp = new BundleableProperty.Int("pumpedup", 0);
+	private BundleableProperty.Int m_HealInc = new BundleableProperty.Int("healinc", 1);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
-
 		super.storeInBundle( bundle );
-
-		bundle.put( PUMPEDUP , pumpedUp );
-		bundle.put( HEALINC, healInc );
+		m_PumpedUp.Store(bundle);
+		m_HealInc.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
-
 		super.restoreFromBundle( bundle );
-
-		pumpedUp = bundle.getInt( PUMPEDUP );
+		m_PumpedUp.Restore(bundle);
+		m_HealInc.Restore(bundle);
 		if (state != SLEEPING) BossHealthBar.assignBoss(this);
 		if ((HP*2 <= GetMaxHP())) BossHealthBar.bleed(true);
-
-		healInc = bundle.getInt(HEALINC);
 	}
-	
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (Random.Int( 3 ) == 0) {
+			Buff.affect( enemy, Ooze.class ).set( Ooze.DURATION );
+			enemy.sprite.burst( 0x000000, 5 );
+		}
+
+		if (m_PumpedUp.Get() > 0) {
+			PixelScene.shake( 3, 0.2f );
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
 }

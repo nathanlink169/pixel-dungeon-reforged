@@ -25,15 +25,19 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MagicImmune;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -41,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndBag;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.watabou.noosa.audio.Sample;
@@ -61,7 +66,7 @@ public class Dart extends MissileWeapon {
 		//infinite, even with penalties
 		baseUses = 1000;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 	
 	protected static final String AC_TIP = "TIP";
@@ -144,29 +149,6 @@ public class Dart extends MissileWeapon {
 	}
 
 	@Override
-	public float accuracyFactor(Char owner, Char target) {
-		//don't update xbow here, as dart is the active weapon atm
-		if (bow != null && owner.buff(Crossbow.ChargedShot.class) != null){
-			return Char.INFINITE_ACCURACY;
-		} else {
-			return super.accuracyFactor(owner, target);
-		}
-	}
-
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
-		if (bow != null && !processingChargedShot){
-			damage = bow.proc(attacker, defender, damage);
-		}
-
-		int dmg = super.proc(attacker, defender, damage);
-		if (!processingChargedShot) {
-			processChargedShot(defender, damage);
-		}
-		return dmg;
-	}
-
-	@Override
 	public int throwPos(Hero user, int dst) {
 		updateCrossbow();
 		return super.throwPos(user, dst);
@@ -175,40 +157,7 @@ public class Dart extends MissileWeapon {
 	@Override
 	protected void onThrow(int cell) {
 		updateCrossbow();
-		//we have to set this here, as on-hit effects can move the target we aim at
-		chargedShotPos = cell;
 		super.onThrow(cell);
-	}
-
-	protected boolean processingChargedShot = false;
-	private int chargedShotPos;
-	protected void processChargedShot( Char target, int dmg ){
-		//don't update xbow here, as dart may be the active weapon atm
-		processingChargedShot = true;
-		if (chargedShotPos != -1 && bow != null && Dungeon.hero.buff(Crossbow.ChargedShot.class) != null) {
-			PathFinder.buildDistanceMap(chargedShotPos, Dungeon.level.passable, 3);
-			//necessary to clone as some on-hit effects use Pathfinder
-			int[] distance = PathFinder.distance.clone();
-			for (Char ch : Actor.chars()){
-				if (ch == target){
-					Actor.add(new Actor() {
-						{ actPriority = VFX_PRIO; }
-						@Override
-						protected boolean act() {
-							if (!ch.isAlive()){
-								bow.onAbilityKill(Dungeon.hero, ch);
-							}
-							Actor.remove(this);
-							return true;
-						}
-					});
-				} else if (distance[ch.pos] != Integer.MAX_VALUE){
-					proc(Dungeon.hero, ch, dmg);
-				}
-			}
-		}
-		chargedShotPos = -1;
-		processingChargedShot = false;
 	}
 
 	@Override

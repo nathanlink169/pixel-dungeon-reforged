@@ -60,6 +60,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Piranha;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -492,7 +493,7 @@ public class CursedWand {
 				toHeal.sprite.emitter().burst(Speck.factory(Speck.HEALING), 3);
 				toHeal.sprite.showStatusWithIcon( CharSprite.POSITIVE, Integer.toString(damage/2), FloatingText.HEALING );
 
-				toDamage.damage(damage, new CursedWand());
+				toDamage.Damage(damage, new CursedWand(), DamageType.of(DamageType.NEGATIVE_ENERGY));
 				toDamage.sprite.emitter().start(ShadowParticle.UP, 0.05f, 10);
 
 				if (toDamage == Dungeon.hero){
@@ -578,7 +579,7 @@ public class CursedWand {
 				//does not harm allies if positive only
 				if (ch.alignment != Char.Alignment.ALLY || !positiveOnly){
 					//shocking dart damage and a little stun
-					ch.damage(Random.NormalIntRange(5 + Dungeon.scalingDepth() / 4, 10 + Dungeon.scalingDepth() / 4), new Electricity());
+					ch.Damage(Random.NormalIntRange(5 + Dungeon.scalingDepth() / 4, 10 + Dungeon.scalingDepth() / 4), new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 					if (ch.isAlive()) {
 						Buff.affect(ch, Paralysis.class, Paralysis.DURATION / 2f);
 					} else if (ch == Dungeon.hero){
@@ -819,7 +820,7 @@ public class CursedWand {
 						Burning burning = Buff.affect(ch, Burning.class);
 						burning.reignite(ch);
 						int dmg = Random.NormalIntRange(5 + Dungeon.scalingDepth(), 10 + Dungeon.scalingDepth()*2);
-						ch.damage(dmg, burning);
+						ch.Damage(dmg, burning, DamageType.of(DamageType.FIRE));
 					}
 					if (Dungeon.level.flamable[i]){
 						GameScene.add(Blob.seed(i, 4, Fire.class));
@@ -903,28 +904,28 @@ public class CursedWand {
 						case 0: default:
 							Burning burning = Buff.affect(ch, Burning.class);
 							burning.reignite(ch);
-							ch.damage(dmg, burning);
+							ch.Damage(dmg, burning, DamageType.of(DamageType.FIRE));
 							ch.sprite.emitter().burst(FlameParticle.FACTORY, 20);
 							break;
 						case 1:
-							ch.damage(dmg, new Frost());
+							ch.Damage(dmg, new Frost(), DamageType.of(DamageType.COLD));
 							if (ch.isAlive()) Buff.affect(ch, Frost.class, Frost.DURATION);
 							Splash.at( ch.sprite.center(), 0xFFB2D6FF, 20 );
 							break;
 						case 2:
 							Poison poison = Buff.affect(ch, Poison.class);
 							poison.set(3 + Dungeon.scalingDepth() / 2);
-							ch.damage(dmg, poison);
+							ch.Damage(dmg, poison, DamageType.of(DamageType.POISON));
 							ch.sprite.emitter().burst(PoisonParticle.SPLASH, 20);
 							break;
 						case 3:
 							Ooze ooze = Buff.affect(ch, Ooze.class);
 							ooze.set(Ooze.DURATION);
-							ch.damage(dmg, ooze);
+							ch.Damage(dmg, ooze, DamageType.of(DamageType.ACID));
 							Splash.at( ch.sprite.center(), 0x000000, 20 );
 							break;
 						case 4:
-							ch.damage(dmg, new Electricity());
+							ch.Damage(dmg, new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 							if (ch.isAlive()) Buff.affect(ch, Paralysis.class, Paralysis.DURATION);
 							ch.sprite.emitter().burst(SparkParticle.FACTORY, 20);
 							break;
@@ -1072,7 +1073,7 @@ public class CursedWand {
 			//play vfx/sfx manually as mimic isn't in the scene yet
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC, 1, 0.85f);
 			CellEmitter.get(mimic.pos).burst(Speck.factory(Speck.STAR), 10);
-			mimic.items.clear();
+			mimic.m_Items.Clear();
 			GameScene.add(mimic);
 
 			//mimic is enthralled, but also contains no extra reward, if positive only
@@ -1084,7 +1085,7 @@ public class CursedWand {
 					reward = Generator.randomUsingDefaults(Random.oneOf(Generator.Category.WEAPON, Generator.Category.ARMOR,
 							Generator.Category.RING, Generator.Category.WAND));
 				} while (reward.level() < 1);
-				mimic.items.add(reward);
+				mimic.m_Items.Add(reward);
 			}
 
 			Dungeon.level.occupyCell(mimic);

@@ -47,22 +47,23 @@ import com.watabou.utils.RectF;
 import java.util.ArrayList;
 
 public class WndChallenges extends Window {
+	private static final int WIDTH		= 120;
 	private static final int BTN_HEIGHT = 16;
 	private static final int GAP        = 1;
 
 	private boolean editable;
 	private ArrayList<CheckBox> boxes;
 	private ArrayList<IconButton> infoButtons;
+	private ArrayList<Integer> masks = new ArrayList<>();
 
 	public WndChallenges( int checked, boolean editable ) {
 
 		super();
 
 		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK).scale(1f/defaultZoom);
-		float w = (Camera.main.width - insets.left - insets.right) * 0.9f;
 		float h = (Camera.main.height - insets.top - insets.bottom) * 0.8f;
 
-		resize((int) w, (int) h);
+		resize(WIDTH, (int) h);
 
 		this.editable = editable;
 
@@ -87,11 +88,11 @@ public class WndChallenges extends Window {
 			}
 		};
 		add(pane);
-		pane.setRect(0, 0, w, h);
+		pane.setRect(0, 0, WIDTH, h);
 
 		Component content = pane.content();
 		IconTitle title = new IconTitle(Icons.CHALLENGE_COLOR.get(), Messages.get(this, "title"));
-		title.setRect(0, 0, w, 0);
+		title.setRect(0, 0, WIDTH, 0);
 		title.setPos(0, 0);
 		content.add(title);
 
@@ -104,6 +105,8 @@ public class WndChallenges extends Window {
 				++lockedCount;
 				continue;
 			}
+
+			masks.add(Challenges.MASKS[i]);
 
 			final String challenge = isLocked ? "locked" : Challenges.NAME_IDS[i];
 			
@@ -122,7 +125,7 @@ public class WndChallenges extends Window {
 			if (i > 0) {
 				pos += GAP;
 			}
-			cb.setRect( 0, pos, w-16, BTN_HEIGHT );
+			cb.setRect( 0, pos, WIDTH-16, BTN_HEIGHT );
 
 			pane.content().add( cb );
 			boxes.add( cb );
@@ -147,16 +150,16 @@ public class WndChallenges extends Window {
 		if (lockedCount > 0) {
 			pos += GAP * 2;
 			RenderedTextBlock info = PixelScene.renderTextBlock(Messages.get(this, "locked", lockedCount), 6);
-			info.setRect( 0, pos, w, BTN_HEIGHT );
-			info.maxWidth((int) w);
+			info.setRect( 0, pos, WIDTH, BTN_HEIGHT );
+			info.maxWidth((int) WIDTH);
 			add(info);
 			pos = info.bottom() + GAP;
 		}
 
-		resize((int) w, (int) Math.min(h, pos));
+		resize((int) WIDTH, (int) Math.min(h, pos));
 
-		content.setRect(0, 0, w, pos);
-		pane.setRect(insets.left, insets.top, w, h);
+		content.setRect(0, 0, WIDTH, pos);
+		pane.setRect(insets.left, insets.top, WIDTH, h);
 	}
 
 	@Override
@@ -166,7 +169,7 @@ public class WndChallenges extends Window {
 			int value = 0;
 			for (int i=0; i < boxes.size(); i++) {
 				if (boxes.get( i ).checked()) {
-					value |= Challenges.MASKS[i];
+					value |= masks.get(i);
 				}
 			}
 			SPDSettings.challenges( value );

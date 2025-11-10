@@ -28,24 +28,24 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Blindness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.MonkSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Monk extends Mob {
+public class Monk extends Mob implements CombatModifier.OnDamageEffect {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.monk; }
 
@@ -56,24 +56,22 @@ public class Monk extends Mob {
 		super.rollToDropLoot();
 	}
 	
-	protected float focusCooldown = 0;
-	
 	@Override
 	protected boolean act() {
 		boolean result = super.act();
-		if (buff(Focus.class) == null && state == HUNTING && focusCooldown <= 0 && buff(Blindness.class) == null) {
+		if (buff(Focus.class) == null && state == HUNTING && m_FocusCooldown.Get() <= 0 && buff(Blindness.class) == null) {
 			Buff.affect( this, Focus.class );
 		}
 		return result;
 	}
-	
+
 	@Override
-	protected void spend( float time ) {
+    public void spend(float time) {
 		if (buff(Blindness.class) == null) {
 			if (getRandomizerEnabled(RandomTraits.DISTRACTED_MIND)) {
-				focusCooldown -= time / 2;
+				m_FocusCooldown.Subtract(time / 2.0f);
 			} else {
-				focusCooldown -= time;
+				m_FocusCooldown.Subtract(time);
 			}
 		}
 		super.spend( time );
@@ -84,37 +82,23 @@ public class Monk extends Mob {
 		// moving reduces cooldown by an additional 0.67, giving a total reduction of 1.67f.
 		// basically monks will become focused notably faster if you kite them.
 		if (travelling) {
-			focusCooldown -= 0.67f;
+			m_FocusCooldown.Subtract(0.67f);
 			if (getRandomizerEnabled(RandomTraits.RAPID_MEDITATION)) {
-				focusCooldown -= 1.67f; // double the total reduction when moving
+				m_FocusCooldown.Subtract(1.67f); // double the total reduction when moving
 			}
 		}
 		super.move( step, travelling);
 	}
-
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
-		if (getRandomizerEnabled(RandomTraits.STUNNING_STRIKES) && enemy.buff(Paralysis.class) == null) {
-			// 1 in 20 chance, but attacks twice a turn so each attack is half a chance
-			if (damage > 0 && Random.Int(40) == 0) {
-				Buff.affect(enemy, Paralysis.class, 1.0f);
-			}
-		}
-
-		return damage;
-	}
 	
 	@Override
-	public int defenseSkill( Char enemy ) {
+	public int defenseSkill() {
 		if (buff(Focus.class) != null && paralysed == 0 && state != SLEEPING) {
 			if (surprisedBy(enemy) && getRandomizerEnabled(RandomTraits.UNFOCUSED_DEFENSE)) {
-				return super.defenseSkill( enemy );
+				return super.defenseSkill();
 			}
 			return INFINITE_EVASION;
 		}
-		return super.defenseSkill( enemy );
+		return super.defenseSkill();
 	}
 	
 	@Override
@@ -127,7 +111,7 @@ public class Monk extends Mob {
 			if (sprite != null && sprite.visible) {
 				Sample.INSTANCE.play(Assets.Sounds.HIT_PARRY, 1, Random.Float(0.96f, 1.05f));
 			}
-			focusCooldown = Random.NormalFloat( 6, 7 );
+			m_FocusCooldown.Set(Random.NormalFloat( 6, 7 ));
 			return Messages.get(this, "parried");
 		}
 	}
@@ -142,21 +126,41 @@ public class Monk extends Mob {
 			Dungeon.level.drop(toDrop, pos).sprite.drop(pos);
 		}
 	}
-	
-	private static String FOCUS_COOLDOWN = "focus_cooldown";
+
+	protected BundleableProperty.Float m_FocusCooldown = new BundleableProperty.Float("focus_cooldown", 0.0f);
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( FOCUS_COOLDOWN, focusCooldown );
+		m_FocusCooldown.Store(bundle);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		focusCooldown = bundle.getInt( FOCUS_COOLDOWN );
+		m_FocusCooldown.Restore(bundle);
 	}
-	
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (getRandomizerEnabled(RandomTraits.STUNNING_STRIKES) && enemy.buff(Paralysis.class) == null) {
+			// 1 in 20 chance, but attacks twice a turn so each attack is half a chance
+			if (Random.Int(40) == 0) {
+				Buff.affect(enemy, Paralysis.class, 1.0f);
+			}
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
 	public static class Focus extends Buff {
 		
 		{

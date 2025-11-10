@@ -6,22 +6,30 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cursed;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
-import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.UnholyPriestSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
 public class UnholyPriest extends Mob implements Callback {
+    {
+        immunities.add(Bleeding.class);
+        immunities.add(Poison.class);
+    }
     @Override
     public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.unholypriest; }
 
@@ -32,7 +40,7 @@ public class UnholyPriest extends Mob implements Callback {
     }
 
     @Override
-    protected boolean doAttack( Char enemy ) {
+    public boolean doAttack(Char enemy) {
         if (Dungeon.level.adjacent( pos, enemy.pos )
                 || new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
 
@@ -63,8 +71,15 @@ public class UnholyPriest extends Mob implements Callback {
 
         Invisibility.dispel(this);
         Char enemy = this.enemy;
-        if (hit( this, enemy, true )) {
+        // Build attack context
+        AttackContext context = new AttackContext.Builder(this, enemy)
+                .attackType(AttackContext.AttackType.RANGED)
+                .damageType(GetRangedDamageType())
+                .build();
 
+        // Resolve attack - this handles EVERYTHING internally
+        AttackResult result = CombatResolver.resolve(context);
+        if (result.result == AttackResult.ResultType.HIT) {
             if (Random.Int( 2 ) == 0) {
                 boolean isBlessed = false;
 
@@ -81,9 +96,9 @@ public class UnholyPriest extends Mob implements Callback {
                 }
             }
 
-            int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
+            int dmg = damageRoll(AttackContext.AttackType.RANGED, false);
             dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
-            enemy.damage( dmg, new CursedBolt() );
+            enemy.Damage( dmg, new CursedBolt(), DamageType.of(DamageType.NEGATIVE_ENERGY));
 
             if (!enemy.isAlive() && enemy == Dungeon.hero) {
                 Badges.validateDeathFromEnemyMagic();
@@ -99,5 +114,4 @@ public class UnholyPriest extends Mob implements Callback {
     public void call() {
         next();
     }
-
 }

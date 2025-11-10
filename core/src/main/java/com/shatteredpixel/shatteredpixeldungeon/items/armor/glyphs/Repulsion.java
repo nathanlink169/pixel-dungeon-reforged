@@ -26,40 +26,52 @@ package com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Random;
 
-public class Repulsion extends Armor.Glyph {
+public class Repulsion extends Armor.Glyph implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing WHITE = new ItemSprite.Glowing( 0xFFFFFF );
-	
-	@Override
-	public int proc( Armor armor, Char attacker, Char defender, int damage) {
 
-		int level = Math.max( 0, armor.buffedLvl() );
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max( 0, context.defender.getArmor().buffedLvl() );
 
 		// lvl 0 - 20%
 		// lvl 1 - 33%
 		// lvl 2 - 43%
-		float procChance = (level+1f)/(level+5f) * procChanceMultiplier(defender);
-		if (Dungeon.level.adjacent(attacker.pos, defender.pos) && Random.Float() < procChance){
+		float procChance = (level+1f)/(level+5f) * procChanceMultiplier(context.defender);
+		if (Dungeon.level.adjacent(context.attackerPosition, context.defenderPosition) && Random.Float() < procChance){
 
 			float powerMulti = Math.max(1f, procChance);
 
-			int oppositeHero = attacker.pos + (attacker.pos - defender.pos);
-			Ballistica trajectory = new Ballistica(attacker.pos, oppositeHero, Ballistica.MAGIC_BOLT);
-			WandOfBlastWave.throwChar(attacker,
+			int oppositeHero = context.attackerPosition + (context.attackerPosition - context.defenderPosition);
+			Ballistica trajectory = new Ballistica(context.attackerPosition, oppositeHero, Ballistica.MAGIC_BOLT);
+			WandOfBlastWave.throwChar(context.attacker,
 					trajectory,
 					Math.round(2 * powerMulti),
 					true,
 					true,
 					this);
 		}
-		
-		return damage;
+	}
+
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
 	}
 
 	@Override

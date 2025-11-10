@@ -31,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -108,7 +109,7 @@ public class Burning extends Buff implements Hero.Doom {
 				
 				Hero hero = (Hero)target;
 
-				hero.damage( damage, this );
+				hero.Damage( damage, this, DamageType.of(DamageType.FIRE));
 				burnIncrement++;
 
 				//at 4+ turns, there is a (turns-3)/3 chance an item burns
@@ -139,19 +140,19 @@ public class Burning extends Buff implements Hero.Doom {
 				}
 				
 			} else {
-				target.damage( damage, this );
+				target.Damage( damage, this, DamageType.of(DamageType.FIRE) );
 			}
 
-			if (target instanceof Thief && ((Thief) target).item != null) {
+			if (target instanceof Thief && ((Thief) target).GetItem() != null) {
 
-				Item item = ((Thief) target).item;
+				Item item = ((Thief) target).GetItem();
 
 				if (!item.unique && item instanceof Scroll) {
 					target.sprite.emitter().burst( ElmoParticle.FACTORY, 6 );
-					((Thief)target).item = null;
+					((Thief)target).SetItem(null);
 				} else if (item instanceof MysteryMeat) {
 					target.sprite.emitter().burst( ElmoParticle.FACTORY, 6 );
-					((Thief)target).item = new ChargrilledMeat();
+					((Thief)target).SetItem(new ChargrilledMeat());
 				}
 
 			}

@@ -27,63 +27,71 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
+import com.watabou.utils.Random;
 
-public class Kinetic extends Weapon.Enchantment {
-	
-	private static ItemSprite.Glowing YELLOW = new ItemSprite.Glowing( 0xFFFF00 );
-	
-	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage) {
-		
-		int conservedDamage = 0;
-		if (attacker.buff(ConservedDamage.class) != null) {
-			conservedDamage = attacker.buff(ConservedDamage.class).damageBonus();
-			attacker.buff(ConservedDamage.class).detach();
-		}
+public class Kinetic extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
-		//use a tracker so that we can know the true final damage
-		Buff.affect(attacker, KineticTracker.class).conservedDamage = conservedDamage;
-		
-		return damage + conservedDamage;
-	}
-	
+	private static ItemSprite.Glowing YELLOW = new ItemSprite.Glowing(0xFFFF00);
+
 	@Override
 	public ItemSprite.Glowing glowing() {
 		return YELLOW;
 	}
 
-	public static class KineticTracker extends Buff {
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
 
-		{
-			actPriority = Actor.VFX_PRIO;
+		// lvl 0 - 25%
+		// lvl 1 ~ 33%
+		// lvl 2 ~ 40%
+		float procChance = (level + 1f) / (level + 4f) * procChanceMultiplier(context.attacker);
+
+		// Store damage for next hit
+		if (Random.Float() < procChance) {
+			float powerMulti = Math.max(1f, procChance);
+
+			int conserved = Math.round(finalDamage * 0.5f * powerMulti) - context.startingDefenderHP;
+			if (conserved > 0) {
+				ConservedDamage newBuff = Buff.affect(
+						context.attacker,
+						ConservedDamage.class
+				);
+				newBuff.setBonus(conserved);
+			}
 		}
+	}
 
-		public int conservedDamage;
+	@Override
+	public int priority() {
+		return Priority.LOWEST; // Go last
+	}
 
-		@Override
-		public boolean act() {
-			detach();
-			return true;
-		}
-	};
-	
-	public static class ConservedDamage extends Buff {
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
+
+	public static class ConservedDamage extends Buff implements CombatModifier.PreArmorDamageModifier {
 
 		{
 			type = buffType.POSITIVE;
 		}
-		
+
 		@Override
 		public int icon() {
 			return BuffIndicator.WEAPON;
 		}
-		
+
 		@Override
 		public void tintIcon(Image icon) {
 			if (preservedDamage >= 10){
@@ -99,22 +107,22 @@ public class Kinetic extends Weapon.Enchantment {
 		public String iconTextDisplay() {
 			return Integer.toString(damageBonus());
 		}
-		
+
 		private float preservedDamage;
-		
+
 		public void setBonus(int bonus){
 			preservedDamage = bonus;
 		}
-		
+
 		public int damageBonus(){
 			return (int)Math.ceil(preservedDamage);
 		}
-		
+
 		@Override
 		public boolean act() {
 			preservedDamage -= Math.max(preservedDamage*.025f, 0.1f);
 			if (preservedDamage <= 0) detach();
-			
+
 			spend(TICK);
 			return true;
 		}
@@ -122,20 +130,20 @@ public class Kinetic extends Weapon.Enchantment {
 		public void delay( float value ){
 			spend(value);
 		}
-		
+
 		@Override
 		public String desc() {
 			return Messages.get(this, "desc", damageBonus());
 		}
-		
+
 		private static final String PRESERVED_DAMAGE = "preserve_damage";
-		
+
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
 			bundle.put(PRESERVED_DAMAGE, preservedDamage);
 		}
-		
+
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
@@ -145,6 +153,23 @@ public class Kinetic extends Weapon.Enchantment {
 				preservedDamage = cooldown()/10;
 				spend(cooldown());
 			}
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			currentDamage += (int) preservedDamage;
+			detach();
+			return currentDamage;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.HIGHEST; // This should essentially be part of damage roll, apply immediately
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
 		}
 	}
 }

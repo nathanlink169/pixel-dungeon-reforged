@@ -35,6 +35,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DemonGooSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.FiendSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GooSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HalfRipperSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.HeroSprite;
@@ -57,6 +58,8 @@ public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+		add_v0_3_0_Changes(changeInfos);
+
 		ChangeInfo changes2 = new ChangeInfo("v0.2", true, "");
 		changes2.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes2);
@@ -103,6 +106,78 @@ public class pdr_v0_X_Changes {
 
 		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.ARMOR_LEATHER), "Armour Rework",
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
+	}
+
+	public static void add_v0_3_0_Changes(ArrayList<ChangeInfo> changeInfos) {
+
+		ChangeInfo changes = new ChangeInfo("v0.3.0", true, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.PDR), "Developer Commentary",
+				"_-_ Released November 8th, 2025\n" +
+						"\n" +
+						"This update is mainly a rework of the combat system behind the scenes. As someone coming into this codebase fresh, the combat logic has a heavy learning curve because its distributed across multiple files and areas of that file. For someone who built it and knows where everything lives, it's intuitive. For me jumping in, it was difficult to comprehend.\n" +
+						"\n" +
+						"That is not saying the system in place in Shattered is bad! The systems work well and the game is excellent. This rework was just more geared towards my style of coding and will allow me to speed up my own personal development.\n" +
+						"\n" +
+						"This rework also comes with a heavier emphasis on damage types, and while there aren't many creatures that take advantage of damage types yet, more will come in the coming updates!",
+						"What's next?\n\n" +
+								"For the 0.4.0 update, there are two things I'd like to update: I'd like to implement the character appearance editor, as well as a mini rework for some of the Artificer's more unbalanced features. A small gun nerf, a big quickdraw nerf, an armourer rework, etc."));
+
+		changes.addButton( new ChangeButton(new Image(new GnollSprite()), "Combat Rework",
+				"This is a complete rewrite of the combat system. You'll see a fair few more damage icons in regular battle! This is because each enemy and weapon now have a specified damage type, and each damage type has its own icon. Some of the old icons are being retired as they had overlap with other damage types, and there are a few new ones.\n" +
+						"**-** Bludgeoning: if you want to pummel, beat, and smash your enemies, bludgeoning damage is for you.\n" +
+						"**-** Piercing: Spikes, daggers, or anything that penetrates.\n" +
+						"**-** Slashing: Slice up enemies with swords or claws.\n" +
+						"**-** Acid: Flesh-melting, corrosion, and ooze.\n" +
+						"**-** Cold: Freeze your oponents to their core.\n" +
+						"**-** Electricity: How shocking.\n" +
+						"**-** Explosive: For those looking to make the loudest impact.\n" +
+						"**-** Fire: We all know what fire is.\n" +
+						"**-** Poison: Toxic traps and coated thorns.\n" +
+						"**-** Sonic: I take it back, THIS is the loudest impact, quite literally.\n" +
+						"**-** Water: Usually not very damaging, but if you're made of fire, watch out.\n" +
+						"**-** Positive Energy: The radiant power of anything holy.\n" +
+						"**-** Negative Energy: The flipside of Positive Energy, necrotic and withering.\n" +
+						"**-** Force: Pure magic.",
+						"^A special thank you to players for helping to test this version early. In particular, thank you to discord users baddreams0862, born_killer, elgransersuperior999, and miaomix2688.^"));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.RATION), "Hunger Buff",
+				"Hunger was a little too forgiving, so I'm partially reverting the changing from version 1.1.\n\n" +
+						"**-** Time to go hungry: 450 -> 350\n" +
+						"**-** Time to start starving: 200 -> 175\n" +
+						"**-** Removing the extra ration on floors 4, 9, 14, 19, and 24."));
+
+		changes.addButton( new ChangeButton(Icons.DISPLAY_PORT.get(), "Version Update",
+				"In order to use some of the newer language features for this Combat Rework, I've had to update Pixel Dungeon Reforged to a newer SDK version. This means that some of the lowest devices will no longer be supported. I do not plan to upgrade this ever again, barring anything outside of my control.\n" +
+						"**-** Pixel Dungeon Reforged now requires Android 8.0+, up from 5.0+."));
+
+		changes.addButton( new ChangeButton(Icons.CONTROLLER.get(), "Other Behind the Scenes Reworks",
+				"I didn't talk much about these parts because ideally, the player will literally never see them. The way the game saved behind the scenes has had a small rework, mainly to make it safer and less likely to accidentally break it on my end. In addition, the way that AI works has had a mini rework to reduce the amount of memory allocations."));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+
+						"**-** Railgun will no longer pierce through the entire dungeon\n" +
+						"**-** Before that bug, the railgun would stop at the tile aimed at. This will no longer occur, and it will continue until it hits something\n" +
+						"**-** Railgun will no longer damage allies\n" +
+						"**-** Firing railgun will remove timestop and invisibility\n" +
+						"**-** Ballista will no longer knock back if you dodge its attack\n" +
+						"**-** Modifier cups will now unlock a modifier rather than claiming they are all unlocked\n" +
+						"**-** Bestiary will no longer crash the game\n" +
+						"**-** Kobold traps will no longer appear outside of the kobold quest\n" +
+						"**-** Unstable spellbook will no longer trigger the volatile salvage text\n" +
+						"**-** Evil Eyes now drop loot\n" +
+						"**-** Falling into the sewers boss level should properly drop you in the starting room\n" +
+						"**-** Quickdraw now requires 65% energy (up from 50%). This is a temporary solution until Quickdraw can be reworked.\n" +
+						"**-** Ringbox should now apply ring bonuses correctly\n" +
+						"**-** Gotcha! quest now has proper description\n" +
+						"**-** Badges will now correctly hide the older badge as necessary\n" +
+						"**-** Badges will no longer constantly appear when swapping between creative mode runs\n" +
+						"**-** Creative mode now properly resets between runs\n" +
+						"**-** Modifier window will no longer enable the incorrect modifier behind the scenes\n" +
+						"**-** Localization fixes"));
 	}
 
 	public static void add_v0_2_1_Changes(ArrayList<ChangeInfo> changeInfos) {

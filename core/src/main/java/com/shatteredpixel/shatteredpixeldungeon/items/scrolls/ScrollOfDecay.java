@@ -33,10 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Doom;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.MirrorImage;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -44,10 +41,6 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
-import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
-
-import java.util.ArrayList;
 
 public class ScrollOfDecay extends Scroll {
 
@@ -73,7 +66,7 @@ public class ScrollOfDecay extends Scroll {
                             Buff.affect(ch, Adrenaline.class, Adrenaline.DURATION);
                         } else if (!ch.isImmune(getClass())) {
                             int damage = (int)Math.max(0.6f * ch.HP, 0.1f * ch.GetMaxHP());
-                            ch.damage(damage, this);
+                            ch.Damage(damage, this, DamageType.of(DamageType.NEGATIVE_ENERGY));
                             Buff.affect(ch, Weakness.class, Weakness.DURATION);
 
                             if (!ch.properties().contains(Char.Property.BOSS) && !ch.properties().contains(Char.Property.MINIBOSS)) {
@@ -82,7 +75,7 @@ public class ScrollOfDecay extends Scroll {
                         }
                     } else /*if (ch == curUser)*/ {
                         int damage = (int)Math.max(0.3f * ch.HP, 0.05f * ch.GetMaxHP());
-                        ch.damage(damage, this);
+                        ch.Damage(damage, this, DamageType.of(DamageType.NEGATIVE_ENERGY));
                         Buff.affect(ch, Weakness.class, Weakness.DURATION * 0.5f);
                     }
                 }

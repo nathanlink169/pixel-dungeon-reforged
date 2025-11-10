@@ -63,6 +63,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.armor.PlateArmor;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.PotionBandolier;
+import com.shatteredpixel.shatteredpixeldungeon.items.bags.ScrollHolder;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.VelvetPouch;
 import com.shatteredpixel.shatteredpixeldungeon.items.food.Food;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfFrost;
@@ -162,6 +165,12 @@ public enum HeroClass {
 			new KingsCrown().collect();
 
 			Dungeon.hero.belongings.identify();
+		}
+
+		if (SPDSettings.creative()) {
+			new ScrollHolder().collect();
+			new PotionBandolier().collect();
+			new MagicalHolster().collect();
 		}
 
 		if (Dungeon.isChallenged(Challenges.TRINKET_MADNESS)) {

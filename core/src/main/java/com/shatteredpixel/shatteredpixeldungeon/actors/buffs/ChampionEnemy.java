@@ -30,7 +30,50 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Fire;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.duelist.ElementalStrike;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.ElementalBlast;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.mage.WarpBeacon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyLance;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.HolyWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Judgement;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Smite;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.Sunray;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.CrystalWisp;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DM100;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Eye;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Fiend;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Shaman;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.UnholyPriest;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Warlock;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.YogFist;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.ArcaneBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.bombs.HolyBomb;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfDecay;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRetribution;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportation;
+import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfPsionicBlast;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.CursedWand;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisintegration;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisplacement;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFireblast;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFrost;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfMagicMissile;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfPrismaticLight;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfTransfusion;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfWarding;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.HolyDart;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisintegrationTrap;
+import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GrimTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -39,6 +82,8 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.HashSet;
 
 public abstract class ChampionEnemy extends Buff {
 
@@ -66,24 +111,8 @@ public abstract class ChampionEnemy extends Buff {
 		else target.sprite.clearAura();
 	}
 
-	public void onAttackProc(Char enemy ){
-
-	}
-
 	public boolean canAttackWithExtraReach( Char enemy ){
 		return false;
-	}
-
-	public float meleeDamageFactor(){
-		return 1f;
-	}
-
-	public float damageTakenFactor(){
-		return 1f;
-	}
-
-	public float evasionAndAccuracyFactor(){
-		return 1f;
 	}
 
 	{
@@ -115,18 +144,11 @@ public abstract class ChampionEnemy extends Buff {
 		}
 	}
 
-	public static class Blazing extends ChampionEnemy {
+	public static class Blazing extends ChampionEnemy implements CombatModifier.PreArmorDamageModifier, CombatModifier.OnHitEffect {
 
 		{
 			color = 0xFF8800;
 			rays = 4;
-		}
-
-		@Override
-		public void onAttackProc(Char enemy) {
-			if (!Dungeon.level.water[enemy.pos]) {
-				Buff.affect(enemy, Burning.class).reignite(enemy);
-			}
 		}
 
 		@Override
@@ -142,26 +164,38 @@ public abstract class ChampionEnemy extends Buff {
 			super.detach();
 		}
 
-		@Override
-		public float meleeDamageFactor() {
-			return 1.25f;
-		}
-
 		{
 			immunities.add(Burning.class);
 		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * (context.attacker == target ? 1.25f : 1.0f));
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (!Dungeon.level.water[context.defenderPosition]) {
+				Buff.affect(context.defender, Burning.class).reignite(context.defender);
+			}
+		}
 	}
 
-	public static class Projecting extends ChampionEnemy {
+	public static class Projecting extends ChampionEnemy implements CombatModifier.PreArmorDamageModifier {
 
 		{
 			color = 0x8800FF;
 			rays = 4;
-		}
-
-		@Override
-		public float meleeDamageFactor() {
-			return 1.25f;
 		}
 
 		@Override
@@ -180,37 +214,120 @@ public abstract class ChampionEnemy extends Buff {
 				return PathFinder.distance[target.pos] <= 4;
 			}
 		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * (context.attacker == target ? 1.25f : 1.0f));
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
 	}
 
-	public static class AntiMagic extends ChampionEnemy {
+	public static class AntiMagic extends ChampionEnemy implements CombatModifier.PostArmorDamageModifier {
 
 		{
 			color = 0x00FF00;
 			rays = 5;
 		}
 
-		@Override
-		public float damageTakenFactor() {
-			return 0.5f;
+
+		public static final HashSet<Class> RESISTS = new HashSet<>();
+		static {
+			RESISTS.add( MagicalSleep.class );
+			RESISTS.add( Charm.class );
+			RESISTS.add( Weakness.class );
+			RESISTS.add( Vulnerable.class );
+			RESISTS.add( Hex.class );
+			RESISTS.add( Degrade.class );
+
+			RESISTS.add( DisintegrationTrap.class );
+			RESISTS.add( GrimTrap.class );
+
+			RESISTS.add( ArcaneBomb.class );
+			RESISTS.add( HolyBomb.HolyDamage.class );
+			RESISTS.add( ScrollOfRetribution.class );
+			RESISTS.add( ScrollOfPsionicBlast.class );
+			RESISTS.add( ScrollOfTeleportation.class );
+			RESISTS.add( ScrollOfDecay.class );
+			RESISTS.add( HolyDart.class );
+
+			RESISTS.add( GuidingLight.class );
+			RESISTS.add( HolyWeapon.class );
+			RESISTS.add( Sunray.class );
+			RESISTS.add( HolyLance.class );
+			RESISTS.add( Smite.class );
+			RESISTS.add( Judgement.class );
+
+			RESISTS.add( ElementalBlast.class );
+			RESISTS.add( CursedWand.class );
+			RESISTS.add( WandOfBlastWave.class );
+			RESISTS.add( WandOfDisintegration.class );
+			RESISTS.add( WandOfFireblast.class );
+			RESISTS.add( WandOfFrost.class );
+			RESISTS.add( WandOfLightning.class );
+			RESISTS.add( WandOfLivingEarth.class );
+			RESISTS.add( WandOfMagicMissile.class );
+			RESISTS.add( WandOfPrismaticLight.class );
+			RESISTS.add( WandOfTransfusion.class );
+			RESISTS.add( WandOfWarding.Ward.class );
+			RESISTS.add( WandOfDisplacement.class );
+
+			RESISTS.add( ElementalStrike.class );
+			RESISTS.add( com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing.class );
+			RESISTS.add( WandOfFireblast.FireBlastOnHit.class );
+			RESISTS.add( Shocking.class );
+			RESISTS.add( WandOfLightning.LightningOnHit.class );
+			RESISTS.add( Grim.class );
+
+			RESISTS.add( WarpBeacon.class );
+
+			RESISTS.add( DM100.LightningBolt.class );
+			RESISTS.add( Shaman.EarthenBolt.class );
+			RESISTS.add( UnholyPriest.class );
+			RESISTS.add( CrystalWisp.LightBeam.class );
+			RESISTS.add( Warlock.DarkBolt.class );
+			RESISTS.add( UnholyPriest.CursedBolt.class );
+			RESISTS.add( Eye.DeathGaze.class );
+			RESISTS.add( YogFist.BrightFist.LightBeam.class );
+			RESISTS.add( YogFist.DarkFist.DarkBolt.class );
+			RESISTS.add( Fiend.class );
+			RESISTS.add( Fiend.FiendExplosion.class );
 		}
 
 		{
-			immunities.addAll(com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic.RESISTS);
+			immunities.addAll(RESISTS);
 		}
 
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * 0.5f);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
+		}
 	}
 
 	//Also makes target large, see Char.properties()
-	public static class Giant extends ChampionEnemy {
+	public static class Giant extends ChampionEnemy implements CombatModifier.PostArmorDamageModifier {
 
 		{
 			color = 0x0088FF;
 			rays = 5;
-		}
-
-		@Override
-		public float damageTakenFactor() {
-			return 0.2f;
 		}
 
 		@Override
@@ -229,9 +346,24 @@ public abstract class ChampionEnemy extends Buff {
 				return PathFinder.distance[target.pos] <= 2;
 			}
 		}
+
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * 0.2f);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
+		}
 	}
 
-	public static class Blessed extends ChampionEnemy {
+	public static class Blessed extends ChampionEnemy implements CombatModifier.AccuracyModifier, CombatModifier.EvasionModifier {
 
 		{
 			color = 0xFFFF00;
@@ -239,12 +371,27 @@ public abstract class ChampionEnemy extends Buff {
 		}
 
 		@Override
-		public float evasionAndAccuracyFactor() {
-			return 4f;
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return currentAccuracy * (context.attacker == target ? 4.0f : 1.0f);
+		}
+
+		@Override
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			return currentEvasion * (context.defender == target ? 4.0f : 1.0f);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target || context.defender == target;
 		}
 	}
 
-	public static class Growing extends ChampionEnemy {
+	public static class Growing extends ChampionEnemy implements CombatModifier.AccuracyModifier, CombatModifier.EvasionModifier, CombatModifier.PreArmorDamageModifier {
 
 		{
 			color = 0xFF2222; //a little white helps it stick out from background
@@ -261,18 +408,23 @@ public abstract class ChampionEnemy extends Buff {
 		}
 
 		@Override
-		public float meleeDamageFactor() {
-			return multiplier;
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return currentAccuracy * (context.attacker == target ? multiplier : 1.0f);
 		}
 
 		@Override
-		public float damageTakenFactor() {
-			return 1f/multiplier;
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			return currentEvasion * (context.defender == target ? multiplier : 1.0f);
 		}
 
 		@Override
-		public float evasionAndAccuracyFactor() {
-			return multiplier;
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target || context.defender == target;
 		}
 
 		@Override
@@ -292,6 +444,11 @@ public abstract class ChampionEnemy extends Buff {
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			multiplier = bundle.getFloat(MULTIPLIER);
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			return (int) (currentDamage * (context.attacker == target ? multiplier : 1.0f));
 		}
 	}
 

@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Belongings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
@@ -264,9 +265,11 @@ public class ShopRoom extends SpecialRoom {
 
 		itemsToSpawn.add( new Alchemize().quantity(Random.IntRange(2, 3)));
 
-		Bag bag = ChooseBag(Dungeon.hero.belongings);
-		if (bag != null) {
-			itemsToSpawn.add(bag);
+		if (!SPDSettings.creative()) {
+			Bag bag = ChooseBag(Dungeon.hero.belongings);
+			if (bag != null) {
+				itemsToSpawn.add(bag);
+			}
 		}
 
 		itemsToSpawn.add( new PotionOfHealing() );

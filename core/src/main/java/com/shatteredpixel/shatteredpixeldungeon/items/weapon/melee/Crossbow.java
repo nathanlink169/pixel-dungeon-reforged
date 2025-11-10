@@ -29,8 +29,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -49,7 +50,7 @@ public class Crossbow extends MeleeWeapon {
 		
 		tier = 4;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
@@ -65,48 +66,6 @@ public class Crossbow extends MeleeWeapon {
 		} else {
 			return false;
 		}
-	}
-
-	@Override
-	public float accuracyFactor(Char owner, Char target) {
-		if (owner.buff(Crossbow.ChargedShot.class) != null){
-			Actor.add(new Actor() {
-				{ actPriority = VFX_PRIO; }
-				@Override
-				protected boolean act() {
-					if (owner instanceof Hero && !target.isAlive()){
-						onAbilityKill((Hero)owner, target);
-					}
-					Actor.remove(this);
-					return true;
-				}
-			});
-			return Float.POSITIVE_INFINITY;
-		} else {
-			return super.accuracyFactor(owner, target);
-		}
-	}
-
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
-		int dmg = super.proc(attacker, defender, damage);
-
-		//stronger elastic effect
-		if (attacker.buff(ChargedShot.class) != null && !(curItem instanceof Dart)){
-			//trace a ballistica to our target (which will also extend past them
-			Ballistica trajectory = new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_TARGET);
-			//trim it to just be the part that goes past them
-			trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size()-1), Ballistica.PROJECTILE);
-			//knock them back along that ballistica
-			WandOfBlastWave.throwChar(defender,
-					trajectory,
-					4,
-					true,
-					true,
-					this);
-			attacker.buff(Crossbow.ChargedShot.class).detach();
-		}
-		return dmg;
 	}
 
 	@Override
@@ -143,7 +102,7 @@ public class Crossbow extends MeleeWeapon {
 		return Integer.toString(3 + level);
 	}
 
-	public static class ChargedShot extends Buff{
+	public static class ChargedShot extends Buff implements AccuracyModifier {
 
 		{
 			announced = true;
@@ -155,6 +114,20 @@ public class Crossbow extends MeleeWeapon {
 			return BuffIndicator.DUEL_XBOW;
 		}
 
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return Char.INFINITE_ACCURACY;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
+		}
 	}
 
 }

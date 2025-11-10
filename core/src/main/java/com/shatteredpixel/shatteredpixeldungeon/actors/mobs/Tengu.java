@@ -45,6 +45,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -58,7 +61,6 @@ import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.TengusMask;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
 import com.shatteredpixel.shatteredpixeldungeon.items.bombs.Bomb;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.PrisonBossLevel;
@@ -69,9 +71,9 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.TenguSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.particles.Emitter;
@@ -84,9 +86,10 @@ import com.watabou.utils.PointF;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 
-public class Tengu extends Mob {
+public class Tengu extends Mob implements CombatModifier.AccuracyModifier, CombatModifier.PostArmorDamageModifier {
 	
 	{
 		HUNTING = new Hunting();
@@ -97,14 +100,6 @@ public class Tengu extends Mob {
 	@Override
 	public int GetMaxHP() {
 		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 1.25f : 1.0f));
-	}
-
-	@Override
-	public int attackSkill( Char target ) {
-		if (!Dungeon.level.adjacent(pos, target.pos)){
-			return super.attackSkill(target) * 2;
-		}
-		return super.attackSkill(target);
 	}
 
 	boolean loading = false;
@@ -119,9 +114,9 @@ public class Tengu extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (!Dungeon.level.mobs.contains(this)){
-			return;
+			return 0;
 		}
 
 		PrisonBossLevel.State state = ((PrisonBossLevel)Dungeon.level).state();
@@ -130,16 +125,9 @@ public class Tengu extends Mob {
 
 		int curbracket = HP / hpBracket;
 
-		int beforeHitHP = HP;
-		super.damage(dmg, src, damageType);
-
-		//cannot be hit through multiple brackets at a time
-		if (HP <= (curbracket-1)*hpBracket){
-			HP = (curbracket-1)*hpBracket + 1;
-		}
+		super.Damage(dmg, src, damageType);
 
 		int newBracket =  HP / hpBracket;
-		dmg = beforeHitHP - HP;
 
 		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
 		if (lock != null && !isImmune(src.getClass()) && !isInvulnerable(src.getClass())){
@@ -149,21 +137,7 @@ public class Tengu extends Mob {
 
 		//phase 2 of the fight is over
 		if (HP == 0 && state == PrisonBossLevel.State.FIGHT_ARENA) {
-			//let full attack action complete first
-			Actor.add(new Actor() {
-
-				{
-					actPriority = VFX_PRIO;
-				}
-
-				@Override
-				protected boolean act() {
-					Actor.remove(this);
-					((PrisonBossLevel)Dungeon.level).progress();
-					return true;
-				}
-			});
-			return;
+			return dmg;
 		}
 
 		//phase 1 of the fight is over
@@ -189,8 +163,9 @@ public class Tengu extends Mob {
 					return true;
 				}
 			});
-			return;
+			return dmg;
 		}
+		return dmg;
 	}
 	
 	@Override
@@ -200,6 +175,7 @@ public class Tengu extends Mob {
 
 	@Override
 	public void die( Object cause ) {
+		((PrisonBossLevel)Dungeon.level).progress();
 		
 		if (Dungeon.hero.subClass == HeroSubClass.NONE) {
 			Dungeon.level.drop( new TengusMask(), pos ).sprite.drop();
@@ -213,12 +189,7 @@ public class Tengu extends Mob {
 			Badges.validateBossChallengeCompleted();
 		}
 		Statistics.bossScores[1] += 2000;
-		
-		LloydsBeacon beacon = Dungeon.hero.belongings.getItem(LloydsBeacon.class);
-		if (beacon != null) {
-			beacon.upgrade();
-		}
-		
+
 		yell( Messages.get(this, "defeated") );
 	}
 	
@@ -226,7 +197,7 @@ public class Tengu extends Mob {
 	protected boolean canAttack( Char enemy ) {
 		return new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos;
 	}
-	
+
 	private void jump() {
 		
 		//in case tengu hasn't had a chance to act yet
@@ -292,7 +263,7 @@ public class Tengu extends Mob {
 				sprite.move( pos, newPos );
 				move( newPos );
 				
-				if (arenaJumps < 4) arenaJumps++;
+				if (m_ArenaJumps.Get() < 4) m_ArenaJumps.Increment();
 				
 				if (level.heroFOV[newPos]) CellEmitter.get( newPos ).burst( Speck.factory( Speck.WOOL ), 6 );
 				Sample.INSTANCE.play( Assets.Sounds.PUFF );
@@ -342,19 +313,19 @@ public class Tengu extends Mob {
 		immunities.add( Dread.class );
 		immunities.add( Terror.class );
 	}
-	
-	private static final String LAST_ABILITY     = "last_ability";
-	private static final String ABILITIES_USED   = "abilities_used";
-	private static final String ARENA_JUMPS      = "arena_jumps";
-	private static final String ABILITY_COOLDOWN = "ability_cooldown";
-	
+
+	private BundleableProperty.Int m_LastAbility = new BundleableProperty.Int("last_ability", -1);
+	private BundleableProperty.Int m_AbilitiesUsed = new BundleableProperty.Int("abilities_used", 0);
+	private BundleableProperty.Int m_ArenaJumps = new BundleableProperty.Int("arena_jumps", 0);
+	private BundleableProperty.Int m_AbilityCooldown = new BundleableProperty.Int("ability_cooldown", 2);
+
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put( LAST_ABILITY, lastAbility );
-		bundle.put( ABILITIES_USED, abilitiesUsed );
-		bundle.put( ARENA_JUMPS, arenaJumps );
-		bundle.put( ABILITY_COOLDOWN, abilityCooldown );
+		m_LastAbility.Store(bundle);
+		m_AbilitiesUsed.Store(bundle);
+		m_ArenaJumps.Store(bundle);
+		m_AbilityCooldown.Store(bundle);
 	}
 	
 	@Override
@@ -362,54 +333,106 @@ public class Tengu extends Mob {
 		loading = true;
 		super.restoreFromBundle(bundle);
 		loading = false;
-		lastAbility = bundle.getInt( LAST_ABILITY );
-		abilitiesUsed = bundle.getInt( ABILITIES_USED );
-		arenaJumps = bundle.getInt( ARENA_JUMPS );
-		abilityCooldown = bundle.getInt( ABILITY_COOLDOWN );
+		m_LastAbility.Restore(bundle);
+		m_AbilitiesUsed.Restore(bundle);
+		m_ArenaJumps.Restore(bundle);
+		m_AbilityCooldown.Restore(bundle);
 		
 		BossHealthBar.assignBoss(this);
 		if (HP <= GetMaxHP()/2) BossHealthBar.bleed(true);
+
+		// Why does he start with 0 hp sometimes?
+		if (HP == 0) {
+			HP = GetMaxHP();
+		}
 	}
-	
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker == this) {
+			return context.distance > 1 ? currentAccuracy * 2.0f : currentAccuracy;
+		}
+		return currentAccuracy;
+	}
+
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender == this) {
+			PrisonBossLevel.State state = ((PrisonBossLevel)Dungeon.level).state();
+
+			int hpBracket = GetMaxHP() / 8;
+			int currentBracket = HP / hpBracket;
+
+			// Calculate what HP would be after this damage
+			int hpAfterDamage = HP - currentDamage;
+
+			// If we'd drop below the bracket minimum, cap the damage
+			int bracketMinimum = (currentBracket - 1) * hpBracket + 1;
+			if (hpAfterDamage < bracketMinimum) {
+				// Only allow damage that brings us to the bracket minimum
+				currentDamage = HP - bracketMinimum;
+			}
+
+			// Handle phase transitions
+			if (state == PrisonBossLevel.State.FIGHT_START && HP - currentDamage <= GetMaxHP()/2) {
+				// Can't go below 50% HP in phase 1
+				currentDamage = HP - (GetMaxHP()/2);
+			}
+
+			return Math.max(0, currentDamage); // Never return negative damage
+		}
+		return currentDamage;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.LOWEST;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
+	}
+
 	//tengu is always hunting, and can use simpler rules because he never moves
-	private class Hunting extends Mob.Hunting{
+	private static class Hunting extends Mob.Hunting{
 		
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			
-			enemySeen = enemyInFOV;
-			if (enemyInFOV && !isCharmedBy( enemy ) && canAttack( enemy )) {
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			Tengu t = (Tengu)mob;
+			t.m_EnemySeen.Set(enemyInFOV);
+			if (enemyInFOV && !t.isCharmedBy( t.enemy ) && t.canAttack( t.enemy )) {
 				
-				if (canUseAbility()){
-					return useAbility();
+				if (t.canUseAbility()){
+					return t.useAbility();
 				}
 
-				recentlyAttackedBy.clear();
-				target = enemy.pos;
-				return doAttack( enemy );
+				t.recentlyAttackedBy.clear();
+				t.m_Target.Set(t.enemy.pos);
+				return t.doAttack( t.enemy );
 				
 			} else {
 				
 				//Try to switch targets to another enemy that is closer
 				//unless we have already done that and still can't attack them, then move on.
 				if (!recursing) {
-					Char oldEnemy = enemy;
-					enemy = null;
-					enemy = chooseEnemy();
-					if (enemy != null && enemy != oldEnemy) {
+					Char oldEnemy = t.enemy;
+					t.enemy = null;
+					t.enemy = t.chooseEnemy();
+					if (t.enemy != null && t.enemy != oldEnemy) {
 						recursing = true;
-						boolean result = act(enemyInFOV, justAlerted);
+						boolean result = act(t, enemyInFOV, justAlerted);
 						recursing = false;
 						return result;
 					}
 				}
 				
 				//attempt to use an ability, even if enemy can't be decided
-				if (canUseAbility()){
-					return useAbility();
+				if (t.canUseAbility()){
+					return t.useAbility();
 				}
-				
-				spend( TICK );
+
+				t.spend( TICK );
 				return true;
 				
 			}
@@ -422,14 +445,7 @@ public class Tengu extends Mob {
 	
 	//so that mobs can also use this
 	private static Char throwingChar;
-	
-	private int lastAbility = -1;
-	private int abilitiesUsed = 0;
-	private int arenaJumps = 0;
-	
-	//starts at 2, so one turn and then first ability
-	private int abilityCooldown = 2;
-	
+
 	private static final int BOMB_ABILITY    = 0;
 	private static final int FIRE_ABILITY    = 1;
 	private static final int SHOCKER_ABILITY = 2;
@@ -439,27 +455,27 @@ public class Tengu extends Mob {
 		
 		if (HP > GetMaxHP()/2) return false;
 		
-		if (abilitiesUsed >= targetAbilityUses()){
+		if (m_AbilitiesUsed.Get() >= targetAbilityUses()){
 			return false;
 		} else {
 			
-			abilityCooldown--;
+			m_AbilityCooldown.Decrement();
 			
-			if (targetAbilityUses() - abilitiesUsed >= 4 && !Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
+			if (targetAbilityUses() - m_AbilitiesUsed.Get() >= 4 && !Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
 				//Very behind in ability uses, use one right away!
 				//but not on bosses challenge, we already cast quickly then
-				abilityCooldown = 0;
+				m_AbilityCooldown.Set(0);
 				
-			} else if (targetAbilityUses() - abilitiesUsed >= 3){
+			} else if (targetAbilityUses() - m_AbilitiesUsed.Get() >= 3){
 				//moderately behind in uses, use one every other action.
-				if (abilityCooldown == -1 || abilityCooldown > 1) abilityCooldown = 1;
+				if (m_AbilitiesUsed.Get() == -1 || m_AbilitiesUsed.Get() > 1) m_AbilityCooldown.Set(1);
 				
 			} else {
 				//standard delay before ability use, 1-4 turns
-				if (abilityCooldown == -1) abilityCooldown = Random.IntRange(1, 4);
+				if (m_AbilityCooldown.Get() == -1) m_AbilityCooldown.Set(Random.IntRange(1, 4));
 			}
 			
-			if (abilityCooldown == 0){
+			if (m_AbilityCooldown.Get() == 0){
 				return true;
 			} else {
 				return false;
@@ -469,10 +485,10 @@ public class Tengu extends Mob {
 	
 	private int targetAbilityUses(){
 		//1 base ability use, plus 2 uses per jump
-		int targetAbilityUses = 1 + 2*arenaJumps;
+		int targetAbilityUses = 1 + 2*m_ArenaJumps.Get();
 		
 		//and ane extra 2 use for jumps 3 and 4
-		targetAbilityUses += Math.max(0, arenaJumps-2);
+		targetAbilityUses += Math.max(0, m_ArenaJumps.Get()-2);
 		
 		return targetAbilityUses;
 	}
@@ -483,9 +499,9 @@ public class Tengu extends Mob {
 		
 		while (!abilityUsed){
 			
-			if (abilitiesUsed == 0){
+			if (m_AbilitiesUsed.Get() == 0){
 				abilityToUse = BOMB_ABILITY;
-			} else if (abilitiesUsed == 1){
+			} else if (m_AbilitiesUsed.Get() == 1){
 				abilityToUse = SHOCKER_ABILITY;
 			} else if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
 				abilityToUse = Random.Int(2)*2; //0 or 2, can't roll fire ability with challenge
@@ -496,12 +512,12 @@ public class Tengu extends Mob {
 			//all abilities always target the hero, even if something else is taking Tengu's normal attacks
 			
 			//If we roll the same ability as last time, 9/10 chance to reroll
-			if (abilityToUse != lastAbility || Random.Int(10) == 0){
+			if (abilityToUse != m_LastAbility.Get() || Random.Int(10) == 0){
 				switch (abilityToUse){
 					case BOMB_ABILITY : default:
 						abilityUsed = throwBomb(Tengu.this, Dungeon.hero);
 						//if Tengu cannot use his bomb ability first, use fire instead.
-						if (abilitiesUsed == 0 && !abilityUsed){
+						if (m_AbilitiesUsed.Get() == 0 && !abilityUsed){
 							abilityToUse = FIRE_ABILITY;
 							abilityUsed = throwFire(Tengu.this, Dungeon.hero);
 						}
@@ -512,7 +528,7 @@ public class Tengu extends Mob {
 					case SHOCKER_ABILITY:
 						abilityUsed = throwShocker(Tengu.this, Dungeon.hero);
 						//if Tengu cannot use his shocker ability second, use fire instead.
-						if (abilitiesUsed == 1 && !abilityUsed){
+						if (m_AbilitiesUsed.Get() == 1 && !abilityUsed){
 							abilityToUse = FIRE_ABILITY;
 							abilityUsed = throwFire(Tengu.this, Dungeon.hero);
 						}
@@ -528,22 +544,22 @@ public class Tengu extends Mob {
 		
 		//spend 1 less turn if seriously behind on ability uses
 		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-			if (targetAbilityUses() - abilitiesUsed >= 4) {
+			if (targetAbilityUses() - m_AbilitiesUsed.Get() >= 4) {
 				//spend no time
 			} else {
 				spend(TICK);
 			}
 		} else {
-			if (targetAbilityUses() - abilitiesUsed >= 4) {
+			if (targetAbilityUses() - m_AbilitiesUsed.Get() >= 4) {
 				spend(TICK);
 			} else {
 				spend(2 * TICK);
 			}
 		}
 		
-		lastAbility = abilityToUse;
-		abilitiesUsed++;
-		return lastAbility == FIRE_ABILITY;
+		m_LastAbility.Set(abilityToUse);
+		m_AbilitiesUsed.Increment();
+		return m_LastAbility.Get() == FIRE_ABILITY;
 	}
 	
 	//******************
@@ -621,10 +637,10 @@ public class Tengu extends Mob {
 						Char ch = Actor.findChar(cell);
 						if (ch != null && !(ch instanceof Tengu)) {
 							int dmg = Random.NormalIntRange(5 + Dungeon.scalingDepth(), 10 + Dungeon.scalingDepth() * 2);
-							dmg -= ch.drRoll();
+							dmg -= ch.drRoll(DamageType.of(DamageType.EXPLOSIVE));
 
 							if (dmg > 0) {
-								ch.damage(dmg, Bomb.class);
+								ch.Damage(dmg, Bomb.class, DamageType.of(DamageType.EXPLOSIVE));
 							}
 
 							if (ch == Dungeon.hero){
@@ -1054,7 +1070,7 @@ public class Tengu extends Mob {
 							
 							Char ch = Actor.findChar(cell);
 							if (ch != null && !(ch instanceof Tengu)){
-								ch.damage(2 + Dungeon.scalingDepth(), new Electricity());
+								ch.Damage(2 + Dungeon.scalingDepth(), new Electricity(), DamageType.of(DamageType.ELECTRICITY));
 								
 								if (ch == Dungeon.hero){
 									Statistics.qualifiedForBossChallengeBadge = false;

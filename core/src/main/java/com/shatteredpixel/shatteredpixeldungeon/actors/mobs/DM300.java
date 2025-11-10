@@ -48,11 +48,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Slow;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.WallOfLight;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.TargetedCell;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.DriedRose;
-import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.LloydsBeacon;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.MetalShard;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.levels.CavesBossLevel;
@@ -66,6 +68,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DM300Sprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Music;
@@ -79,8 +82,9 @@ import com.watabou.utils.Random;
 import com.watabou.utils.Rect;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
-public class DM300 extends Mob {
+public class DM300 extends Mob implements CombatModifier.OnHitEffect  {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.dm300; }
 
@@ -89,54 +93,43 @@ public class DM300 extends Mob {
 		return (int) (super.GetMaxHP() * (Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 4f/3f : 1.0f));
 	}
 
-	public int pylonsActivated = 0;
-	public boolean supercharged = false;
-	public boolean chargeAnnounced = false;
 
 	private final int MIN_COOLDOWN = 5;
 	private final int MAX_COOLDOWN = Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 7 : 9;
-
-	private int turnsSinceLastAbility = -1;
-	private int abilityCooldown = Random.NormalIntRange(MIN_COOLDOWN, MAX_COOLDOWN);
-
-	private int lastAbility = 0;
 	private static final int NONE = 0;
 	private static final int GAS = 1;
 	private static final int ROCKS = 2;
-
-	private static final String PYLONS_ACTIVATED = "pylons_activated";
-	private static final String SUPERCHARGED = "supercharged";
-	private static final String CHARGE_ANNOUNCED = "charge_announced";
-
-	private static final String TURNS_SINCE_LAST_ABILITY = "turns_since_last_ability";
-	private static final String ABILITY_COOLDOWN = "ability_cooldown";
-
-	private static final String LAST_ABILITY = "last_ability";
+	private BundleableProperty.Int m_PylonsActivated = new BundleableProperty.Int("pylons_activated", 0);
+	private BundleableProperty.Bool m_Supercharged = new BundleableProperty.Bool("supercharged", false);
+	private BundleableProperty.Bool m_ChargeAnnounced = new BundleableProperty.Bool("charge_announced", false);
+	private BundleableProperty.Int m_TurnsSinceLastAbility = new BundleableProperty.Int("turns_since_last_ability", -1);
+	private BundleableProperty.Int m_AbilityCooldown = new BundleableProperty.Int("ability_cooldown", 0);
+	private BundleableProperty.Int m_LastAbility = new BundleableProperty.Int("last_ability", 0);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(PYLONS_ACTIVATED, pylonsActivated);
-		bundle.put(SUPERCHARGED, supercharged);
-		bundle.put(CHARGE_ANNOUNCED, chargeAnnounced);
-		bundle.put(TURNS_SINCE_LAST_ABILITY, turnsSinceLastAbility);
-		bundle.put(ABILITY_COOLDOWN, abilityCooldown);
-		bundle.put(LAST_ABILITY, lastAbility);
+		m_PylonsActivated.Store(bundle);
+		m_Supercharged.Store(bundle);
+		m_ChargeAnnounced.Store(bundle);
+		m_TurnsSinceLastAbility.Store(bundle);
+		m_AbilityCooldown.Store(bundle);
+		m_LastAbility.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		pylonsActivated = bundle.getInt(PYLONS_ACTIVATED);
-		supercharged = bundle.getBoolean(SUPERCHARGED);
-		chargeAnnounced = bundle.getBoolean(CHARGE_ANNOUNCED);
-		turnsSinceLastAbility = bundle.getInt(TURNS_SINCE_LAST_ABILITY);
-		abilityCooldown = bundle.getInt(ABILITY_COOLDOWN);
-		lastAbility = bundle.getInt(LAST_ABILITY);
+		m_PylonsActivated.Restore(bundle);
+		m_Supercharged.Restore(bundle);
+		m_ChargeAnnounced.Restore(bundle);
+		m_TurnsSinceLastAbility.Restore(bundle);
+		m_AbilityCooldown.Restore(bundle);
+		m_LastAbility.Restore(bundle);
 
-		if (turnsSinceLastAbility != -1){
+		if (m_TurnsSinceLastAbility.Get() != -1){
 			BossHealthBar.assignBoss(this);
-			if (!supercharged && pylonsActivated == totalPylonsToActivate()) BossHealthBar.bleed(true);
+			if (!m_Supercharged.Get() && m_PylonsActivated.Get() == totalPylonsToActivate()) BossHealthBar.bleed(true);
 		}
 	}
 
@@ -148,8 +141,8 @@ public class DM300 extends Mob {
 		}
 
 		//ability logic only triggers if DM is not supercharged
-		if (!supercharged){
-			if (turnsSinceLastAbility >= 0) turnsSinceLastAbility++;
+		if (!m_Supercharged.Get()){
+			if (m_TurnsSinceLastAbility.Get() >= 0) m_TurnsSinceLastAbility.Increment();
 
 			//in case DM-300 hasn't been able to act yet
 			if (fieldOfView == null || fieldOfView.length != Dungeon.level.length()){
@@ -187,12 +180,12 @@ public class DM300 extends Mob {
 				if (enemy != null && enemy.isAlive() && !canReach){
 
 					//try to fire gas at an enemy we can't reach
-					if (turnsSinceLastAbility >= MIN_COOLDOWN){
+					if (m_TurnsSinceLastAbility.Get() >= MIN_COOLDOWN){
 						//use a coneAOE to try and account for trickshotting angles
 						ConeAOE aim = new ConeAOE(new Ballistica(pos, enemy.pos, Ballistica.WONT_STOP), Float.POSITIVE_INFINITY, 30, Ballistica.STOP_SOLID);
 						if (aim.cells.contains(enemy.pos) && !Char.hasProp(enemy, Property.INORGANIC)) {
-							lastAbility = GAS;
-							turnsSinceLastAbility = 0;
+							m_LastAbility.Set(GAS);
+							m_TurnsSinceLastAbility.Set(0);
 
 							if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 								sprite.zap(enemy.pos);
@@ -205,8 +198,8 @@ public class DM300 extends Mob {
 						//if we can't gas, or if target is inorganic then drop rocks
 						//unless enemy is already stunned, we don't want to stunlock them
 						} else if (enemy.paralysed <= 0) {
-							lastAbility = ROCKS;
-							turnsSinceLastAbility = 0;
+							m_LastAbility.Set(ROCKS);
+							m_TurnsSinceLastAbility.Set(0);
 							if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 								((DM300Sprite)sprite).slam(enemy.pos);
 								return false;
@@ -220,21 +213,21 @@ public class DM300 extends Mob {
 					}
 
 				} else if (enemy != null && enemy.isAlive() && fieldOfView[enemy.pos]) {
-					if (turnsSinceLastAbility > abilityCooldown) {
+					if (m_TurnsSinceLastAbility.Get() > m_AbilityCooldown.Get()) {
 
-						if (lastAbility == NONE) {
+						if (m_LastAbility.Get() == NONE) {
 							//50/50 either ability
-							lastAbility = Random.Int(2) == 0 ? GAS : ROCKS;
-						} else if (lastAbility == GAS) {
+							m_LastAbility.Set(Random.Int(2) == 0 ? GAS : ROCKS);
+						} else if (m_LastAbility.Get() == GAS) {
 							//more likely to use rocks
-							lastAbility = Random.Int(4) == 0 ? GAS : ROCKS;
+							m_LastAbility.Set(Random.Int(4) == 0 ? GAS : ROCKS);
 						} else {
 							//more likely to use gas
-							lastAbility = Random.Int(4) != 0 ? GAS : ROCKS;
+							m_LastAbility.Set(Random.Int(4) != 0 ? GAS : ROCKS);
 						}
 
 						if (Char.hasProp(enemy, Property.INORGANIC)){
-							lastAbility = ROCKS;
+							m_LastAbility.Set(ROCKS);
 						}
 
 						//doesn't spend a turn if enemy is at a distance
@@ -242,10 +235,10 @@ public class DM300 extends Mob {
 							spend(TICK);
 						}
 
-						turnsSinceLastAbility = 0;
-						abilityCooldown = Random.NormalIntRange(MIN_COOLDOWN, MAX_COOLDOWN);
+						m_TurnsSinceLastAbility.Set(0);
+						m_AbilityCooldown.Set(Random.NormalIntRange(MIN_COOLDOWN, MAX_COOLDOWN));
 
-						if (lastAbility == GAS) {
+						if (m_LastAbility.Get() == GAS) {
 							if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
 								sprite.zap(enemy.pos);
 								return false;
@@ -269,9 +262,9 @@ public class DM300 extends Mob {
 			}
 		} else {
 
-			if (!chargeAnnounced){
+			if (!m_ChargeAnnounced.Get()){
 				yell(Messages.get(this, "supercharged"));
-				chargeAnnounced = true;
+				m_ChargeAnnounced.Set(true);
 			}
 
 			if (Dungeon.hero.invisible <= 0){
@@ -286,17 +279,9 @@ public class DM300 extends Mob {
 	}
 
 	@Override
-	public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
-		if (enemy == Dungeon.hero && supercharged){
-			Statistics.qualifiedForBossChallengeBadge = false;
-		}
-		return super.attack(enemy, dmgMulti, dmgBonus, accMulti);
-	}
-
-	@Override
 	protected Char chooseEnemy() {
 		Char enemy = super.chooseEnemy();
-		if (supercharged && enemy == null){
+		if (m_Supercharged.Get() && enemy == null){
 			enemy = Dungeon.hero;
 		}
 		return enemy;
@@ -306,7 +291,7 @@ public class DM300 extends Mob {
 	public void move(int step, boolean travelling) {
 		super.move(step, travelling);
 
-		if (travelling) PixelScene.shake( supercharged ? 3 : 1, 0.25f );
+		if (travelling) PixelScene.shake( m_Supercharged.Get() ? 3 : 1, 0.25f );
 
 		if (!flying && Dungeon.level.map[pos] == Terrain.INACTIVE_TRAP && state == HUNTING) {
 
@@ -331,7 +316,7 @@ public class DM300 extends Mob {
 
 	@Override
 	public float speed() {
-		return super.speed() * (supercharged ? 2 : 1);
+		return super.speed() * (m_Supercharged.Get() ? 2 : 1);
 	}
 
 	@Override
@@ -339,7 +324,7 @@ public class DM300 extends Mob {
 		super.notice();
 		if (!BossHealthBar.isAssigned()) {
 			BossHealthBar.assignBoss(this);
-			turnsSinceLastAbility = 0;
+			m_TurnsSinceLastAbility.Set(0);
 			yell(Messages.get(this, "notice"));
 			for (Char ch : Actor.chars()){
 				if (ch instanceof DriedRose.GhostHero){
@@ -451,16 +436,13 @@ public class DM300 extends Mob {
 	private boolean invulnWarned = false;
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (!BossHealthBar.isAssigned()){
 			notice();
 		}
 
 		int preHP = HP;
-		super.damage(dmg, src, damageType);
-		if (isInvulnerable(src.getClass())){
-			return;
-		}
+		super.Damage(dmg, src, damageType);
 
 		int dmgTaken = preHP - HP;
 		if (dmgTaken > 0) {
@@ -473,9 +455,9 @@ public class DM300 extends Mob {
 
 		int threshold;
 		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)){
-			threshold = GetMaxHP() / 4 * (3 - pylonsActivated);
+			threshold = GetMaxHP() / 4 * (3 - m_PylonsActivated.Get());
 		} else {
-			threshold = GetMaxHP() / 3 * (2 - pylonsActivated);
+			threshold = GetMaxHP() / 3 * (2 - m_PylonsActivated.Get());
 		}
 
 		if (HP <= threshold && threshold > 0){
@@ -483,6 +465,7 @@ public class DM300 extends Mob {
 			supercharge();
 		}
 
+		return preHP - HP;
 	}
 
 	public int totalPylonsToActivate(){
@@ -491,39 +474,38 @@ public class DM300 extends Mob {
 
 	@Override
 	public boolean isInvulnerable(Class effect) {
-		if (supercharged && !invulnWarned){
+		if (m_Supercharged.Get() && !invulnWarned){
 			invulnWarned = true;
 			GLog.w(Messages.get(this, "charging_hint"));
 		}
-		return supercharged || super.isInvulnerable(effect);
+		return m_Supercharged.Get() || super.isInvulnerable(effect);
 	}
 
 	public void supercharge(){
-		supercharged = true;
+		m_Supercharged.Set(true);
 		((CavesBossLevel)Dungeon.level).activatePylon();
-		pylonsActivated++;
+		m_PylonsActivated.Increment();
 
 		spend(Dungeon.isChallenged(Challenges.STRONGER_BOSSES) ? 2f : 3f);
 		yell(Messages.get(this, "charging"));
 		sprite.showStatus(CharSprite.POSITIVE, Messages.get(this, "invulnerable"));
 		((DM300Sprite)sprite).setup();
 		((DM300Sprite)sprite).charge();
-		chargeAnnounced = false;
-
+		m_ChargeAnnounced.Set(false);
 	}
 
 	public boolean isSupercharged(){
-		return supercharged;
+		return m_Supercharged.Get();
 	}
 
 	public void loseSupercharge(){
-		supercharged = false;
+		m_Supercharged.Set(false);
 		((DM300Sprite)sprite).setup();
 
 		//adjust turns since last ability to prevent DM immediately using an ability when charge ends
-		turnsSinceLastAbility = Math.max(turnsSinceLastAbility, MIN_COOLDOWN-3);
+		m_TurnsSinceLastAbility.Set(Math.max(m_TurnsSinceLastAbility.Get(), MIN_COOLDOWN-3));
 
-		if (pylonsActivated < totalPylonsToActivate()){
+		if (m_PylonsActivated.Get() < totalPylonsToActivate()){
 			yell(Messages.get(this, "charge_lost"));
 		} else {
 			yell(Messages.get(this, "pylons_destroyed"));
@@ -544,7 +526,7 @@ public class DM300 extends Mob {
 
 	@Override
 	public boolean isAlive() {
-		return super.isAlive() || pylonsActivated < totalPylonsToActivate();
+		return super.isAlive() || m_PylonsActivated.Get() < totalPylonsToActivate();
 	}
 
 	@Override
@@ -571,21 +553,16 @@ public class DM300 extends Mob {
 		}
 		Statistics.bossScores[2] += 3000;
 
-		LloydsBeacon beacon = Dungeon.hero.belongings.getItem(LloydsBeacon.class);
-		if (beacon != null) {
-			beacon.upgrade();
-		}
-
 		yell( Messages.get(this, "defeated") );
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		if (super.getCloser(target)){
 			return true;
 		} else {
 
-			if (!supercharged || state != HUNTING || rooted || target == pos || Dungeon.level.adjacent(pos, target)) {
+			if (!m_Supercharged.Get() || state != HUNTING || rooted || target == pos || Dungeon.level.adjacent(pos, target)) {
 				return false;
 			}
 
@@ -643,7 +620,7 @@ public class DM300 extends Mob {
 	@Override
 	public String description(boolean forceNoMonsterUnknown) {
 		String desc = super.description(forceNoMonsterUnknown);
-		if (supercharged) {
+		if (m_Supercharged.Get()) {
 			desc += "\n\n" + Messages.get(this, "desc_supercharged");
 		}
 		return desc;
@@ -660,6 +637,23 @@ public class DM300 extends Mob {
 		resistances.add(Frost.class);
 		resistances.add(Roots.class);
 		resistances.add(Slow.class);
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (context.defender == Dungeon.hero && m_Supercharged.Get()) {
+			Statistics.qualifiedForBossChallengeBadge = false;
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return false;
 	}
 
 	public static class FallingRockBuff extends DelayedRockFall {

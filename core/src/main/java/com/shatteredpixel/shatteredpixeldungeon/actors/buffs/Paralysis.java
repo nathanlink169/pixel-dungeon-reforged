@@ -26,13 +26,15 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Paralysis extends FlavourBuff {
+public class Paralysis extends FlavourBuff implements CombatModifier.EvasionModifier, CombatModifier.OnDamageEffect {
 
 	public static final float DURATION	= 10f;
 
@@ -48,21 +50,6 @@ public class Paralysis extends FlavourBuff {
 			return true;
 		} else {
 			return false;
-		}
-	}
-	
-	public void processDamage( int damage ){
-		if (target == null) return;
-		ParalysisResist resist = target.buff(ParalysisResist.class);
-		if (resist == null){
-			resist = Buff.affect(target, ParalysisResist.class);
-		}
-		resist.damage += damage;
-		if (Random.NormalIntRange(0, resist.damage) >= Random.NormalIntRange(0, target.HP)){
-			if (Dungeon.level.heroFOV[target.pos]) {
-				target.sprite.showStatus(CharSprite.NEUTRAL, Messages.get(this, "out"));
-			}
-			detach();
 		}
 	}
 	
@@ -87,6 +74,33 @@ public class Paralysis extends FlavourBuff {
 	public void fx(boolean on) {
 		if (on)                         target.sprite.add(CharSprite.State.PARALYSED);
 		else if (target.paralysed <= 1) target.sprite.remove(CharSprite.State.PARALYSED);
+	}
+
+	@Override
+	public float modifyEvasion(AttackContext context, float currentEvasion) {
+		return currentEvasion * 0.5f;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		ParalysisResist resist = target.buff(ParalysisResist.class);
+		if (resist == null){
+			resist = Buff.affect(target, ParalysisResist.class);
+		}
+		resist.damage += damageDealt;
+		if (Random.NormalIntRange(0, resist.damage) >= Random.NormalIntRange(0, target.HP)){
+			detach();
+		}
 	}
 
 	public static class ParalysisResist extends Buff {

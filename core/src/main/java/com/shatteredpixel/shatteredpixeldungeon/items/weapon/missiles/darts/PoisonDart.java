@@ -35,15 +35,12 @@ public class PoisonDart extends TippedDart {
 	{
 		image = ItemSpriteSheet.POISON_DART;
 	}
-	
-	@Override
-	public int proc(Char attacker, Char defender, int damage) {
 
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
 		//when processing charged shot, only poison enemies
 		if (!processingChargedShot || attacker.alignment != defender.alignment) {
-			Buff.affect(defender, Poison.class).set(3 + Dungeon.scalingDepth() / 2);
+			Buff.affect(defender, Poison.class).set(3 + Dungeon.scalingDepth() / 2.0f);
 		}
-		
-		return super.proc(attacker, defender, damage);
 	}
 }

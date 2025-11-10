@@ -27,7 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -40,7 +40,7 @@ public class Shortsword extends MeleeWeapon {
 
 		tier = 2;
 
-		damageType = DamageType.PIERCING | DamageType.SLASHING;
+		damageType = DamageType.of(DamageType.PIERCING, DamageType.SLASHING);
 	}
 
 	@Override
@@ -59,9 +59,7 @@ public class Shortsword extends MeleeWeapon {
 
 	@Override
 	protected void duelistAbility(Hero hero, Integer target) {
-		//+(4+lvl) damage, roughly +50% base dmg, +50% scaling
-		int dmgBoost = augment.damageFactor(4 + buffedLvl());
-		Sword.cleaveAbility(hero, target, 1, dmgBoost, this);
+		Sword.cleaveAbility(hero, target, this, augment.damageFactor(4 + buffedLvl()));
 	}
 
 	@Override

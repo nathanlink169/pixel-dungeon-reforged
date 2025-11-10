@@ -33,6 +33,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Wraith;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -45,6 +47,7 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class CorpseDust extends Item {
 	
@@ -190,7 +193,7 @@ public class CorpseDust extends Item {
 		private int atkCount = 0;
 
 		@Override
-		public boolean attack(Char enemy, float dmgMulti, float dmgBonus, float accMulti) {
+		public boolean Attack(Char enemy, AttackContext.AttackType attackType, EnumSet<DamageType> damageType) {
 			if (enemy == Dungeon.hero){
 				atkCount++;
 				//first attack from each wraith is free, max of -200 point penalty per wraith
@@ -198,7 +201,7 @@ public class CorpseDust extends Item {
 					Statistics.questScores[1] -= 100;
 				}
 			}
-			return super.attack(enemy, dmgMulti, dmgBonus, accMulti);
+			return super.Attack(enemy, attackType, damageType);
 		}
 
 		private static final String ATK_COUNT = "atk_count";

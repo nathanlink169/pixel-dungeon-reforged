@@ -34,6 +34,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ElmoParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.Bag;
@@ -45,7 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfCorruption;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfDisintegration;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -84,7 +85,7 @@ public class MagesStaff extends MeleeWeapon {
 		unique = true;
 		bones = false;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -172,31 +173,32 @@ public class MagesStaff extends MeleeWeapon {
 	}
 
 	@Override
-	public int proc(Char attacker, Char defender, int damage) {
-		if (attacker instanceof Hero && ((Hero) attacker).hasTalent(Talent.MYSTICAL_CHARGE)){
-			Hero hero = (Hero) attacker;
+	public void onHit(AttackContext context, int finalDamage) {
+		if (context.attacker instanceof Hero && ((Hero) context.attacker).hasTalent(Talent.MYSTICAL_CHARGE)){
+			Hero hero = (Hero) context.attacker;
 			ArtifactRecharge.chargeArtifacts(hero, hero.pointsInTalent(Talent.MYSTICAL_CHARGE)/2f);
 		}
 
-		Talent.EmpoweredStrikeTracker empoweredStrike = attacker.buff(Talent.EmpoweredStrikeTracker.class);
+		Talent.EmpoweredStrikeTracker empoweredStrike = context.attacker.buff(Talent.EmpoweredStrikeTracker.class);
 		if (empoweredStrike != null){
-			damage = Math.round( damage * (1f + Dungeon.hero.pointsInTalent(Talent.EMPOWERED_STRIKE)/6f));
+			finalDamage = Math.round( finalDamage * (1f + Dungeon.hero.pointsInTalent(Talent.EMPOWERED_STRIKE)/6f));
 		}
 
 		if (wand != null &&
-				attacker instanceof Hero && ((Hero)attacker).subClass == HeroSubClass.BATTLEMAGE) {
+				context.attacker instanceof Hero && ((Hero)context.attacker).subClass == HeroSubClass.BATTLEMAGE) {
 			if (wand.curCharges < wand.maxCharges) wand.partialCharge += 0.5f;
-			ScrollOfRecharging.charge((Hero)attacker);
-			wand.onHit(this, attacker, defender, damage);
+			ScrollOfRecharging.charge((Hero)context.attacker);
+			wand.onHit(this, context.attacker, context.defender, finalDamage);
 		}
 
 		if (empoweredStrike != null){
 			if (!empoweredStrike.delayedDetach) empoweredStrike.detach();
-			if (!(defender instanceof Mob) || !((Mob) defender).surprisedBy(attacker)){
+			if (!(context.defender instanceof Mob) || !((Mob) context.defender).surprisedBy(context.attacker)){
 				Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG, 0.75f, 1.2f);
 			}
 		}
-		return super.proc(attacker, defender, damage);
+
+		super.onHit(context, finalDamage);
 	}
 
 	@Override

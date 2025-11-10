@@ -30,17 +30,19 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.Ratmogrify;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.KingsCrown;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.RatKingSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.Holiday;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndInfoArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Callback;
+
+import java.util.EnumSet;
 
 public class RatKing extends NPC {
 
@@ -51,7 +53,7 @@ public class RatKing extends NPC {
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.ratking; }
 	
 	@Override
-	public int defenseSkill( Char enemy ) {
+	public int defenseSkill() {
 		return INFINITE_EVASION;
 	}
 	
@@ -61,8 +63,9 @@ public class RatKing extends NPC {
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 		//do nothing
+		return 0;
 	}
 
 	@Override
@@ -98,14 +101,14 @@ public class RatKing extends NPC {
 				destroy();
 				sprite.killAndErase();
 			} else {
-				target = Dungeon.level.exit();
+				m_Target.Set(Dungeon.level.exit());
 			}
 		} else if (Dungeon.depth > 5){
 			if (pos == Dungeon.level.entrance()){
 				destroy();
 				sprite.killAndErase();
 			} else {
-				target = Dungeon.level.entrance();
+				m_Target.Set(Dungeon.level.entrance());
 			}
 		}
 		return super.act();

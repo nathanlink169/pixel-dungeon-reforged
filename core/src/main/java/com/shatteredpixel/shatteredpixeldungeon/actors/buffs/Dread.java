@@ -27,12 +27,14 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Bundle;
 
-public class Dread extends Buff {
+public class Dread extends Buff implements CombatModifier.OnHitEffect {
 
 	public boolean permanent = false;
 	protected int left = (int)DURATION;
@@ -66,7 +68,7 @@ public class Dread extends Buff {
 		if (!Dungeon.level.heroFOV[target.pos]
 				&& Dungeon.level.distance(target.pos, Dungeon.hero.pos) >= 6) {
 			if (target instanceof Mob){
-				((Mob) target).xpHalved = true;
+				((Mob) target).SetXPHalved();
 			}
 			permanent = false;
 			detach();
@@ -150,5 +152,20 @@ public class Dread extends Buff {
 		if (left <= 0){
 			detach();
 		}
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		recover();
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == target;
 	}
 }

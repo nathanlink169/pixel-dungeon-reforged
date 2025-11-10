@@ -73,7 +73,7 @@ public class RingOfTenacity extends Ring {
 	}
 
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Tenacity();
 	}
 	

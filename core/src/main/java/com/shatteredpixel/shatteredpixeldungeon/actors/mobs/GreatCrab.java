@@ -25,24 +25,21 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.ClericSpell;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
-import com.shatteredpixel.shatteredpixeldungeon.items.food.MysteryMeat;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.AcidicSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GreatCrabSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public class GreatCrab extends Crab {
 
@@ -56,7 +53,7 @@ public class GreatCrab extends Crab {
 	private int moving = 0;
 
 	@Override
-	protected boolean getCloser( int target ) {
+    public boolean getCloser(int target) {
 		//this is used so that the crab remains slower, but still detects the player at the expected rate.
 		moving++;
 		if (moving < 3) {
@@ -69,10 +66,10 @@ public class GreatCrab extends Crab {
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ){
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ){
 		//crab blocks all wand damage from the hero if it sees them.
 		//Direct damage is negated, but add-on effects and environmental effects go through as normal.
-		if (enemySeen
+		if (m_EnemySeen.Get()
 				&& state != SLEEPING
 				&& paralysed == 0
 				&& (src instanceof Wand || src instanceof ClericSpell)
@@ -82,18 +79,18 @@ public class GreatCrab extends Crab {
 			sprite.showStatus( CharSprite.NEUTRAL, Messages.get(this, "def_verb") );
 			Sample.INSTANCE.play( Assets.Sounds.HIT_PARRY, 1, Random.Float(0.96f, 1.05f));
 			Statistics.questScores[0] -= 50;
+			return 0;
 		} else {
-			super.damage( dmg, src, damageType );
+			return super.Damage( dmg, src, damageType );
 		}
 	}
 
 	@Override
-	public int defenseSkill( Char enemy ) {
+	public int defenseSkill() {
 		//crab blocks all melee attacks from its current target
-		if (enemySeen
+		if (m_EnemySeen.Get()
 				&& state != SLEEPING
 				&& paralysed == 0
-				&& enemy == this.enemy
 				&& enemy.invisible == 0){
 			if (sprite != null && sprite.visible) {
 				Sample.INSTANCE.play(Assets.Sounds.HIT_PARRY, 1, Random.Float(0.96f, 1.05f));
@@ -104,7 +101,7 @@ public class GreatCrab extends Crab {
 			}
 			return INFINITE_EVASION;
 		}
-		return super.defenseSkill( enemy );
+		return super.defenseSkill();
 	}
 
 	@Override
@@ -116,10 +113,10 @@ public class GreatCrab extends Crab {
 
 	protected class Wandering extends Mob.Wandering{
 		@Override
-		protected int randomDestination() {
+		protected int randomDestination(Mob mob) {
 			//of two potential wander positions, picks the one closest to the hero
-			int pos1 = super.randomDestination();
-			int pos2 = super.randomDestination();
+			int pos1 = super.randomDestination(mob);
+			int pos2 = super.randomDestination(mob);
 			PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable);
 			if (PathFinder.distance[pos2] < PathFinder.distance[pos1]){
 				return pos2;

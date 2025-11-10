@@ -26,7 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
@@ -38,9 +38,8 @@ public class Gauntlet extends MeleeWeapon {
 		hitSoundPitch = 1.2f;
 		
 		tier = 5;
-		DLY = 0.5f; //2x speed
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 	
 	@Override
@@ -58,7 +57,7 @@ public class Gauntlet extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(5+lvl) damage, roughly +50% base damage, +50% scaling
 		int dmgBoost = augment.damageFactor(5 + buffedLvl());
-		Sai.comboStrikeAbility(hero, target, 0, dmgBoost, this);
+		Sai.comboStrikeAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -75,4 +74,8 @@ public class Gauntlet extends MeleeWeapon {
 		return "+" + augment.damageFactor(5 + level);
 	}
 
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 0.5f;
+	}
 }

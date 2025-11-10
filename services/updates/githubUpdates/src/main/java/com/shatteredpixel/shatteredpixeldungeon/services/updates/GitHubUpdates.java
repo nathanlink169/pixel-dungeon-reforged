@@ -88,28 +88,28 @@ public class GitHubUpdates extends UpdateService {
 					for (Bundle b : Bundle.read( httpResponse.getResultAsStream() ).getBundleArray()){
 						String m = b.getString("tag_name");
 
-							//skip release that aren't the latest update (or an update at all)
+						//skip release that aren't the latest update (or an update at all)
 						if (GetVersionNumberFromCode(m) <= latestVersionCode) {
-								continue;
+							continue;
 
 							// or that are betas when we haven't opted in
-							} else if (!includeBetas && b.getBoolean("prerelease")){
-								continue;
+						} else if (!includeBetas && b.getBoolean("prerelease")){
+							continue;
 
 							// or that aren't compatible
-							} else if (DeviceCompat.isAndroid()){
-								Matcher minAndroid = minAndroidPattern.matcher(b.getString("body"));
-								if (minAndroid.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minAndroid.group(1))){
-									continue;
-								}
-							} else if (DeviceCompat.isiOS()){
-								Matcher minIOS = minIOSPattern.matcher(b.getString("body"));
-								if (minIOS.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minIOS.group(1))){
-									continue;
-								}
+						} else if (DeviceCompat.isAndroid()){
+							Matcher minAndroid = minAndroidPattern.matcher(b.getString("body"));
+							if (minAndroid.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minAndroid.group(1))){
+								continue;
 							}
+						} else if (DeviceCompat.isiOS()){
+							Matcher minIOS = minIOSPattern.matcher(b.getString("body"));
+							if (minIOS.find() && DeviceCompat.getPlatformVersion() < Integer.parseInt(minIOS.group(1))){
+								continue;
+							}
+						}
 
-							latestRelease = b;
+						latestRelease = b;
 						latestVersionCode = GetVersionNumberFromCode(m);
 					}
 

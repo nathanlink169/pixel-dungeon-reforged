@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.watabou.noosa.TextureFilm;
@@ -104,7 +105,7 @@ public class TenguSprite extends MobSprite {
 				reset( this, cell, new TenguShuriken(), new Callback() {
 					@Override
 					public void call() {
-						ch.onAttackComplete(Char.AttackType.MELEE);
+						ch.onAttackComplete(AttackContext.AttackType.MELEE);
 					}
 				} );
 			

@@ -30,12 +30,15 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hex;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -52,9 +55,9 @@ public abstract class Shaman extends Mob {
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
 		int damage = super.damageRoll(type, isMaxDamage);
-		if (getRandomizerEnabled(RandomTraits.RITUAL_BLADE)) {
+		if (type == AttackContext.AttackType.MELEE && getRandomizerEnabled(RandomTraits.RITUAL_BLADE)) {
 			damage *= 2;
 		}
 		return damage;
@@ -79,7 +82,7 @@ public abstract class Shaman extends Mob {
 		return super.createLoot(itemSlot);
 	}
 
-	protected boolean doAttack(Char enemy ) {
+	public boolean doAttack(Char enemy) {
 
 		if (Dungeon.level.adjacent( pos, enemy.pos )
 				|| new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos != enemy.pos) {
@@ -110,18 +113,24 @@ public abstract class Shaman extends Mob {
 
 		Invisibility.dispel(this);
 		Char enemy = this.enemy;
-		if (hit( this, enemy, true )) {
+
+		// Build attack context
+		AttackContext context = new AttackContext.Builder(this, enemy)
+				.attackType(AttackContext.AttackType.RANGED)
+				.damageType(GetRangedDamageType())
+				.build();
+
+		// Resolve attack - this handles EVERYTHING internally
+		AttackResult result = CombatResolver.resolve(context);
+
+		if (result.result == AttackResult.ResultType.HIT) {
 			int randomChance = 2;
 			if (getRandomizerEnabled(RandomTraits.DILUTED_MAGIC)) randomChance = 5;
 			if (Random.Int( randomChance ) == 0) {
 				debuff( enemy );
 				if (enemy == Dungeon.hero) Sample.INSTANCE.play( Assets.Sounds.DEBUFF );
 			}
-			
-			int dmg = damageRoll(AttackType.RANGED_MAGICAL, false);
-			dmg = Math.round(dmg * AscensionChallenge.statModifier(this));
-			enemy.damage( dmg, new EarthenBolt() );
-			
+
 			if (!enemy.isAlive() && enemy == Dungeon.hero) {
 				Badges.validateDeathFromEnemyMagic();
 				Dungeon.fail( this );
@@ -147,7 +156,7 @@ public abstract class Shaman extends Mob {
 	public static class RedShaman extends Shaman {
 		@Override
 		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.redshaman; }
-		
+
 		@Override
 		protected void debuff( Char enemy ) {
 			Buff.prolong( enemy, Weakness.class, Weakness.DURATION  * (getRandomizerEnabled(RandomTraits.PERSISTENT_CURSES) ? 2 : 1));

@@ -33,6 +33,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Eye;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.NPC;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -58,6 +62,8 @@ import com.watabou.utils.Bundle;
 import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 import com.watabou.utils.Rect;
+
+import java.util.EnumSet;
 
 public class SentryRoom extends SpecialRoom {
 
@@ -288,9 +294,19 @@ public class SentryRoom extends SpecialRoom {
 			return true;
 		}
 
-		public void onZapComplete(){
-			if (hit(this, Dungeon.hero, true)) {
-				Dungeon.hero.damage(damageRoll(AttackType.RANGED_MAGICAL, false), new Eye.DeathGaze());
+		public void onZapComplete() {
+			// Build attack context
+			AttackContext context = new AttackContext.Builder(this, Dungeon.hero)
+					.attackType(AttackContext.AttackType.RANGED)
+					.damageType(DamageType.of(DamageType.NEGATIVE_ENERGY))
+					.build();
+
+			// Resolve attack - this handles everything internally
+			AttackResult result = CombatResolver.resolve(context);
+
+
+			if (result.result == AttackResult.ResultType.HIT) {
+				Dungeon.hero.Damage(damageRoll(AttackContext.AttackType.RANGED, false), new Eye.DeathGaze(), DamageType.of(DamageType.NEGATIVE_ENERGY));
 				if (!Dungeon.hero.isAlive()) {
 					Badges.validateDeathFromEnemyMagic();
 					Dungeon.fail(this);
@@ -302,28 +318,29 @@ public class SentryRoom extends SpecialRoom {
 		}
 
 		@Override
-		public int minDamage(AttackType type) {
+		public int minDamage(AttackContext.AttackType type) {
 			return 2 + Dungeon.depth / 2;
 		}
 
 		@Override
-		public int maxDamage(AttackType type) {
+		public int maxDamage(AttackContext.AttackType type) {
 			return 4 + Dungeon.depth;
 		}
 
 		@Override
-		public int attackSkill(Char target) {
+		public int attackSkill() {
 			return 20 + Dungeon.depth * 2;
 		}
 
 		@Override
-		public int defenseSkill( Char enemy ) {
+		public int defenseSkill() {
 			return INFINITE_EVASION;
 		}
 
 		@Override
-		public void damage( int dmg, Object src, int damageType ) {
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 			//do nothing
+			return 0;
 		}
 
 		@Override

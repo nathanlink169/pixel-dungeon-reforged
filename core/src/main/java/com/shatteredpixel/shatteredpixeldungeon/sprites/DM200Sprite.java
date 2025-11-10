@@ -68,7 +68,7 @@ public class DM200Sprite extends MobSprite {
 
 		super.zap( cell );
 
-		if (((DM200)ch).nextWeapon == 1) {
+		if (((DM200)ch).GetNextWeapon() == 1) {
 			MagicMissile.boltFromChar(parent,
 					MagicMissile.SPECK + Speck.TOXIC,
 					this,

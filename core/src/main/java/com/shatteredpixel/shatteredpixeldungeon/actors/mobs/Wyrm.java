@@ -11,6 +11,10 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -27,6 +31,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.WyrmSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
@@ -36,6 +41,7 @@ import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 public class Wyrm extends Mob
@@ -88,7 +94,7 @@ public class Wyrm extends Mob
     }
 
     @Override
-    protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
         return false;
     }
 
@@ -133,11 +139,11 @@ public class Wyrm extends Mob
                 public void call() {
                     //does its own special damage calculation that's only influenced by pickaxe level and augment
                     //we pretend the wyrm is the owner here so that properties like hero str or or other equipment do not factor in
-                    int dmg = p.damageRoll(Wyrm.this, false);
+                    int dmg = p.damageRoll(false, true);
 
                     boolean wasSleeping = state == SLEEPING;
 
-                    damage(dmg, p);
+                    Damage(dmg, p, DamageType.of(DamageType.PIERCING));
                     sprite.bloodBurstA(Dungeon.hero.sprite.center(), dmg);
                     sprite.flash();
 
@@ -154,7 +160,7 @@ public class Wyrm extends Mob
 
                     Sample.INSTANCE.play(Assets.Sounds.MINE, 1f, Random.Float(0.85f, 1.15f));
                     Invisibility.dispel(Dungeon.hero);
-                    Dungeon.hero.spendAndNext(p.delayFactor(Wyrm.this));
+                    Dungeon.hero.spendAndNext(p.timeToUse());
                 }
             });
 
@@ -162,7 +168,7 @@ public class Wyrm extends Mob
         }
     }
 
-    protected boolean doAttack( Char enemy ) {
+    public boolean doAttack(Char enemy) {
         if (Dungeon.level.distance(enemy.pos, pos) <= 2
                 && new Ballistica( pos, enemy.pos, Ballistica.PROJECTILE).collisionPos == enemy.pos
                 && new Ballistica( enemy.pos, pos, Ballistica.PROJECTILE).collisionPos == pos) {
@@ -186,7 +192,15 @@ public class Wyrm extends Mob
 
         Invisibility.dispel(this);
         Char enemy = this.enemy;
-        if (hit( this, enemy, true )) {
+        // Build attack context
+        AttackContext context = new AttackContext.Builder(this, enemy)
+                .attackType(AttackContext.AttackType.RANGED)
+                .damageType(GetRangedDamageType())
+                .build();
+
+        // Resolve attack - this handles EVERYTHING internally
+        AttackResult result = CombatResolver.resolve(context);
+        if (result.result == AttackResult.ResultType.HIT) {
             if (!Dungeon.level.water[enemy.pos]) {
                 Buff.affect( enemy, Burning.class ).reignite( enemy, 4f );
             }
@@ -202,7 +216,8 @@ public class Wyrm extends Mob
     }
 
     @Override
-    public void damage(int dmg, Object src, int damageType) {
+    public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
+        int preHP = HP;
         int hpBracket = GetMaxHP() / 3;
 
         int curbracket = HP / hpBracket;
@@ -210,7 +225,7 @@ public class Wyrm extends Mob
 
         inFinalBracket = curbracket == 0;
 
-        super.damage(dmg, src, damageType);
+        super.Damage(dmg, src, damageType);
 
         int newBracket =  HP / hpBracket;
         if (newBracket == 3) newBracket--; //full HP isn't its own bracket
@@ -238,6 +253,7 @@ public class Wyrm extends Mob
         if (!fieldOfView[Dungeon.hero.pos] && dmg >= 1) {
             carveRockAndDash(Dungeon.hero.pos);
         }
+        return HP - preHP;
     }
 
     private void carveRockAndDash(int dashPos) {
@@ -391,37 +407,36 @@ public class Wyrm extends Mob
         }
     }
 
-    public Boolean hasSeen = false;
-    private class Sleeping extends Mob.Sleeping {
+    private static class Sleeping extends Mob.Sleeping {
 
         @Override
-        protected void awaken(boolean enemyInFOV) {
+        protected void awaken(Mob mob, boolean enemyInFOV) {
             //do nothing, has special awakening rules
         }
     }
 
     public void Observe() {
         // only need to warn the user if this is the first time seeing the wyrm
-        if (!hasSeen) {
-            hasSeen = true;
+        if (!m_HasSeen.Get()) {
+            m_HasSeen.Set(true);
             GLog.n( Messages.get(Wyrm.this, "warning"));
         }
     }
 
     private static final String DASH_POSITIONS = "dash_positions";
-    private static final String HAS_SEEN = "has_seen";
+    private BundleableProperty.Bool m_HasSeen = new BundleableProperty.Bool("has_seen", false);
 
     @Override
     public void storeInBundle(Bundle bundle) {
         super.storeInBundle(bundle);
-        bundle.put(HAS_SEEN, hasSeen);
+        m_HasSeen.Store(bundle);
         bundle.put(DASH_POSITIONS, dashPositions);
     }
 
     @Override
     public void restoreFromBundle(Bundle bundle) {
         super.restoreFromBundle(bundle);
-        hasSeen = bundle.getBoolean(HAS_SEEN);
+        m_HasSeen.Restore(bundle);
         dashPositions = bundle.getIntArray(DASH_POSITIONS);
         if (state == HUNTING){
             BossHealthBar.assignBoss(this);

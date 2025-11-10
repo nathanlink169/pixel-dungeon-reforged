@@ -1,94 +1,39 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 
-import static com.shatteredpixel.shatteredpixeldungeon.actors.Char.hit;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.ARCSHIELDING;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.VOLATILE_CHAIN;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
-import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
-import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Web;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cursed;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldown;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.RevealedArea;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.huntress.NaturesPower;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
-import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
-import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.BlastParticle;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.LeafParticle;
-import com.shatteredpixel.shatteredpixeldungeon.effects.particles.PurpleParticle;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
-import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.Viscosity;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfSharpshooting;
-import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfRecharging;
-import com.shatteredpixel.shatteredpixeldungeon.items.spells.ReclaimTrap;
-import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfRegrowth;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
-import com.shatteredpixel.shatteredpixeldungeon.journal.Bestiary;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
-import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.ToxicGasRoom;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BlazingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.BurningTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ChillingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ConfusionTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.CorrosionTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DisarmingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.DistortionTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FlashingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.FrostTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GatewayTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.GeyserTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.OozeTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.PoisonDartTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ShockingTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.StormTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.SummoningTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TeleportationTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.ToxicTrap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.Trap;
-import com.shatteredpixel.shatteredpixeldungeon.levels.traps.WarpingTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Fadeleaf;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Firebloom;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Icecap;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Plant;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Sorrowmoss;
-import com.shatteredpixel.shatteredpixeldungeon.plants.Stormvine;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
-import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
-import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
-import com.watabou.noosa.particles.Emitter;
-import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
-import com.watabou.utils.Random;
-import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class Gun extends Weapon {
 
@@ -106,7 +51,7 @@ public class Gun extends Weapon {
         unique = true;
         bones = false;
 
-        damageType = DamageType.PIERCING;
+        damageType = DamageType.of(DamageType.PIERCING);
     }
 
     @Override
@@ -220,16 +165,16 @@ public class Gun extends Weapon {
     }
 
     @Override
-    public int damageRoll(Char owner, boolean isMaxDamage) {
-        if (((Hero)owner).hasTalent(EFFECTIVE_SHOT)) {
-            if (owner.buff(EffectiveShotCooldown.class) == null) {
+    public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+        if (Dungeon.hero.hasTalent(EFFECTIVE_SHOT)) {
+            if (Dungeon.hero.buff(EffectiveShotCooldown.class) == null) {
                 isMaxDamage = true;
             }
         }
-        int damage = augment.damageFactor(super.damageRoll(owner, isMaxDamage));
-        if (owner.buff(Talent.ArtificerFoodDamageBonus.class) != null) {
+        int damage = super.damageRoll(isMaxDamage, usedByHero);
+        if (Dungeon.hero.buff(Talent.ArtificerFoodDamageBonus.class) != null) {
             damage += 3;
-            owner.buff(Talent.ArtificerFoodDamageBonus.class).detach();
+            Dungeon.hero.buff(Talent.ArtificerFoodDamageBonus.class).detach();
         }
         return damage;
     }
@@ -259,6 +204,7 @@ public class Gun extends Weapon {
         ArrayList<Char> alreadyDamagedMobs = new ArrayList<>();
         ArrayList<Integer> positionsToDamage = new ArrayList<Integer>();
         final Ballistica beam = new Ballistica( curUser.pos, cell, Ballistica.STOP_SOLID);
+        int lastHitEnemyID = -1;
 
         if (user.hasTalent(ARCSHIELDING)) {
             float threshold = 0.25f;
@@ -282,8 +228,9 @@ public class Gun extends Weapon {
                         && !(Dungeon.level.mapped[c] || Dungeon.level.visited[c])){
                     //avoid harming undiscovered passive chars
                 } else {
-                    if (!(ch instanceof Mob && ((Mob) ch).alignment == Char.Alignment.ALLY)) {
+                    if (!(ch instanceof Mob && ch.alignment == Char.Alignment.ALLY)) {
                         chars.add(ch);
+                        lastHitEnemyID = ch.id();
                     }
                 }
             }
@@ -294,7 +241,7 @@ public class Gun extends Weapon {
         }
 
         for (Char ch : chars) {
-            ch.damage( damageRoll(user, false), this );
+            ch.Damage( damageRoll(false, true), this, DamageType.of(DamageType.EXPLOSIVE) );
 
             for (int o : PathFinder.NEIGHBOURS8) {
                 int position = ch.pos + o;
@@ -304,8 +251,8 @@ public class Gun extends Weapon {
                     if (adjacent.state == adjacent.PASSIVE && !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])){
                         //avoid harming undiscovered passive chars
                     } else {
-                        if (!(adjacent instanceof Mob && adjacent.alignment == Char.Alignment.ALLY)) {
-                            adjacent.damage( damageRoll(user, false) / 2, this);
+                        if (!(adjacent.alignment == Char.Alignment.ALLY)) {
+                            adjacent.Damage( damageRoll(false, true) / 2, this, EnumSet.of(DamageType.EXPLOSIVE));
                         }
                     }
                 }
@@ -331,7 +278,7 @@ public class Gun extends Weapon {
                     //avoid harming undiscovered passive chars
                 } else {
                     if (!(adjacent.alignment == Char.Alignment.ALLY)) {
-                        adjacent.damage( damageRoll(user, false) / 2, this);
+                        adjacent.Damage( damageRoll(false, true) / 2, this, EnumSet.of(DamageType.EXPLOSIVE));
                     }
                 }
             }
@@ -388,8 +335,11 @@ public class Gun extends Weapon {
         }
 
         Invisibility.dispel();
-
         curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( beam.collisionPos )));
+
+        if (Dungeon.hero.hasTalent(VOLATILE_CHAIN) && lastHitEnemyID != -1) {
+            Buff.prolong(Dungeon.hero, Talent.VolatileChainTracker.class, 5f).object = lastHitEnemyID;
+        }
 
         Dungeon.observe();
         return mobs;
@@ -397,11 +347,11 @@ public class Gun extends Weapon {
 
     public class Bullet extends MissileWeapon {
         {
-            damageType = DamageType.PIERCING;
+            damageType = DamageType.of(DamageType.PIERCING);
         }
         @Override
-        public int damageRoll(Char owner, boolean isMaxDamage) {
-            return Gun.this.damageRoll(owner, isMaxDamage);
+        public int damageRoll(boolean isMaxDamage, boolean usedByHero) {
+            return Gun.this.damageRoll(isMaxDamage, usedByHero);
         }
     }
 

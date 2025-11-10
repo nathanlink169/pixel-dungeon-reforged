@@ -543,8 +543,6 @@ public class PrisonBossLevel extends Level {
 					mobs.add(m);
 				}
 				
-				tengu.die(Dungeon.hero);
-				
 				clearEntities(tenguCell);
 				cleanMapState();
 				

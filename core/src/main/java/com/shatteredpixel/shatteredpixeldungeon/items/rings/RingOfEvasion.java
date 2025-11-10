@@ -26,10 +26,12 @@ package com.shatteredpixel.shatteredpixeldungeon.items.rings;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class RingOfEvasion extends Ring {
+public class RingOfEvasion extends Ring implements CombatModifier.EvasionModifier {
 
 	{
 		icon = ItemSpriteSheet.Icons.RING_EVASION;
@@ -56,12 +58,27 @@ public class RingOfEvasion extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Evasion();
 	}
 	
 	public static float evasionMultiplier( Char target ){
 		return (float) Math.pow( 1.125, getBuffedBonus(target, Evasion.class));
+	}
+
+	@Override
+	public float modifyEvasion(AttackContext context, float currentEvasion) {
+		return currentEvasion * evasionMultiplier(Dungeon.hero);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == Dungeon.hero;
 	}
 
 	public class Evasion extends RingBuff {

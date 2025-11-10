@@ -24,47 +24,76 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Random;
 
-public class Elastic extends Weapon.Enchantment {
+public class Elastic extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 	
 	private static ItemSprite.Glowing PINK = new ItemSprite.Glowing( 0xFF00FF );
-	
+
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage ) {
-		int level = Math.max( 0, weapon.buffedLvl() );
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max(0, context.attacker.getWeapon().buffedLvl());
+
+		boolean chargedShot = Dungeon.hero.buff(Crossbow.ChargedShot.class) != null;
 
 		// lvl 0 - 20%
 		// lvl 1 - 33%
 		// lvl 2 - 43%
-		float procChance = (level+1f)/(level+5f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance) {
+		float procChance = (level + 1f) / (level + 5f) * procChanceMultiplier(context.attacker);
 
+		if (Random.Float() < procChance || chargedShot) {
 			float powerMulti = Math.max(1f, procChance);
 
-			//trace a ballistica to our target (which will also extend past them
-			Ballistica trajectory = new Ballistica(attacker.pos, defender.pos, Ballistica.STOP_TARGET);
-			//trim it to just be the part that goes past them
-			trajectory = new Ballistica(trajectory.collisionPos, trajectory.path.get(trajectory.path.size()-1), Ballistica.PROJECTILE);
-			//knock them back along that ballistica
-			WandOfBlastWave.throwChar(defender,
+			// Trace a ballistica to our target (which will also extend past them)
+			Ballistica trajectory = new Ballistica(
+					context.attacker.pos,
+					context.defender.pos,
+					Ballistica.STOP_TARGET
+			);
+
+			// Trim it to just be the part that goes past them
+			trajectory = new Ballistica(
+					trajectory.collisionPos,
+					trajectory.path.get(trajectory.path.size() - 1),
+					Ballistica.PROJECTILE
+			);
+
+			// Knock them back along that ballistica
+			WandOfBlastWave.throwChar(
+					context.defender,
 					trajectory,
-					Math.round(2 * powerMulti),
-					!(weapon instanceof MissileWeapon || weapon instanceof SpiritBow),
+					Math.round(2 * powerMulti * (chargedShot ? 2 : 1)),
+					!(context.attacker.getWeapon() instanceof MissileWeapon || context.attacker.getWeapon() instanceof SpiritBow),
 					true,
-					this);
+					this
+			);
 		}
-		
-		return damage;
 	}
-	
+
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
+
 	@Override
 	public ItemSprite.Glowing glowing() {
 		return PINK;

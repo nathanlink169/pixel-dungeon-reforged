@@ -31,7 +31,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
@@ -40,7 +42,7 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
-public class Flail extends MeleeWeapon {
+public class Flail extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.FLAIL;
@@ -48,11 +50,10 @@ public class Flail extends MeleeWeapon {
 		hitSoundPitch = 0.8f;
 
 		tier = 4;
-		ACC = 0.8f; //0.8x accuracy
 		//also cannot surprise attack, see Hero.canSurpriseAttack
 
 		// I'd say this is bludgeoning, but the description says it has spikes so screw it
-		damageType = DamageType.PIERCING | DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.PIERCING, DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -64,38 +65,11 @@ public class Flail extends MeleeWeapon {
 	private static int spinBoost = 0;
 
 	@Override
-	public int damageRoll(Char owner, boolean isMaxDamage) {
-		int dmg = super.damageRoll(owner, isMaxDamage) + spinBoost;
+	public int damageRoll(boolean isMaxDamage, boolean userIsHero) {
+		int dmg = super.damageRoll(isMaxDamage, userIsHero) + spinBoost;
 		if (spinBoost > 0) Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 		spinBoost = 0;
 		return dmg;
-	}
-
-	@Override
-	public float accuracyFactor(Char owner, Char target) {
-		SpinAbilityTracker spin = owner.buff(SpinAbilityTracker.class);
-		if (spin != null) {
-			Actor.add(new Actor() {
-				{ actPriority = VFX_PRIO; }
-				@Override
-				protected boolean act() {
-					if (owner instanceof Hero && !target.isAlive()){
-						onAbilityKill((Hero)owner, target);
-					}
-					Actor.remove(this);
-					return true;
-				}
-			});
-			//we detach and calculate bonus here in case the attack misses (e.g. vs. monks)
-			spin.detach();
-			//+(8+2*lvl) damage per spin, roughly +40% base damage, +45% scaling
-			// so +120% base dmg, +135% scaling at 3 spins
-			spinBoost = spin.spins * augment.damageFactor(8 + 2*buffedLvl());
-			return Float.POSITIVE_INFINITY;
-		} else {
-			spinBoost = 0;
-			return super.accuracyFactor(owner, target);
-		}
 	}
 
 	@Override
@@ -145,7 +119,15 @@ public class Flail extends MeleeWeapon {
 		return "+" + augment.damageFactor(8 + 2*level);
 	}
 
-	public static class SpinAbilityTracker extends FlavourBuff {
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 0.8f;
+		}
+		return currentAccuracy;
+	}
+
+	public static class SpinAbilityTracker extends FlavourBuff implements AccuracyModifier {
 
 		{
 			type = buffType.POSITIVE;
@@ -195,6 +177,21 @@ public class Flail extends MeleeWeapon {
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
 			spins = bundle.getInt(SPINS);
+		}
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			return Char.INFINITE_ACCURACY;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
 		}
 	}
 }

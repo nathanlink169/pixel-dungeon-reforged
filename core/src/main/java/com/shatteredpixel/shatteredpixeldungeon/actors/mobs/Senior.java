@@ -39,9 +39,9 @@ public class Senior extends Monk {
 		// on top of the existing move bonus, senior monks get a further 1.66 cooldown reduction
 		// for a total of 3.33, double the normal 1.67 for regular monks
 		if (travelling) {
-			focusCooldown -= 1.66f;
+			m_FocusCooldown.Subtract(1.66f);
 			if (getRandomizerEnabled(RandomTraits.RAPID_MEDITATION)) {
-				focusCooldown = -1.0f; // Moving immediate focus
+				m_FocusCooldown.Subtract(1.0f);
 			}
 		}
 		super.move( step, travelling);

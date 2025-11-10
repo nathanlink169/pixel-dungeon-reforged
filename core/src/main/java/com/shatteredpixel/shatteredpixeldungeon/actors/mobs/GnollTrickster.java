@@ -34,15 +34,19 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Ghost;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class GnollTrickster extends Gnoll {
+public class GnollTrickster extends Gnoll implements CombatModifier.OnHitEffect {
 
 	{
 		WANDERING = new Wandering();
@@ -52,8 +56,6 @@ public class GnollTrickster extends Gnoll {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnolltrickster; }
 
-	private int combo = 0;
-
 	@Override
 	protected boolean canAttack( Char enemy ) {
 		return !Dungeon.level.adjacent( pos, enemy.pos )
@@ -61,40 +63,10 @@ public class GnollTrickster extends Gnoll {
 	}
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-
-		if (combo >= 1){
-			//score loss is on-hit instead of on-attack as it's tied to combo
-			Statistics.questScores[0] -= 50;
-		}
-
-		//The gnoll's attacks get more severe the more the player lets it hit them
-		combo++;
-		int effect = Random.Int(4)+combo;
-
-		if (effect > 2) {
-
-			if (effect >=6 && enemy.buff(Burning.class) == null){
-
-				if (Dungeon.level.flamable[enemy.pos]) {
-					GameScene.add(Blob.seed(enemy.pos, 4, Fire.class));
-				}
-				Buff.affect(enemy, Burning.class).reignite( enemy );
-
-			} else {
-				Buff.affect(enemy, Poison.class).set((effect - 2));
-			}
-
-		}
-		return damage;
-	}
-
-	@Override
-	protected boolean getCloser( int target ) {
-		combo = 0; //if he's moving, he isn't attacking, reset combo.
+    public boolean getCloser(int target) {
+		m_Combo.Set(0); //if he's moving, he isn't attacking, reset combo.
 		if (state == HUNTING) {
-			return enemySeen && getFurther( target );
+			return m_EnemySeen.Get() && getFurther( target );
 		} else {
 			return super.getCloser( target );
 		}
@@ -125,12 +97,49 @@ public class GnollTrickster extends Gnoll {
 		Ghost.Quest.process();
 	}
 
-	protected class Wandering extends Mob.Wandering{
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (m_Combo.Get() >= 1){
+			//score loss is on-hit instead of on-attack as it's tied to combo
+			Statistics.questScores[0] -= 50;
+		}
+
+		//The gnoll's attacks get more severe the more the player lets it hit them
+		m_Combo.Increment();
+		int effect = Random.Int(4)+m_Combo.Get();
+
+		if (effect > 2) {
+
+			if (effect >=6 && enemy.buff(Burning.class) == null){
+
+				if (Dungeon.level.flamable[enemy.pos]) {
+					GameScene.add(Blob.seed(enemy.pos, 4, Fire.class));
+				}
+				Buff.affect(enemy, Burning.class).reignite( enemy );
+
+			} else {
+				Buff.affect(enemy, Poison.class).set((effect - 2));
+			}
+
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	protected static class Wandering extends Mob.Wandering{
 		@Override
-		protected int randomDestination() {
+		protected int randomDestination(Mob mob) {
 			//of two potential wander positions, picks the one closest to the hero
-			int pos1 = super.randomDestination();
-			int pos2 = super.randomDestination();
+			int pos1 = super.randomDestination(mob);
+			int pos2 = super.randomDestination(mob);
 			PathFinder.buildDistanceMap(Dungeon.hero.pos, Dungeon.level.passable);
 			if (PathFinder.distance[pos2] < PathFinder.distance[pos1]){
 				return pos2;
@@ -140,18 +149,18 @@ public class GnollTrickster extends Gnoll {
 		}
 	}
 
-	private static final String COMBO = "combo";
+	private BundleableProperty.Int m_Combo = new BundleableProperty.Int("combo", 0);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle(bundle);
-		bundle.put(COMBO, combo);
+		m_Combo.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		combo = bundle.getInt( COMBO );
+		m_Combo.Restore(bundle);
 	}
 
 }

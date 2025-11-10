@@ -32,7 +32,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Combo;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -50,9 +54,8 @@ public class Sai extends MeleeWeapon {
 		hitSoundPitch = 1.3f;
 
 		tier = 3;
-		DLY = 0.5f; //2x speed
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
@@ -70,7 +73,7 @@ public class Sai extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(4+lvl) damage, roughly +60% base damage, +67% scaling
 		int dmgBoost = augment.damageFactor(4 + buffedLvl());
-		Sai.comboStrikeAbility(hero, target, 0, dmgBoost, this);
+		Sai.comboStrikeAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -87,7 +90,7 @@ public class Sai extends MeleeWeapon {
 		return "+" + augment.damageFactor(4 + level);
 	}
 
-	public static void comboStrikeAbility(Hero hero, Integer target, float multiPerHit, int boostPerHit, MeleeWeapon wep){
+	public static void comboStrikeAbility(Hero hero, Integer target, int boostPerHit, MeleeWeapon wep) {
 		if (target == null) {
 			return;
 		}
@@ -99,7 +102,7 @@ public class Sai extends MeleeWeapon {
 		}
 
 		hero.belongings.abilityWeapon = wep;
-		if (!hero.canAttack(enemy)){
+		if (!hero.canAttack(enemy)) {
 			GLog.w(Messages.get(wep, "ability_target_range"));
 			hero.belongings.abilityWeapon = null;
 			return;
@@ -112,21 +115,38 @@ public class Sai extends MeleeWeapon {
 				wep.beforeAbilityUsed(hero, enemy);
 				AttackIndicator.target(enemy);
 
+				// Get the tracker and activate it for this ability
+				ComboStrikeTracker tracker = hero.buff(ComboStrikeTracker.class);
 				int recentHits = 0;
-				ComboStrikeTracker buff = hero.buff(ComboStrikeTracker.class);
-				if (buff != null){
-					recentHits = buff.hits;
-					buff.detach();
+
+				if (tracker != null) {
+					recentHits = tracker.hits;
+					// Activate the tracker for this attack
+					tracker.activeAbility = true;
+					tracker.abilityDamageBoost = boostPerHit;
 				}
 
-				boolean hit = hero.attack(enemy, 1f + multiPerHit*recentHits, boostPerHit*recentHits, Char.INFINITE_ACCURACY, DamageType.PIERCING, Char.AttackType.MELEE);
-				if (hit && !enemy.isAlive()){
-					wep.onAbilityKill(hero, enemy);
+				// Build attack context
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.MELEE)
+						.damageType(DamageType.of(DamageType.PIERCING))
+						.build();
+
+				// Resolve through new combat system
+				AttackResult result = CombatResolver.resolve(context);
+
+				// Clean up tracker
+				if (tracker != null) {
+					tracker.activeAbility = false;
+					tracker.abilityDamageBoost = 0;
 				}
+
+				boolean hit = result.result == AttackResult.ResultType.HIT;
 
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
-				if (recentHits >= 2 && hit){
+
+				if (recentHits >= 2 && hit) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
 				}
 
@@ -135,7 +155,15 @@ public class Sai extends MeleeWeapon {
 		});
 	}
 
-	public static class ComboStrikeTracker extends Buff {
+	@Override
+	public float timeToUse() {
+		return super.timeToUse() * 0.5f;
+	}
+
+	// Refactored ComboStrikeTracker - now implements CombatModifier interfaces
+	public static class ComboStrikeTracker extends Buff implements
+			CombatModifier.AccuracyModifier,
+			CombatModifier.PreArmorDamageModifier {
 
 		{
 			type = buffType.POSITIVE;
@@ -144,6 +172,42 @@ public class Sai extends MeleeWeapon {
 		public static int DURATION = 5;
 		private float comboTime = 0f;
 		public int hits = 0;
+
+		// NEW: Track if this is being used for an ability
+		public boolean activeAbility = false;
+		public int abilityDamageBoost = 0;
+
+		@Override
+		public int priority() {
+			return CombatModifier.Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			// Only applies during ability usage
+			if (!activeAbility) return false;
+			if (context.attacker != target) return false;
+			return true;
+		}
+
+		@Override
+		public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+			// Infinite accuracy during ability
+			if (activeAbility) {
+				return Char.INFINITE_ACCURACY;
+			}
+			return currentAccuracy;
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			if (activeAbility && hits > 0) {
+				// Apply the ability's damage scaling
+				int totalBoost = abilityDamageBoost * hits;
+				return currentDamage + totalBoost;
+			}
+			return currentDamage;
+		}
 
 		@Override
 		public int icon() {
@@ -161,7 +225,7 @@ public class Sai extends MeleeWeapon {
 
 		@Override
 		public boolean act() {
-			comboTime-=TICK;
+			comboTime -= TICK;
 			spend(TICK);
 			if (comboTime <= 0) {
 				detach();
@@ -169,18 +233,19 @@ public class Sai extends MeleeWeapon {
 			return true;
 		}
 
-		public void addHit(){
+		// Called by normal attacks to build combo
+		public void addHit() {
 			hits++;
 			comboTime = 5f;
 
-			if (hits >= 2 && icon() != BuffIndicator.NONE){
-				GLog.p( Messages.get(Combo.class, "combo", hits) );
+			if (hits >= 2 && icon() != BuffIndicator.NONE) {
+				GLog.p(Messages.get(Combo.class, "combo", hits));
 			}
 		}
 
 		@Override
 		public float iconFadePercent() {
-			return Math.max(0, (DURATION - comboTime)/ DURATION);
+			return Math.max(0, (DURATION - comboTime) / DURATION);
 		}
 
 		@Override
@@ -193,32 +258,28 @@ public class Sai extends MeleeWeapon {
 			return Messages.get(this, "desc", hits, dispTurns(comboTime));
 		}
 
-		private static final String TIME  = "combo_time";
+		// Bundle code stays the same...
+		private static final String TIME = "combo_time";
 		public static String RECENT_HITS = "recent_hits";
+		private static final String ACTIVE = "active_ability";
+		private static final String BOOST = "ability_boost";
 
 		@Override
 		public void storeInBundle(Bundle bundle) {
 			super.storeInBundle(bundle);
 			bundle.put(TIME, comboTime);
 			bundle.put(RECENT_HITS, hits);
+			bundle.put(ACTIVE, activeAbility);
+			bundle.put(BOOST, abilityDamageBoost);
 		}
 
 		@Override
 		public void restoreFromBundle(Bundle bundle) {
 			super.restoreFromBundle(bundle);
-			if (bundle.contains(TIME)){
-				comboTime = bundle.getInt(TIME);
-				hits = bundle.getInt(RECENT_HITS);
-			} else {
-				//pre-2.4.0 saves
-				comboTime = 5f;
-				hits = 0;
-				if (bundle.contains(RECENT_HITS)) {
-					for (int i : bundle.getIntArray(RECENT_HITS)) {
-						hits += i;
-					}
-				}
-			}
+			comboTime = bundle.getFloat(TIME);
+			hits = bundle.getInt(RECENT_HITS);
+			activeAbility = bundle.getBoolean(ACTIVE);
+			abilityDamageBoost = bundle.getInt(BOOST);
 		}
 	}
 

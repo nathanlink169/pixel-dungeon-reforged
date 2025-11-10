@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.elixirs.ElixirOfFeatherFall;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
@@ -162,7 +163,7 @@ public class Chasm implements Hero.Doom {
 		else if (hero.pointsInTalent(Talent.ARMOR_MOD_INFINITE_FALLING) == 3) {
 			damageMultiplier = 0.01f;
 		}
-		hero.damage((int)(Math.max(hero.HP / 2, Random.NormalIntRange(hero.HP / 2, hero.GetMaxHP() / 4)) * damageMultiplier), new Chasm());
+		hero.Damage((int)(Math.max(hero.HP / 2, Random.NormalIntRange(hero.HP / 2, hero.GetMaxHP() / 4)) * damageMultiplier), new Chasm(), DamageType.of(DamageType.BLUDGEONING));
 	}
 
 	public static void mobFall( Mob mob ) {

@@ -30,8 +30,13 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
@@ -42,7 +47,13 @@ import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
-public class Skeleton extends Mob {
+import java.util.EnumSet;
+
+public class Skeleton extends Mob implements CombatModifier.OnDamageEffect {
+	{
+		immunities.add(Bleeding.class);
+		immunities.add(Poison.class);
+	}
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.skeleton; }
 
@@ -76,7 +87,7 @@ public class Skeleton extends Mob {
 
 			Char ch = findChar( pos + neighbours[i] );
 			if (ch != null && ch.isAlive()) {
-				int damage = damageRoll(AttackType.RANGED_PHYSICAL, false);
+				int damage = damageRoll(AttackContext.AttackType.RANGED, false);
 
 				if (cause == this && getRandomizerEnabled(RandomTraits.KAMIKAZE_BONES)) {
 					damage *= 3;
@@ -106,8 +117,9 @@ public class Skeleton extends Mob {
 				}
 
 				//apply DR twice (with 2 rolls for more consistency)
-				damage = Math.max( 0,  damage - (ch.drRoll() + ch.drRoll()) );
-				ch.damage( damage, this );
+				EnumSet<DamageType> damageType = DamageType.of(DamageType.PIERCING, DamageType.SLASHING);
+				damage = Math.max( 0,  damage - (ch.drRoll(damageType) + ch.drRoll(damageType)) );
+				ch.Damage( damage, this, damageType);
 				if (ch == Dungeon.hero && !ch.isAlive()) {
 					heroKilled = true;
 				}
@@ -125,21 +137,12 @@ public class Skeleton extends Mob {
 	}
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
+	public boolean Attack(Char enemy, AttackContext.AttackType attackType, EnumSet<DamageType> damageType) {
 		if (getRandomizerEnabled(RandomTraits.KAMIKAZE_BONES)) {
 			die(this);
-			return 0;
+			return true;
 		}
-
-		damage = super.attackProc( enemy, damage );
-
-		if (getRandomizerEnabled(RandomTraits.DRAINING_TOUCH)) {
-			if (damage > 0 && Random.Int(2) == 0) {
-				Buff.affect(enemy, Weakness.class);
-			}
-		}
-
-		return damage;
+		return super.Attack(enemy, attackType, damageType);
 	}
 
 	@Override
@@ -156,8 +159,27 @@ public class Skeleton extends Mob {
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		return super.attackSkill(target) / (getRandomizerEnabled(RandomTraits.BRITTLE_JOINTS) ? 6 : 1);
+	public int attackSkill() {
+		return super.attackSkill() / (getRandomizerEnabled(RandomTraits.BRITTLE_JOINTS) ? 6 : 1);
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (getRandomizerEnabled(RandomTraits.DRAINING_TOUCH)) {
+			if (Random.Int(2) == 0) {
+				Buff.affect(enemy, Weakness.class);
+			}
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
 	}
 
 	public enum RandomTraits {

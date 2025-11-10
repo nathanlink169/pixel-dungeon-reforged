@@ -29,6 +29,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Blob;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.Game;
 import com.watabou.utils.Bundlable;
 import com.watabou.utils.Bundle;
@@ -40,10 +41,8 @@ public abstract class Actor implements Bundlable {
 	
 	public static final float TICK	= 1f;
 
-	private float time;
-	protected float getTime() {return time;}
+	protected float getTime() { return m_Time.Get(); }
 
-	private int id = 0;
 
 	//default priority values for general actor categories
 	//note that some specific actors pick more specific values
@@ -61,12 +60,12 @@ public abstract class Actor implements Bundlable {
 	protected abstract boolean act();
 
 	//Always spends exactly the specified amount of time, regardless of time-influencing factors
-	protected void spendConstant( float time ){
-		this.time += time;
+	protected void spendConstant( float time ) {
+		m_Time.Set(m_Time.Get() + time);
 		//if time is very close to a whole number, round to a whole number to fix errors
-		float ex = Math.abs(this.time % 1f);
+		float ex = Math.abs(m_Time.Get() % 1f);
 		if (ex < .001f){
-			this.time = Math.round(this.time);
+			m_Time.Set((float) Math.round(m_Time.Get()));
 		}
 	}
 
@@ -76,22 +75,22 @@ public abstract class Actor implements Bundlable {
 	}
 
 	public void spendToWhole(){
-		time = (float)Math.ceil(time);
+		m_Time.Set((float)Math.ceil(m_Time.Get()));
 	}
-	
+
 	protected void postpone( float time ) {
-		if (this.time < now + time) {
-			this.time = now + time;
+		if (m_Time.Get() < now + time) {
+			m_Time.Set(now + time);
 			//if time is very close to a whole number, round to a whole number to fix errors
-			float ex = Math.abs(this.time % 1f);
+			float ex = Math.abs(m_Time.Get() % 1f);
 			if (ex < .001f){
-				this.time = Math.round(this.time);
+				m_Time.Set((float) Math.round(m_Time.Get()));
 			}
 		}
 	}
-	
+
 	public float cooldown() {
-		return time - now;
+		return m_Time.Get() - now;
 	}
 
 	public void clearTime() {
@@ -104,49 +103,46 @@ public abstract class Actor implements Bundlable {
 	}
 
 	public void timeToNow() {
-		time = now;
+		m_Time.Set(now);
 	}
-	
+
 	protected void diactivate() {
-		time = Float.MAX_VALUE;
+		m_Time.Set(Float.MAX_VALUE);
 	}
-	
+
 	protected void onAdd() {}
-	
+
 	protected void onRemove() {}
 
-	private static final String TIME    = "time";
-	private static final String ID      = "id";
+	private BundleableProperty.Float m_Time = new BundleableProperty.Float("time", 0.0f);
+	private BundleableProperty.Int m_ID = new BundleableProperty.Int("id", 0);
 
 	@Override
 	public void storeInBundle( Bundle bundle ) {
-		bundle.put( TIME, time );
-		bundle.put( ID, id );
+		m_Time.Store(bundle);
+		m_ID.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
-		time = bundle.getFloat( TIME );
-		int incomingID = bundle.getInt( ID );
-		if (Actor.findById(incomingID) == null){
-			id = incomingID;
-		} else {
-			id = nextID++;
+		m_Time.Restore(bundle);
+		m_ID.Restore(bundle);
+		if (Actor.findById(m_ID.Get()) != null){
+			m_ID.Set(nextID++);
 		}
 	}
 
 	public int id() {
-		if (id > 0) {
-			return id;
-		} else {
-			return (id = nextID++);
+		if (m_ID.Get() == 0) {
+			m_ID.Set(nextID++);
 		}
+		return m_ID.Get();
 	}
 
 	// **********************
 	// *** Static members ***
 	// **********************
-	
+
 	private static HashSet<Actor> all = new HashSet<>();
 	private static HashSet<Char> chars = new HashSet<>();
 	private static volatile Actor current;
@@ -155,13 +151,13 @@ public abstract class Actor implements Bundlable {
 	private static int nextID = 1;
 
 	private static float now = 0;
-	
+
 	public static float now(){
 		return now;
 	}
-	
+
 	public static synchronized void clear() {
-		
+
 		now = 0;
 
 		all.clear();
@@ -171,13 +167,13 @@ public abstract class Actor implements Bundlable {
 	}
 
 	public static synchronized void fixTime() {
-		
+
 		if (all.isEmpty()) return;
-		
+
 		float min = Float.MAX_VALUE;
 		for (Actor a : all) {
-			if (a.time < min) {
-				min = a.time;
+			if (a.m_Time.Get() < min) {
+				min = a.m_Time.Get();
 			}
 		}
 
@@ -185,7 +181,7 @@ public abstract class Actor implements Bundlable {
 		//So that turns always align with a whole number
 		min = (int)min;
 		for (Actor a : all) {
-			a.time -= min;
+			a.m_Time.Set(a.m_Time.Get() - min);
 		}
 
 		if (Dungeon.hero != null && all.contains( Dungeon.hero )) {
@@ -193,11 +189,11 @@ public abstract class Actor implements Bundlable {
 		}
 		now -= min;
 	}
-	
+
 	public static void init() {
-		
+
 		add( Dungeon.hero );
-		
+
 		for (Mob mob : Dungeon.level.mobs) {
 			add( mob );
 		}
@@ -206,11 +202,11 @@ public abstract class Actor implements Bundlable {
 		for (Mob mob : Dungeon.level.mobs) {
 			mob.restoreEnemy();
 		}
-		
+
 		for (Blob blob : Dungeon.level.blobs.values()) {
 			add( blob );
 		}
-		
+
 		current = null;
 	}
 
@@ -241,35 +237,35 @@ public abstract class Actor implements Bundlable {
 	public static int curActorPriority() {
 		return current != null ? current.actPriority : HERO_PRIO;
 	}
-	
+
 	public static boolean keepActorThreadAlive = true;
-	
+
 	public static void process() {
-		
+
 		boolean doNext;
 		boolean interrupted = false;
 
 		do {
-			
+
 			current = null;
 			if (!interrupted && !Game.switchingScene()) {
 				float earliest = Float.MAX_VALUE;
 
 				for (Actor actor : all) {
-					
+
 					//some actors will always go before others if time is equal.
-					if (actor.time < earliest ||
-							actor.time == earliest && (current == null || actor.actPriority > current.actPriority)) {
-						earliest = actor.time;
+					if (actor.m_Time.Get() < earliest ||
+							actor.m_Time.Get() == earliest && (current == null || actor.actPriority > current.actPriority)) {
+						earliest = actor.m_Time.Get();
 						current = actor;
 					}
-					
+
 				}
 			}
 
 			if  (current != null) {
 
-				now = current.time;
+				now = current.m_Time.Get();
 				Actor acting = current;
 
 				if (acting instanceof Char && ((Char) acting).sprite != null) {
@@ -285,9 +281,9 @@ public abstract class Actor implements Bundlable {
 						interrupted = true;
 					}
 				}
-				
+
 				interrupted = interrupted || Thread.interrupted();
-				
+
 				if (interrupted){
 					doNext = false;
 					current = null;
@@ -304,9 +300,9 @@ public abstract class Actor implements Bundlable {
 
 			if (!doNext){
 				synchronized (Thread.currentThread()) {
-					
+
 					interrupted = interrupted || Thread.interrupted();
-					
+
 					if (interrupted){
 						current = null;
 						interrupted = false;
@@ -314,7 +310,7 @@ public abstract class Actor implements Bundlable {
 
 					//signals to the gamescene that actor processing is finished for now
 					Thread.currentThread().notify();
-					
+
 					try {
 						Thread.currentThread().wait();
 					} catch (InterruptedException e) {
@@ -325,17 +321,17 @@ public abstract class Actor implements Bundlable {
 
 		} while (keepActorThreadAlive);
 	}
-	
+
 	public static void add( Actor actor ) {
 		add( actor, now );
 	}
-	
+
 	public static void addDelayed( Actor actor, float delay ) {
 		add( actor, now + Math.max(delay, 0) );
 	}
-	
+
 	private static synchronized void add( Actor actor, float time ) {
-		
+
 		if (all.contains( actor )) {
 			return;
 		}
@@ -343,9 +339,9 @@ public abstract class Actor implements Bundlable {
 		ids.put( actor.id(),  actor );
 
 		all.add( actor );
-		actor.time += time;
+		actor.m_Time.Set(actor.m_Time.Get() + time);
 		actor.onAdd();
-		
+
 		if (actor instanceof Char) {
 			Char ch = (Char)actor;
 			chars.add( ch );
@@ -354,16 +350,16 @@ public abstract class Actor implements Bundlable {
 			}
 		}
 	}
-	
+
 	public static synchronized void remove( Actor actor ) {
-		
+
 		if (actor != null) {
 			all.remove( actor );
 			chars.remove( actor );
 			actor.onRemove();
 
-			if (actor.id > 0) {
-				ids.remove( actor.id );
+			if (actor.m_ID.Get() > 0) {
+				ids.remove( actor.m_ID.Get() );
 			}
 		}
 	}

@@ -74,16 +74,16 @@ public class SpectralNecromancerSprite extends MobSprite {
 	@Override
 	public void link(Char ch) {
 		super.link(ch);
-		if (ch instanceof Necromancer && ((Necromancer) ch).summoning){
-			zap(((Necromancer) ch).summoningPos);
+		if (ch instanceof Necromancer && ((Necromancer) ch).GetIsSummoning()){
+			zap(((Necromancer) ch).GetSummoningPosition());
 		}
 	}
 
 	@Override
 	public void update() {
 		super.update();
-		if (summoningParticles != null && ((Necromancer) ch).summoningPos != -1){
-			summoningParticles.visible = Dungeon.level.heroFOV[((Necromancer) ch).summoningPos];
+		if (summoningParticles != null && ((Necromancer) ch).GetSummoningPosition() != -1){
+			summoningParticles.visible = Dungeon.level.heroFOV[((Necromancer) ch).GetSummoningPosition()];
 		}
 	}
 
@@ -130,13 +130,13 @@ public class SpectralNecromancerSprite extends MobSprite {
 	@Override
 	public void zap(int cell) {
 		super.zap(cell);
-		if (ch instanceof Necromancer && ((Necromancer) ch).summoning){
+		if (ch instanceof Necromancer && ((Necromancer) ch).GetIsSummoning()){
 			if (summoningParticles != null){
 				summoningParticles.on = false;
 			}
-			summoningParticles = CellEmitter.get(((Necromancer) ch).summoningPos);
+			summoningParticles = CellEmitter.get(((Necromancer) ch).GetSummoningPosition());
 			summoningParticles.pour(ShadowParticle.MISSILE, 0.1f);
-			summoningParticles.visible = Dungeon.level.heroFOV[((Necromancer) ch).summoningPos];
+			summoningParticles.visible = Dungeon.level.heroFOV[((Necromancer) ch).GetSummoningPosition()];
 			if (visible || summoningParticles.visible ) Sample.INSTANCE.play( Assets.Sounds.CHARGEUP, 1f, 0.8f );
 		}
 	}
@@ -146,7 +146,7 @@ public class SpectralNecromancerSprite extends MobSprite {
 		super.onComplete(anim);
 		if (anim == zap){
 			if (ch instanceof Necromancer){
-				if (((Necromancer) ch).summoning){
+				if (((Necromancer) ch).GetIsSummoning()){
 					charge();
 				} else {
 					((Necromancer)ch).onZapComplete();

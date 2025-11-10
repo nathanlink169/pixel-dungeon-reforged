@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.MagicMissile;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
@@ -112,7 +113,7 @@ public class GrimTrap extends Trap {
 								new Callback() {
 									@Override
 									public void call() {
-										finalTarget.damage(finalDmg, GrimTrap.this);
+										finalTarget.Damage(finalDmg, GrimTrap.this, DamageType.of(DamageType.NEGATIVE_ENERGY));
 										if (finalTarget == Dungeon.hero) {
 											Sample.INSTANCE.play(Assets.Sounds.CURSED);
 											if (!finalTarget.isAlive()) {
@@ -130,7 +131,7 @@ public class GrimTrap extends Trap {
 								});
 						return false;
 					} else {
-						finalTarget.damage(finalDmg, GrimTrap.this);
+						finalTarget.Damage(finalDmg, GrimTrap.this, DamageType.of(DamageType.NEGATIVE_ENERGY));
 						return true;
 					}
 				} else {

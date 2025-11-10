@@ -28,6 +28,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Flare;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -38,11 +39,17 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class HolyBomb extends Bomb {
 	
 	{
 		image = ItemSpriteSheet.HOLY_BOMB;
+	}
+
+	@Override
+	protected EnumSet<DamageType> GetDamageType() {
+		return DamageType.of(DamageType.POSITIVE_ENERGY);
 	}
 
 	@Override
@@ -77,7 +84,7 @@ public class HolyBomb extends Bomb {
 				
 				//bomb deals an additional 50% damage to unholy enemies
 				int damage = Math.round(Random.NormalIntRange( Dungeon.scalingDepth()+4, 12 + 3*Dungeon.scalingDepth() ) * 0.5f);
-				ch.damage(damage, new HolyDamage());
+				ch.Damage(damage, new HolyDamage(), GetDamageType());
 			}
 		}
 		

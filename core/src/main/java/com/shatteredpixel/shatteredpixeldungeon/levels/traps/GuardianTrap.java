@@ -89,10 +89,10 @@ public class GuardianTrap extends Trap {
 
 		@Override
 		public void createWeapon( boolean useDecks ) {
-			weapon = (MeleeWeapon) Generator.randomUsingDefaults(Generator.Category.WEAPON);
-			weapon.cursed = false;
-			weapon.enchant(null);
-			weapon.level(0);
+			m_Weapon.Set((MeleeWeapon) Generator.randomUsingDefaults(Generator.Category.WEAPON));
+			m_Weapon.Get().cursed = false;
+			m_Weapon.Get().enchant(null);
+			m_Weapon.Get().level(0);
 		}
 
 		@Override
@@ -103,7 +103,7 @@ public class GuardianTrap extends Trap {
 			if (state != HUNTING) {
 				state = WANDERING;
 			}
-			target = cell;
+			m_Target.Set(cell);
 		}
 
 	}

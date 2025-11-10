@@ -26,16 +26,16 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bleeding;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
-import com.watabou.utils.Random;
 
-public class Leech extends Weapon.Enchantment implements Hero.Doom {
+public class Leech extends Weapon.Enchantment implements Hero.Doom, CombatModifier.OnDamageEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
@@ -45,13 +45,21 @@ public class Leech extends Weapon.Enchantment implements Hero.Doom {
 	private static float turnsWithoutDamage = 0.0f;
 
 	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage ) {
+	public void onDamage (AttackContext context, int finalDamage) {
 		turnsWithoutDamage = 0.0f;
-		return damage;
 	}
 
-	// 20 turns to activate, triggers 1 damage, then damage every 5 turns, squares the damage (1, 2, 4, 8, etc.)
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
 
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
+
+	// 20 turns to activate, triggers 1 damage, then damage every 5 turns, squares the damage (1, 2, 4, 16, etc.)
 	public void triggerDamage( Char owner, float time ) {
 		turnsWithoutDamage += time;
 		int intTurns = (int)(turnsWithoutDamage);
@@ -60,7 +68,7 @@ public class Leech extends Weapon.Enchantment implements Hero.Doom {
 		}
 
 		int damage = (int) Math.pow(2, (intTurns - TURNS_TO_ACTIVATE) / (float)DAMAGE_INTERVAL);
-		owner.damage(damage, this);
+		owner.Damage(damage, this, DamageType.of(DamageType.NONE));
 	}
 
 	@Override

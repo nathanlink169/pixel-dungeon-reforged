@@ -52,7 +52,7 @@ public class ArmoredBrute extends Brute {
 			sprite.showStatus( CharSprite.WARNING, Messages.get(this, "enraged") );
 		}
 		spend( TICK );
-		hasRaged = true;
+		m_HasRaged.Set(true);
 	}
 	
 	@Override

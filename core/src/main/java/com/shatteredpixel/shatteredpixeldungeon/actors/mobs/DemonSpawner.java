@@ -29,17 +29,15 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
-import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CrystalWispSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.RatSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.SpawnerSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -47,7 +45,7 @@ import com.watabou.utils.Random;
 
 import java.util.ArrayList;
 
-public class DemonSpawner extends Mob {
+public class DemonSpawner extends Mob implements CombatModifier.PostArmorDamageModifier, CombatModifier.OnDamageEffect {
 	{
 		state = PASSIVE;
 	}
@@ -70,40 +68,36 @@ public class DemonSpawner extends Mob {
 		return true;
 	}
 
-	private float spawnCooldown = 0;
-
-	public boolean spawnRecorded = false;
-
 	@Override
 	protected boolean act() {
-		if (!spawnRecorded){
+		if (!m_SpawnRecorded.Get()){
 			Statistics.spawnersAlive++;
-			spawnRecorded = true;
+			m_SpawnRecorded.Set(true);
 		}
 
-		if (Dungeon.hero.buff(AscensionChallenge.class) != null && spawnCooldown > 20){
-			spawnCooldown = 20;
+		if (Dungeon.hero.buff(AscensionChallenge.class) != null && m_SpawnCooldown.Get() > 20){
+			m_SpawnCooldown.Set(20.0f);
 		}
 
-		spawnCooldown--;
-		if (spawnCooldown <= 0){
+		m_SpawnCooldown.Set(m_SpawnCooldown.Get() - 1);
+		if (m_SpawnCooldown.Get() <= 0){
 			SpawnDemon();
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
 				SpawnDemon();
 			}
 
 			//we don't want spawners to store multiple ripper demons
-			if (spawnCooldown < -20){
-				spawnCooldown = -20;
+			if (m_SpawnCooldown.Get() < -20){
+				m_SpawnCooldown.Set(-20.0f);
 			}
-			spawnCooldown += timeBetweenSpawns();
+			m_SpawnCooldown.Set(m_SpawnCooldown.Get() + timeBetweenSpawns());
 			if (Dungeon.depth > 21){
 				//60/53.33/46.67/40 turns to spawn on floor 21/22/23/24
-				spawnCooldown -= Math.min(20, (Dungeon.depth-21)*6.67);
+				m_SpawnCooldown.Set(m_SpawnCooldown.Get() - Math.min(20, (Dungeon.depth-21)*6.67f));
 			}
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
 				// Not quite double, but we spawn double the demons
-				spawnCooldown *= 1.75f;
+				m_SpawnCooldown.Set(m_SpawnCooldown.Get() * 1.75f);
 			}
 		}
 		alerted = false;
@@ -144,27 +138,13 @@ public class DemonSpawner extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (dmg >= 20){
-			//takes 20/21/22/23/24/25/26/27/28/29/30 dmg
-			// at   20/22/25/29/34/40/47/55/64/74/85 incoming dmg
-			dmg = 19 + (int)(Math.sqrt(8*(dmg - 19) + 1) - 1)/2;
-		}
-		spawnCooldown -= dmg;
-		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
-			spawnCooldown -= dmg;
-		}
-		super.damage(dmg, src, damageType);
-	}
-
-	@Override
 	public Notes.Landmark landmark() {
 		return Notes.Landmark.DEMON_SPAWNER;
 	}
 
 	@Override
 	public void die(Object cause) {
-		if (spawnRecorded){
+		if (m_SpawnRecorded.Get()){
 			Statistics.spawnersAlive--;
 			Notes.remove(landmark());
 		}
@@ -172,21 +152,52 @@ public class DemonSpawner extends Mob {
 		super.die(cause);
 	}
 
-	public static final String SPAWN_COOLDOWN = "spawn_cooldown";
-	public static final String SPAWN_RECORDED = "spawn_recorded";
+	public boolean GetSpawnRecorded() {
+		return m_SpawnRecorded.Get();
+	}
+
+	private BundleableProperty.Float m_SpawnCooldown = new BundleableProperty.Float("spawn_cooldown", 0.0f);
+	private BundleableProperty.Bool m_SpawnRecorded = new BundleableProperty.Bool("spawn_cooldown", false);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(SPAWN_COOLDOWN, spawnCooldown);
-		bundle.put(SPAWN_RECORDED, spawnRecorded);
+		m_SpawnCooldown.Store(bundle);
+		m_SpawnRecorded.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		spawnCooldown = bundle.getFloat(SPAWN_COOLDOWN);
-		spawnRecorded = bundle.getBoolean(SPAWN_RECORDED);
+		m_SpawnCooldown.Restore(bundle);
+		m_SpawnRecorded.Restore(bundle);
 	}
 
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		if (currentDamage >= 20){
+			//takes 20/21/22/23/24/25/26/27/28/29/30 dmg
+			// at   20/22/25/29/34/40/47/55/64/74/85 incoming dmg
+			currentDamage = 19 + (int)(Math.sqrt(8*(currentDamage - 19) + 1) - 1)/2;
+		}
+		return currentDamage;
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		m_SpawnCooldown.Set(m_SpawnCooldown.Get() - damageDealt);
+		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
+			m_SpawnCooldown.Set(m_SpawnCooldown.Get() - damageDealt);
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this;
+	}
 }

@@ -24,10 +24,12 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.trinkets;
 
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class FerretTuft extends Trinket {
+public class FerretTuft extends Trinket implements CombatModifier.EvasionModifier {
 
 	{
 		image = ItemSpriteSheet.FERRET_TUFT;
@@ -60,4 +62,18 @@ public class FerretTuft extends Trinket {
 		}
 	}
 
+	@Override
+	public float modifyEvasion(AttackContext context, float currentEvasion) {
+		return currentEvasion * evasionMultiplier();
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return true;
+	}
 }

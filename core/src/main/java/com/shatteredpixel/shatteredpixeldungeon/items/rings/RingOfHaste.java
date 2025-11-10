@@ -56,7 +56,7 @@ public class RingOfHaste extends Ring {
 	}
 	
 	@Override
-	protected RingBuff buff( ) {
+	public RingBuff buff( ) {
 		return new Haste();
 	}
 	

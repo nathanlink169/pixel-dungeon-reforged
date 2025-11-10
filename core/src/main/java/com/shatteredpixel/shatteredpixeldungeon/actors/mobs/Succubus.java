@@ -29,10 +29,12 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -43,6 +45,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfTeleportat
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfUpgrade;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -51,59 +54,13 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 
-public class Succubus extends Mob {
-	private int blinkCooldown = 0;
-
+public class Succubus extends Mob implements CombatModifier.PreArmorDamageModifier, CombatModifier.OnHitEffect {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.succubus; }
 
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		
-		if (enemy.buff(Charm.class) != null ){
-			int shield = (HP - GetMaxHP()) + (5 + damage);
-			if (shield > 0){
-				HP = GetMaxHP();
-				if (shield < 5){
-					sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5-shield), FloatingText.HEALING);
-				}
-
-				Buff.affect(this, Barrier.class).setShield(shield);
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
-			} else {
-				HP += 5 + damage;
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, "5", FloatingText.HEALING);
-			}
-			if (Dungeon.level.heroFOV[pos]) {
-				Sample.INSTANCE.play( Assets.Sounds.CHARMS );
-			}
-		} else {
-			boolean shouldCharm;
-			if (getRandomizerEnabled(RandomTraits.CHARMING_DEMON)) {
-				shouldCharm = Random.Int(3) <= 1;
-			} else if (getRandomizerEnabled(RandomTraits.WEAK_ENCHANTMENT)) {
-				shouldCharm = Random.Int(10) == 0;
-			} else {
-				shouldCharm = Random.Int(3) == 0;
-			}
-			if (shouldCharm) {
-				Charm c = Buff.affect(enemy, Charm.class, Charm.DURATION / 2f);
-				c.object = id();
-				c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
-				if (Dungeon.level.heroFOV[enemy.pos]) {
-					enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
-					Sample.INSTANCE.play(Assets.Sounds.CHARMS);
-				}
-			}
-		}
-		
-		return damage;
-	}
-	
-	@Override
-	protected boolean getCloser( int target ) {
-		if (fieldOfView[target] && Dungeon.level.distance( pos, target ) > 2 && blinkCooldown <= 0 && !rooted && !getRandomizerEnabled(RandomTraits.EARTHBOUND)) {
+    public boolean getCloser(int target) {
+		if (fieldOfView[target] && Dungeon.level.distance( pos, target ) > 2 && m_BlinkCooldown.Get() <= 0 && !rooted && !getRandomizerEnabled(RandomTraits.EARTHBOUND)) {
 			
 			if (blink( target )) {
 				spend(-1 / speed());
@@ -114,12 +71,12 @@ public class Succubus extends Mob {
 			
 		} else {
 
-			blinkCooldown--;
+			m_BlinkCooldown.Decrement();
 			return super.getCloser( target );
 			
 		}
 	}
-	
+
 	private boolean blink( int target ) {
 		
 		Ballistica route = new Ballistica( pos, target, Ballistica.PROJECTILE);
@@ -142,14 +99,14 @@ public class Succubus extends Mob {
 			if (candidates.size() > 0)
 				cell = Random.element(candidates);
 			else {
-				blinkCooldown = Random.IntRange(4, 6);
+				m_BlinkCooldown.Set(Random.IntRange(4, 6));
 				return false;
 			}
 		}
 		
 		ScrollOfTeleportation.appear( this, cell );
 
-		blinkCooldown = Random.IntRange(4, 6);
+		m_BlinkCooldown.Set(Random.IntRange(4, 6));
 		return true;
 	}
 
@@ -179,18 +136,88 @@ public class Succubus extends Mob {
 		immunities.add( Charm.class );
 	}
 
+	@Override
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		// Only applies when:
+		// 1. Succubus is the DEFENDER (taking damage)
+		// 2. Has PARTIAL_RESISTANCE trait enabled
+		// 3. Attacker is charmed by THIS succubus
+		if (context.defender != this) {
+			return false;
+		}
+
+		if (!getRandomizerEnabled(RandomTraits.PARTIAL_RESISTANCE)) {
+			return false;
+		}
+
+		// Check if attacker is charmed by this specific succubus
+		Charm charm = context.attacker.buff(Charm.class);
+		return charm != null && charm.object == this.id();
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		return currentDamage / 2; // 50% damage reduction
+	}
+
 	private static final String BLINK_CD = "blink_cd";
+	private BundleableProperty.Int m_BlinkCooldown = new BundleableProperty.Int("blink_cd", 0);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(BLINK_CD, blinkCooldown);
+		m_BlinkCooldown.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		blinkCooldown = bundle.getInt(BLINK_CD);
+		m_BlinkCooldown.Restore(bundle);
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (enemy.buff(Charm.class) != null ){
+			int shield = (HP - GetMaxHP()) + (5 + finalDamage);
+			if (shield > 0){
+				HP = GetMaxHP();
+				if (shield < 5){
+					sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5-shield), FloatingText.HEALING);
+				}
+
+				Buff.affect(this, Barrier.class).setShield(shield);
+				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
+			} else {
+				HP += 5 + finalDamage;
+				sprite.showStatusWithIcon(CharSprite.POSITIVE, "5", FloatingText.HEALING);
+			}
+			if (Dungeon.level.heroFOV[pos]) {
+				Sample.INSTANCE.play( Assets.Sounds.CHARMS );
+			}
+		} else {
+			boolean shouldCharm;
+			if (getRandomizerEnabled(RandomTraits.CHARMING_DEMON)) {
+				shouldCharm = Random.Int(3) <= 1;
+			} else if (getRandomizerEnabled(RandomTraits.WEAK_ENCHANTMENT)) {
+				shouldCharm = Random.Int(10) == 0;
+			} else {
+				shouldCharm = Random.Int(3) == 0;
+			}
+			if (shouldCharm) {
+				Charm c = Buff.affect(enemy, Charm.class, Charm.DURATION / 2f);
+				c.object = id();
+				c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
+				if (Dungeon.level.heroFOV[enemy.pos]) {
+					enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
+					Sample.INSTANCE.play(Assets.Sounds.CHARMS);
+				}
+			}
+		}
 	}
 
 	public enum RandomTraits {

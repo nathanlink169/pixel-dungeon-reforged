@@ -25,12 +25,15 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class WarHammer extends MeleeWeapon {
+public class WarHammer extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.WAR_HAMMER;
@@ -38,9 +41,16 @@ public class WarHammer extends MeleeWeapon {
 		hitSoundPitch = 1f;
 
 		tier = 5;
-		ACC = 1.20f; //20% boost to accuracy
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
+	}
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 1.2f;
+		}
+		return currentAccuracy;
 	}
 
 	@Override
@@ -58,7 +68,7 @@ public class WarHammer extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(6+1.5*lvl) damage, roughly +40% base dmg, +45% scaling
 		int dmgBoost = augment.damageFactor(6 + Math.round(1.5f*buffedLvl()));
-		Mace.heavyBlowAbility(hero, target, 1, dmgBoost, this);
+		Mace.heavyBlowAbility(hero, target, dmgBoost, this);
 	}
 
 	public String upgradeAbilityStat(int level){

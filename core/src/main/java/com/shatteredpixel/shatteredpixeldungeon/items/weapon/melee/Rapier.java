@@ -30,8 +30,12 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LungeTracker;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.features.Door;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -54,18 +58,13 @@ public class Rapier extends MeleeWeapon {
 
 		bones = false;
 
-		damageType = DamageType.PIERCING;
+		damageType = DamageType.of(DamageType.PIERCING);
 	}
 
 	@Override
 	public int max(int lvl) {
 		return  4*(tier+1) +    //8 base, down from 10
 				lvl*(tier+1);   //scaling unchanged
-	}
-
-	@Override
-	public int defenseFactor( Char owner ) {
-		return 1;	//1 extra defence
 	}
 
 	@Override
@@ -77,7 +76,7 @@ public class Rapier extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(5+1.5*lvl) damage, roughly +111% base damage, +100% scaling
 		int dmgBoost =  augment.damageFactor(5 + Math.round(1.5f*buffedLvl()));
-		lungeAbility(hero, target, 1, dmgBoost, this);
+		lungeAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -95,13 +94,25 @@ public class Rapier extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
-	public static void lungeAbility(Hero hero, Integer target, float dmgMulti, int dmgBoost, MeleeWeapon wep){
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		if (context.defender.getWeapon() == this) {
+			currentDamage -= 1;
+			if (currentDamage < 0) {
+				currentDamage = 0;
+			}
+		}
+
+		return super.modifyPreArmorDamage(context, currentDamage);
+	}
+
+	public static void lungeAbility(Hero hero, Integer target, int dmgBoost, MeleeWeapon wep){
 		if (target == null){
 			return;
 		}
 
 		Char enemy = Actor.findChar(target);
-		//duelist can lunge out of her FOV, but this wastes the ability instead of cancelling if there is no target
+		// Duelist can lunge out of her FOV, but this wastes the ability instead of cancelling
 		if (Dungeon.level.heroFOV[target]) {
 			if (enemy == null || enemy == hero || hero.isCharmedBy(enemy)) {
 				GLog.w(Messages.get(wep, "ability_no_target"));
@@ -116,6 +127,7 @@ public class Rapier extends MeleeWeapon {
 			return;
 		}
 
+		// Find optimal lunge cell
 		int lungeCell = -1;
 		for (int i : PathFinder.NEIGHBOURS8){
 			if (Dungeon.level.distance(hero.pos+i, target) <= wep.reachFactor(hero)
@@ -136,6 +148,8 @@ public class Rapier extends MeleeWeapon {
 
 		hero.busy();
 		Sample.INSTANCE.play(Assets.Sounds.MISS);
+
+		// LUNGE MOVEMENT - happens first
 		hero.sprite.jump(hero.pos, dest, 0, 0.1f, new Callback() {
 			@Override
 			public void call() {
@@ -146,27 +160,46 @@ public class Rapier extends MeleeWeapon {
 				Dungeon.level.occupyCell(hero);
 				Dungeon.observe();
 
-				hero.belongings.abilityWeapon = wep; //set this early to we can check canAttack
-				if (enemy != null && hero.canAttack(enemy)) {
-					hero.sprite.attack(enemy.pos, new Callback() {
+				// After landing, check if we can still attack
+				hero.belongings.abilityWeapon = wep;
+				Char finalEnemy = Actor.findChar(target); // Re-get enemy in case things changed
+
+				if (finalEnemy != null && hero.canAttack(finalEnemy)) {
+					// ATTACK PHASE - set up tracker and attack
+					hero.sprite.attack(finalEnemy.pos, new Callback() {
 						@Override
 						public void call() {
+							wep.beforeAbilityUsed(hero, finalEnemy);
 
-							wep.beforeAbilityUsed(hero, enemy);
-							AttackIndicator.target(enemy);
-							if (hero.attack(enemy, dmgMulti, dmgBoost, Char.INFINITE_ACCURACY, DamageType.PIERCING, Char.AttackType.MELEE)) {
+							// Apply lunge tracker with damage boost
+							LungeTracker tracker = Buff.affect(hero, LungeTracker.class);
+							tracker.dmgBoost = dmgBoost;
+							tracker.weapon = wep;
+
+							AttackIndicator.target(finalEnemy);
+
+							// Build attack context using new system
+							AttackContext context = new AttackContext.Builder(hero, finalEnemy)
+									.attackType(AttackContext.AttackType.MELEE)
+									.damageType(DamageType.of(DamageType.PIERCING))
+									.build();
+
+							// Resolve through new combat system
+							AttackResult result = CombatResolver.resolve(context);
+
+							if (result.result == AttackResult.ResultType.HIT) {
 								Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-								if (!enemy.isAlive()) {
-									wep.onAbilityKill(hero, enemy);
-								}
 							}
+
+							tracker.detach();
+
 							Invisibility.dispel();
 							hero.spendAndNext(hero.attackDelay());
 							wep.afterAbilityUsed(hero);
 						}
 					});
 				} else {
-					//spends charge but otherwise does not count as an ability use
+					// Lunge succeeded but no valid target - spend charge but don't count as ability use
 					Charger charger = Buff.affect(hero, Charger.class);
 					charger.partialCharge -= 1;
 					while (charger.partialCharge < 0 && charger.charges > 0) {

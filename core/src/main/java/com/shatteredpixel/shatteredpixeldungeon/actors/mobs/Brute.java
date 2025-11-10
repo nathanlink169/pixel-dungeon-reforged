@@ -30,6 +30,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -39,42 +42,13 @@ import com.shatteredpixel.shatteredpixeldungeon.levels.features.Chasm;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 public class Brute extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.brute; }
-	
-	protected boolean hasRaged = false;
-
-	@Override
-	public int minDamage(AttackType type) {
-		int damageMultiplier = 1;
-		if (buff(BruteRage.class) != null) {
-			if (getRandomizerEnabled(RandomTraits.DYING_BREATH)) {
-				damageMultiplier = 0;
-			} else {
-				damageMultiplier = 3;
-			}
-		}
-
-		return super.minDamage(type) * damageMultiplier;
-	}
-
-	@Override
-	public int maxDamage(AttackType type) {
-		float damageMultiplier = 1;
-		if (buff(BruteRage.class) != null) {
-			if (getRandomizerEnabled(RandomTraits.DYING_BREATH)) {
-				damageMultiplier = 0.6f;
-			} else {
-				damageMultiplier = 1.6f;
-			}
-		}
-
-		return (int) (super.minDamage(type) * damageMultiplier);
-	}
 
 	@Override
 	public float speed() {
@@ -89,10 +63,15 @@ public class Brute extends Mob {
 
 	@Override
 	public void die(Object cause) {
-		super.die(cause);
-
 		if (cause == Chasm.class){
-			hasRaged = true; //don't let enrage trigger for chasm deaths
+			m_HasRaged.Set(true); //don't let enrage trigger for chasm deaths
+		}
+
+		if (m_HasRaged.Get()) {
+			super.die(cause);
+		}
+		else {
+			triggerEnrage();
 		}
 	}
 
@@ -101,7 +80,7 @@ public class Brute extends Mob {
 		if (super.isAlive()){
 			return true;
 		} else {
-			if (!hasRaged){
+			if (!m_HasRaged.Get()){
 				triggerEnrage();
 			}
 			return !buffs(BruteRage.class).isEmpty();
@@ -119,7 +98,7 @@ public class Brute extends Mob {
 			SpellSprite.show( this, SpellSprite.BERSERK);
 		}
 		spend( TICK );
-		hasRaged = true;
+		m_HasRaged.Set(true);
 	}
 
 	@Override
@@ -133,22 +112,21 @@ public class Brute extends Mob {
 		return super.createLoot(itemSlot);
 	}
 
-
-	private static final String HAS_RAGED = "has_raged";
+	protected BundleableProperty.Bool m_HasRaged = new BundleableProperty.Bool("has_raged", false);
 	
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(HAS_RAGED, hasRaged);
+		m_HasRaged.Store(bundle);
 	}
 	
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		hasRaged = bundle.getBoolean(HAS_RAGED);
+		m_HasRaged.Restore(bundle);
 	}
-	
-	public static class BruteRage extends ShieldBuff {
+
+	public static class BruteRage extends ShieldBuff implements CombatModifier.PreArmorDamageModifier {
 		
 		{
 			type = buffType.POSITIVE;
@@ -189,6 +167,27 @@ public class Brute extends Mob {
 		@Override
 		public String desc () {
 			return Messages.get(this, "desc", shielding());
+		}
+
+		@Override
+		public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+			float damageMultiplier = 1.0f;
+			if (getRandomizerEnabled(RandomTraits.DYING_BREATH)) {
+				damageMultiplier = 0.5f;
+			} else {
+				damageMultiplier = 3.0f;
+			}
+			return (int) (currentDamage * damageMultiplier);
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == target;
 		}
 	}
 	public enum RandomTraits {

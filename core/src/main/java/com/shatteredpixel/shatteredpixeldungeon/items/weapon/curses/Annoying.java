@@ -27,9 +27,15 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.curses;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Burning;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.FlameParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
@@ -37,19 +43,18 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Random;
 
-public class Annoying extends Weapon.Enchantment {
+public class Annoying extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 
 	private static ItemSprite.Glowing BLACK = new ItemSprite.Glowing( 0x000000 );
 
 	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-
-		float procChance = 1/20f * procChanceMultiplier(attacker);
+	public void onHit(AttackContext context, int finalDamage) {
+		float procChance = 1/20f * procChanceMultiplier(context.attacker);
 		if (Random.Float() < procChance) {
 			for (Mob mob : Dungeon.level.mobs.toArray(new Mob[0])) {
-				mob.beckon(attacker.pos);
+				mob.beckon(context.attacker.pos);
 			}
-			attacker.sprite.centerEmitter().start(Speck.factory(Speck.SCREAM), 0.3f, 3);
+			context.attacker.sprite.centerEmitter().start(Speck.factory(Speck.SCREAM), 0.3f, 3);
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC);
 			Invisibility.dispel();
 			//~1/100 for each rare line, ~1/10 for each common line
@@ -59,8 +64,16 @@ public class Annoying extends Weapon.Enchantment {
 				GLog.n(Messages.get(this, "msg_" + Random.IntRange(11, 13)));
 			}
 		}
+	}
 
-		return damage;
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 
 	@Override

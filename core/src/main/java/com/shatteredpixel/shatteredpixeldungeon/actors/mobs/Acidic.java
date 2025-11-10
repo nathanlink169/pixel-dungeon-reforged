@@ -25,26 +25,31 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
-import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
-import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 
 public class Acidic extends Scorpio {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.acidic; }
 
 	@Override
-	public int attackProc(Char enemy, int damage) {
-		Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
-		return super.attackProc(enemy, damage);
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (context.attacker == this) {
+			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
+		}
+		else if (context.defender == this && context.distance == 1) {
+			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
+		}
+
+		if (super.appliesTo(context)) {
+			super.onDamage(context, damageDealt);
+		}
 	}
 
 	@Override
-	public int defenseProc( Char enemy, int damage ) {
-		if (Dungeon.level.adjacent(pos, enemy.pos)){
-			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
-		}
-		return super.defenseProc( enemy, damage );
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this || context.defender == this;
 	}
 }

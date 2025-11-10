@@ -28,6 +28,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.RatSkull;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -36,21 +39,20 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.StatueSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-public class Statue extends Mob {
+import java.util.EnumSet;
+
+public class Statue extends Mob implements CombatModifier.OnDamageEffect {
 	
 	{
 		state = PASSIVE;
 	}
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.statue; }
-	
-	protected Weapon weapon;
 
 	public boolean levelGenStatue = true;
 
@@ -60,59 +62,58 @@ public class Statue extends Mob {
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
+	public int defenseSkill() {
 		return 4 + Dungeon.depth;
 	}
 
 	public void createWeapon( boolean useDecks ){
 		if (useDecks) {
-			weapon = (MeleeWeapon) Generator.random(Generator.Category.WEAPON);
+			m_Weapon.Set((MeleeWeapon) Generator.random(Generator.Category.WEAPON));
 		} else {
-			weapon = (MeleeWeapon) Generator.randomUsingDefaults(Generator.Category.WEAPON);
+			m_Weapon.Set((MeleeWeapon) Generator.randomUsingDefaults(Generator.Category.WEAPON));
 		}
 		levelGenStatue = useDecks;
-		weapon.cursed = false;
-		weapon.enchant( Enchantment.random() );
+		m_Weapon.Get().cursed = false;
+		m_Weapon.Get().enchant( Enchantment.random() );
 	}
-	
-	private static final String WEAPON	= "weapon";
-	
+
+	protected BundleableProperty.Object<Weapon> m_Weapon = new BundleableProperty.Object<>("weapon");
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( WEAPON, weapon );
+		m_Weapon.Store(bundle);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		weapon = (Weapon)bundle.get( WEAPON );
+		m_Weapon.Restore(bundle);
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
-		if (isMaxDamage) return weapon.max();
-		return weapon.damageRoll(this, isMaxDamage);
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
+		if (isMaxDamage) return m_Weapon.Get().max();
+		return m_Weapon.Get().damageRoll(isMaxDamage, false);
 	}
-	
+
 	@Override
-	public int attackSkill( Char target ) {
-		return (int)((9 + Dungeon.depth) * weapon.accuracyFactor( this, target ));
+	protected EnumSet<DamageType> GetMeleeDamageType() {
+		return m_Weapon.Get().damageType;
+	}
+
+	@Override
+	public int attackSkill() {
+		return (int)((9 + Dungeon.depth) * m_Weapon.Get().accuracyFactor( this ));
 	}
 	
 	@Override
 	public float attackDelay() {
-		return super.attackDelay()*weapon.delayFactor( this );
+		return super.attackDelay()*m_Weapon.Get().timeToUse();
 	}
 
 	@Override
 	protected boolean canAttack(Char enemy) {
-		return super.canAttack(enemy) || weapon.canReach(this, enemy.pos);
-	}
-
-	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, Dungeon.depth + weapon.defenseFactor(this));
+		return super.canAttack(enemy) || m_Weapon.Get().canReach(this, enemy.pos);
 	}
 	
 	@Override
@@ -127,24 +128,13 @@ public class Statue extends Mob {
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 
 		if (state == PASSIVE) {
 			state = HUNTING;
 		}
 		
-		super.damage( dmg, src, damageType );
-	}
-	
-	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		damage = weapon.proc( this, enemy, damage );
-		if (!enemy.isAlive() && enemy == Dungeon.hero){
-			Dungeon.fail(this);
-			GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
-		}
-		return damage;
+		return super.Damage( dmg, src, damageType );
 	}
 	
 	@Override
@@ -156,8 +146,8 @@ public class Statue extends Mob {
 	
 	@Override
 	public void die( Object cause ) {
-		weapon.identify(false);
-		Dungeon.level.drop( weapon, pos ).sprite.drop();
+		m_Weapon.Get().identify(false);
+		Dungeon.level.drop( m_Weapon.Get(), pos ).sprite.drop();
 		super.die( cause );
 	}
 
@@ -187,8 +177,8 @@ public class Statue extends Mob {
 	@Override
 	public String description(boolean forceNoMonsterUnknown) {
 		String desc = Messages.get(this, "desc");
-		if (weapon != null){
-			desc += "\n\n" + Messages.get(this, "desc_weapon", weapon.name());
+		if (m_Weapon.Get() != null){
+			desc += "\n\n" + Messages.get(this, "desc_weapon", m_Weapon.Get().name());
 		}
 		return desc;
 	}
@@ -213,5 +203,27 @@ public class Statue extends Mob {
 		statue.createWeapon(useDecks);
 		return statue;
 	}
-	
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (!context.attacker.isAlive() && enemy == Dungeon.hero){
+			Dungeon.fail(this);
+			GLog.n( Messages.capitalize(Messages.get(Char.class, "kill", name(false))) );
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == this;
+	}
+
+	@Override
+	public Weapon getWeapon() {
+		return m_Weapon.Get();
+	}
 }

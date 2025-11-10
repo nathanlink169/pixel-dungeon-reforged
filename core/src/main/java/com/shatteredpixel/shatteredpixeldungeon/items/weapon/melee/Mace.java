@@ -30,10 +30,15 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Daze;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.HeavyBlowTracker;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
@@ -41,7 +46,7 @@ import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Callback;
 
-public class Mace extends MeleeWeapon {
+public class Mace extends MeleeWeapon implements CombatModifier.AccuracyModifier {
 
 	{
 		image = ItemSpriteSheet.MACE;
@@ -49,9 +54,8 @@ public class Mace extends MeleeWeapon {
 		hitSoundPitch = 1f;
 
 		tier = 3;
-		ACC = 1.28f; //28% boost to accuracy
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 
 	@Override
@@ -69,7 +73,7 @@ public class Mace extends MeleeWeapon {
 	protected void duelistAbility(Hero hero, Integer target) {
 		//+(5+1.5*lvl) damage, roughly +55% base dmg, +60% scaling
 		int dmgBoost = augment.damageFactor(5 + Math.round(1.5f*buffedLvl()));
-		Mace.heavyBlowAbility(hero, target, 1, dmgBoost, this);
+		Mace.heavyBlowAbility(hero, target, dmgBoost, this);
 	}
 
 	@Override
@@ -87,7 +91,7 @@ public class Mace extends MeleeWeapon {
 		return augment.damageFactor(min(level)+dmgBoost) + "-" + augment.damageFactor(max(level)+dmgBoost);
 	}
 
-	public static void heavyBlowAbility(Hero hero, Integer target, float dmgMulti, int dmgBoost, MeleeWeapon wep){
+	public static void heavyBlowAbility(Hero hero, Integer target, int dmgBoost, MeleeWeapon wep){
 		if (target == null) {
 			return;
 		}
@@ -106,27 +110,33 @@ public class Mace extends MeleeWeapon {
 		}
 		hero.belongings.abilityWeapon = null;
 
-		//no bonus damage if attack isn't a surprise
-		if (enemy instanceof Mob && !((Mob) enemy).surprisedBy(hero)){
-			dmgMulti = Math.min(1, dmgMulti);
-			dmgBoost = 0;
-		}
-
-		float finalDmgMulti = dmgMulti;
-		int finalDmgBoost = dmgBoost;
 		hero.sprite.attack(enemy.pos, new Callback() {
 			@Override
 			public void call() {
 				wep.beforeAbilityUsed(hero, enemy);
+
+				// Apply the tracker buff with the damage boost
+				HeavyBlowTracker tracker = Buff.affect(hero, HeavyBlowTracker.class);
+				tracker.dmgBoost = dmgBoost;
+				tracker.weapon = wep;
+
 				AttackIndicator.target(enemy);
-				if (hero.attack(enemy, finalDmgMulti, finalDmgBoost, Char.INFINITE_ACCURACY, DamageType.BLUDGEONING, Char.AttackType.MELEE)) {
+
+				// Build attack context - no special parameters needed!
+				AttackContext context = new AttackContext.Builder(hero, enemy)
+						.attackType(AttackContext.AttackType.MELEE)
+						.damageType(DamageType.of(DamageType.BLUDGEONING))
+						.build();
+
+				// Resolve the attack through your new system
+				AttackResult result = CombatResolver.resolve(context);
+
+				if (result.result == AttackResult.ResultType.HIT) {
 					Sample.INSTANCE.play(Assets.Sounds.HIT_STRONG);
-					if (enemy.isAlive()){
-						Buff.affect(enemy, Daze.class, Daze.DURATION);
-					} else {
-						wep.onAbilityKill(hero, enemy);
-					}
 				}
+
+				tracker.detach();
+
 				Invisibility.dispel();
 				hero.spendAndNext(hero.attackDelay());
 				wep.afterAbilityUsed(hero);
@@ -134,4 +144,12 @@ public class Mace extends MeleeWeapon {
 		});
 	}
 
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		if (context.attacker.getWeapon() == this) {
+			return currentAccuracy * 1.28f;
+		}
+		return currentAccuracy;
+	}
 }

@@ -25,12 +25,15 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments;
 
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSprite;
 import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
-public class Unstable extends Weapon.Enchantment {
+public class Unstable extends Weapon.Enchantment implements CombatModifier.AccuracyModifier, CombatModifier.PostArmorDamageModifier, CombatModifier.OnHitEffect, CombatModifier.OnDamageEffect {
 
 	private static ItemSprite.Glowing GREY = new ItemSprite.Glowing( 0x999999 );
 
@@ -49,22 +52,44 @@ public class Unstable extends Weapon.Enchantment {
 			Vampiric.class
 	};
 
-	@Override
-	public int proc( Weapon weapon, Char attacker, Char defender, int damage ) {
-		
-		int conservedDamage = 0;
-		if (attacker.buff(Kinetic.ConservedDamage.class) != null) {
-			conservedDamage = attacker.buff(Kinetic.ConservedDamage.class).damageBonus();
-			attacker.buff(Kinetic.ConservedDamage.class).detach();
-		}
-		
-		damage = Reflection.newInstance(Random.oneOf(randomEnchants)).proc( weapon, attacker, defender, damage );
-		
-		return damage + conservedDamage;
-	}
+	private Weapon.Enchantment randomEnch = null;
 
 	@Override
 	public ItemSprite.Glowing glowing() {
 		return GREY;
+	}
+
+	// Modify Accuracy is the first modifier called. Randomize enchantment here
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		Weapon.Enchantment randomEnch = (Weapon.Enchantment) Reflection.newInstance(Random.oneOf(randomEnchants));
+		return randomEnch instanceof AccuracyModifier ? ((AccuracyModifier)randomEnch).modifyAccuracy(context, currentAccuracy) : currentAccuracy;
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (randomEnch instanceof OnHitEffect)
+			((OnHitEffect)randomEnch).onHit(context, finalDamage);
+	}
+
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		return randomEnch instanceof PostArmorDamageModifier ? ((PostArmorDamageModifier)randomEnch).modifyPostArmorDamage(context, currentDamage) : currentDamage;
+	}
+
+	@Override
+	public void onDamage(AttackContext context, int damageDealt) {
+		if (randomEnch instanceof OnDamageEffect)
+			((OnDamageEffect)randomEnch).onDamage(context, damageDealt);
+	}
+
+	@Override
+	public int priority() {
+		return randomEnch != null ? ((CombatModifier)randomEnch).priority() : Priority.HIGHEST;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
 	}
 }

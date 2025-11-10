@@ -31,28 +31,25 @@ import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
-import com.shatteredpixel.shatteredpixeldungeon.items.Gold;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 public class Gnoll extends Mob {
 	{
 		WANDERING = new Wandering();
 		HUNTING = getRandomizerEnabled(RandomTraits.PACIFIST_PATROL) ? new Fleeing() : new Hunting();
 	}
-
-	protected int partnerID = -1;
-	protected boolean seenPlayer = false;
 
 	@Override
 	protected void onAdd(){
@@ -65,29 +62,29 @@ public class Gnoll extends Mob {
 		}
 	}
 
+	private BundleableProperty.Int m_PartnerID = new BundleableProperty.Int("partner_id", -1);
+	private BundleableProperty.Bool m_SeenPlayer = new BundleableProperty.Bool("seen_player", false);
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( PARTNER_ID, partnerID );
-		bundle.put( SEEN_PLAYER, seenPlayer);
+		m_PartnerID.Store(bundle);
+		m_SeenPlayer.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		partnerID = bundle.getInt( PARTNER_ID );
-		seenPlayer = bundle.getBoolean( SEEN_PLAYER );
+		m_PartnerID.Restore(bundle);
+		m_SeenPlayer.Restore(bundle);
 	}
 
-	private static final String PARTNER_ID = "partner_id";
-	private static final String SEEN_PLAYER = "seen_player";
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.gnoll; }
 
 	@Override
 	protected boolean act() {
 		//create a child
-		if (getRandomizerEnabled(RandomTraits.PACK_HUNTERS) && partnerID == -1 && !(this instanceof GnollExile)){
+		if (getRandomizerEnabled(RandomTraits.PACK_HUNTERS) && m_PartnerID.Get() == -1 && !(this instanceof GnollExile)){
 
 			ArrayList<Integer> candidates = new ArrayList<>();
 
@@ -102,8 +99,8 @@ public class Gnoll extends Mob {
 
 			if (!candidates.isEmpty()){
 				Gnoll child = new Gnoll();
-				child.partnerID = this.id();
-				this.partnerID = child.id();
+				child.m_PartnerID.Set(this.id());
+				this.m_PartnerID.Set(child.id());
 				if (state != SLEEPING) {
 					child.state = child.WANDERING;
 				}
@@ -133,9 +130,9 @@ public class Gnoll extends Mob {
 
 	public void notice() {
 		super.notice();
-		if (!seenPlayer && getRandomizerEnabled(RandomTraits.ALARM_NETWORK)) {
+		if (!m_SeenPlayer.Get() && getRandomizerEnabled(RandomTraits.ALARM_NETWORK)) {
 			if (fieldOfView[Dungeon.hero.pos] && Dungeon.hero.invisible <= 0) {
-				seenPlayer = true;
+				m_SeenPlayer.Set(true);
 				CellEmitter.center( pos ).start( Speck.factory( Speck.SCREAM ), 0.3f, 3 );
 				Sample.INSTANCE.play( Assets.Sounds.ALERT );
 
@@ -147,36 +144,36 @@ public class Gnoll extends Mob {
 	}
 	
 	@Override
-	public int drRoll() {
+	public int drRoll(EnumSet<DamageType> damageType) {
 		if (getRandomizerEnabled(RandomTraits.BRITTLE_ARMOUR)) {
-			return super.drRoll() - 1;
+			return super.drRoll(damageType) - 1;
 		}
-		return super.drRoll() + (getRandomizerEnabled(RandomTraits.BRITTLE_ARMOUR) ? -2 : 0);
+		return super.drRoll(damageType) + (getRandomizerEnabled(RandomTraits.BRITTLE_ARMOUR) ? -2 : 0);
 	}
 
-	private class Wandering extends Mob.Wandering {
+	private static class Wandering extends Mob.Wandering {
 
 		@Override
-		protected boolean continueWandering() {
+		protected boolean continueWandering(Mob mob) {
 			if (!getRandomizerEnabled(RandomTraits.PACK_HUNTERS)) {
-				return super.continueWandering();
+				return super.continueWandering(mob);
 			}
 
-			enemySeen = false;
+			mob.m_EnemySeen.Set(false);
 
-			Gnoll partner = (Gnoll) Actor.findById( partnerID );
-			if (partner != null && (partner.state != partner.WANDERING || Dungeon.level.distance( pos,  partner.target) > 1)){
-				target = partner.pos;
-				int oldPos = pos;
-				if (getCloser( target )){
-					spend( 1 / speed() );
-					return moveSprite( oldPos, pos );
+			Gnoll partner = (Gnoll) Actor.findById( ((Gnoll)mob).m_PartnerID.Get() );
+			if (partner != null && (partner.state != partner.WANDERING || Dungeon.level.distance( mob.pos,  partner.m_Target.Get()) > 1)){
+				mob.m_Target.Set(partner.pos);
+				int oldPos = mob.pos;
+				if (mob.getCloser( mob.m_Target.Get() )){
+					mob.spend( 1 / mob.speed() );
+					return mob.moveSprite( oldPos, mob.pos );
 				} else {
-					spend( TICK );
+					mob.spend( TICK );
 					return true;
 				}
 			} else {
-				return super.continueWandering();
+				return super.continueWandering(mob);
 			}
 		}
 	}

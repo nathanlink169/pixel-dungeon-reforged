@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.darts.Dart;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -100,8 +101,8 @@ public class WornDartTrap extends Trap {
 								reset(pos, finalTarget.sprite, new Dart(), new Callback() {
 									@Override
 									public void call() {
-										int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll();
-										finalTarget.damage(dmg, WornDartTrap.this);
+										int dmg = Random.NormalIntRange(4, 8) - finalTarget.drRoll(DamageType.of(DamageType.PIERCING));
+										finalTarget.Damage(dmg, WornDartTrap.this, DamageType.of(DamageType.PIERCING));
 										if (finalTarget == Dungeon.hero && !finalTarget.isAlive()){
 											Dungeon.fail( WornDartTrap.this  );
 											GLog.n(Messages.get(WornDartTrap.class, "ondeath"));
@@ -115,7 +116,7 @@ public class WornDartTrap extends Trap {
 								});
 						return false;
 					} else {
-						finalTarget.damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(), WornDartTrap.this);
+						finalTarget.Damage(Random.NormalIntRange(4, 8) - finalTarget.drRoll(DamageType.of(DamageType.PIERCING)), WornDartTrap.this, DamageType.of(DamageType.PIERCING));
 						return true;
 					}
 				} else {

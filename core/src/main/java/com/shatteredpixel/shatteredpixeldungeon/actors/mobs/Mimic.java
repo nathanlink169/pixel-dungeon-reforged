@@ -31,6 +31,9 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
@@ -43,18 +46,15 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MimicSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.EnumSet;
 
-public class Mimic extends Mob {
-	
-	private int level;
+public class Mimic extends Mob implements CombatModifier.OnHitEffect {
 	
 	{
 		//mimics are neutral when hidden
@@ -64,35 +64,26 @@ public class Mimic extends Mob {
 
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.mimic; }
-	
-	public ArrayList<Item> items;
 
-	private boolean stealthy = false;
-	
-	private static final String LEVEL	= "level";
-	private static final String ENEMY_SEEN	= "enemySeen";
-	private static final String ITEMS	= "items";
-	private static final String STEALTHY= "stealthy";
+	public BundleableProperty.BundlableCollection<Item> m_Items = new BundleableProperty.BundlableCollection<>("items");
+	private BundleableProperty.Int m_Level = new BundleableProperty.Int("level", 0);
+	private BundleableProperty.Bool m_Stealthy = new BundleableProperty.Bool("stealthy", false);
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		if (items != null) bundle.put( ITEMS, items );
-		bundle.put( LEVEL, level );
-		bundle.put( STEALTHY, stealthy );
-		bundle.put( ENEMY_SEEN, enemySeen );
+		m_Items.Store(bundle);
+		m_Level.Store(bundle);
+		m_Stealthy.Store(bundle);
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
-		if (bundle.contains( ITEMS )) {
-			items = new ArrayList<>((Collection<Item>) ((Collection<?>) bundle.getCollection(ITEMS)));
-		}
-		level = bundle.getInt( LEVEL );
-		enemySeen = bundle.getBoolean( ENEMY_SEEN );
-		stealthy = bundle.getBoolean(STEALTHY);
 		super.restoreFromBundle(bundle);
+		m_Items.Restore(bundle);
+		m_Level.Restore(bundle);
+		m_Stealthy.Restore(bundle);
 		if (state != PASSIVE && alignment == Alignment.NEUTRAL){
 			alignment = Alignment.ENEMY;
 		}
@@ -176,7 +167,7 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public void onAttackComplete(AttackType attackType) {
+	public void onAttackComplete(AttackContext.AttackType attackType) {
 		super.onAttackComplete(attackType);
 		if (alignment == Alignment.NEUTRAL){
 			alignment = Alignment.ENEMY;
@@ -185,22 +176,13 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public int defenseProc(Char enemy, int damage) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		if (state == PASSIVE){
 			alignment = Alignment.ENEMY;
 			stopHiding();
 		}
-		return super.defenseProc(enemy, damage);
-	}
-
-	@Override
-	public void damage(int dmg, Object src, int damageType) {
-		if (state == PASSIVE){
-			alignment = Alignment.ENEMY;
-			stopHiding();
-		}
-		super.damage(dmg, src, damageType);
-	}
+		return super.Damage(dmg, src, damageType);
+    }
 
 	@Override
 	public void die(Object cause) {
@@ -216,7 +198,7 @@ public class Mimic extends Mob {
 		if (sprite != null) sprite.idle();
 		if (Actor.chars().contains(this) && Dungeon.level.heroFOV[pos]) {
 			enemy = Dungeon.hero;
-			target = Dungeon.hero.pos;
+			m_Target.Set(Dungeon.hero.pos);
 			GLog.w(Messages.get(this, "reveal") );
 			CellEmitter.get(pos).burst(Speck.factory(Speck.STAR), 10);
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC);
@@ -225,22 +207,22 @@ public class Mimic extends Mob {
 
 	//stealthy mimics have changes to visual behaviour that make them much harder to detect
 	public boolean stealthy(){
-		return stealthy;
+		return m_Stealthy.Get();
 	}
 
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
-		if (isMaxDamage) return 2 + 2*level;
+	public int damageRoll(AttackContext.AttackType type, boolean isMaxDamage) {
+		if (isMaxDamage) return 2 + 2*m_Level.Get();
 		if (alignment == Alignment.NEUTRAL){
-			return Random.NormalIntRange( 2 + 2*level, 2 + 2*level);
+			return Random.NormalIntRange( 2 + 2*m_Level.Get(), 2 + 2*m_Level.Get());
 		} else {
-			return Random.NormalIntRange( 1 + level, 2 + 2*level);
+			return Random.NormalIntRange( 1 + m_Level.Get(), 2 + 2*m_Level.Get());
 		}
 	}
 
 	@Override
-	public int drRoll() {
-		return super.drRoll() + Random.NormalIntRange(0, 1 + level/2);
+	public int drRoll(EnumSet<DamageType> damageType) {
+		return super.drRoll(damageType) + Random.NormalIntRange(0, 1 + m_Level.Get()/2);
 	}
 
 	@Override
@@ -251,37 +233,36 @@ public class Mimic extends Mob {
 	}
 
 	@Override
-	public int attackSkill( Char target ) {
-		if (target != null && alignment == Alignment.NEUTRAL && target.invisible <= 0){
+	public int attackSkill() {
+		if (enemy != null && alignment == Alignment.NEUTRAL && enemy.invisible <= 0){
 			return INFINITE_ACCURACY;
 		} else {
-			return 6 + level;
+			return 6 + m_Level.Get();
 		}
 	}
 
 	public void setLevel( int level ){
-		this.level = level;
-		enemySeen = true;
+		m_Level.Set(level);
+		m_EnemySeen.Set(true);
 	}
 
 	@Override
 	public int GetMaxHP() {
-		return (1 + level) * 6;
+		return (1 + m_Level.Get()) * 6;
 	}
 
 	@Override
-	protected int GetDefenseSkillInternal() {
-		return 2 + level / 2;
+	public int defenseSkill() {
+		return 2 + m_Level.Get() / 2;
 	}
 	
 	@Override
 	public void rollToDropLoot(){
-		
-		if (items != null) {
-			for (Item item : items) {
+		if (m_Items.Get() != null) {
+			for (Item item : m_Items.Get()) {
 				Dungeon.level.drop( item, pos ).sprite.drop();
 			}
-			items = null;
+			m_Items.Clear();
 		}
 		super.rollToDropLoot();
 	}
@@ -321,7 +302,9 @@ public class Mimic extends Mob {
 			m = new Mimic();
 		}
 
-		m.items = new ArrayList<>( Arrays.asList(items) );
+		for (Item i : items) {
+			m.m_Items.Add(i);
+		}
 		m.setLevel( Dungeon.scalingDepth() );
 		m.pos = pos;
 
@@ -329,7 +312,7 @@ public class Mimic extends Mob {
 		m.generatePrize(useDecks);
 
 		if (MimicTooth.stealthyMimics()){
-			m.stealthy = true;
+			m.m_Stealthy.Set(true);
 		}
 
 		return m;
@@ -356,12 +339,29 @@ public class Mimic extends Mob {
 					break;
 			}
 		} while (reward == null || Challenges.isItemBlocked(reward));
-		items.add(reward);
+		m_Items.Add(reward);
 
 		if (MimicTooth.stealthyMimics()){
 			//add an extra random item if player has a mimic tooth
-			items.add(Generator.randomUsingDefaults());
+			m_Items.Add(Generator.randomUsingDefaults());
 		}
 	}
 
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		if (state == PASSIVE){
+			alignment = Alignment.ENEMY;
+			stopHiding();
+		}
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.defender == this;
+	}
 }

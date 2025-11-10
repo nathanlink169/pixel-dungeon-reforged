@@ -46,6 +46,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Roots;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Sleep;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
@@ -60,11 +65,13 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.FistSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
+
+import java.util.EnumSet;
 
 public abstract class YogFist extends Mob {
 
@@ -74,17 +81,15 @@ public abstract class YogFist extends Mob {
 		properties.add(Property.BOSS);
 		properties.add(Property.DEMONIC);
 	}
-
-	private float rangedCooldown;
 	protected boolean canRangedInMelee = true;
 
-	protected void incrementRangedCooldown(){
-		rangedCooldown += Random.NormalFloat(8, 12);
+	protected void incrementRangedCooldown() {
+		m_RangedCooldown.Add(Random.NormalFloat(8, 12));
 	}
 
 	@Override
 	protected boolean act() {
-		if (paralysed <= 0 && rangedCooldown > 0) rangedCooldown--;
+		if (paralysed <= 0 && m_RangedCooldown.Get() > 0) m_RangedCooldown.Decrement();
 
 		if (Dungeon.hero.invisible <= 0 && state == WANDERING){
 			beckon(Dungeon.hero.pos);
@@ -97,7 +102,7 @@ public abstract class YogFist extends Mob {
 
 	@Override
 	protected boolean canAttack(Char enemy) {
-		if (rangedCooldown <= 0){
+		if (m_RangedCooldown.Get() <= 0){
 			return new Ballistica( pos, enemy.pos, Ballistica.MAGIC_BOLT).collisionPos == enemy.pos;
 		} else {
 			return super.canAttack(enemy);
@@ -121,9 +126,9 @@ public abstract class YogFist extends Mob {
 	}
 
 	@Override
-	protected boolean doAttack( Char enemy ) {
+    public boolean doAttack(Char enemy) {
 
-		if (Dungeon.level.adjacent( pos, enemy.pos ) && (!canRangedInMelee || rangedCooldown > 0)) {
+		if (Dungeon.level.adjacent( pos, enemy.pos ) && (!canRangedInMelee || m_RangedCooldown.Get() > 0)) {
 
 			return super.doAttack( enemy );
 
@@ -141,9 +146,9 @@ public abstract class YogFist extends Mob {
 	}
 
 	@Override
-	public void damage(int dmg, Object src, int damageType) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 		int preHP = HP;
-		super.damage(dmg, src, damageType);
+		super.Damage(dmg, src, damageType);
 		int dmgTaken = preHP - HP;
 
 		LockedFloor lock = Dungeon.hero.buff(LockedFloor.class);
@@ -151,6 +156,7 @@ public abstract class YogFist extends Mob {
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmgTaken/4f);
 			else                                                    lock.addTime(dmgTaken/2f);
 		}
+		return dmgTaken;
 	}
 
 	@Override
@@ -179,18 +185,18 @@ public abstract class YogFist extends Mob {
 		return Messages.get(YogFist.class, "desc") + "\n\n" + Messages.get(this, "desc");
 	}
 
-	public static final String RANGED_COOLDOWN = "ranged_cooldown";
+	private BundleableProperty.Float m_RangedCooldown = new BundleableProperty.Float("ranged_cooldown");
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(RANGED_COOLDOWN, rangedCooldown);
+		m_RangedCooldown.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		rangedCooldown = bundle.getFloat(RANGED_COOLDOWN);
+		m_RangedCooldown.Restore(bundle);
 	}
 
 	public static class BurningFist extends YogFist {
@@ -262,7 +268,7 @@ public abstract class YogFist extends Mob {
 
 	}
 
-	public static class SoiledFist extends YogFist {
+	public static class SoiledFist extends YogFist implements CombatModifier.PostArmorDamageModifier {
 		@Override
 		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.soiledfist; }
 
@@ -297,22 +303,13 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src, int damageType) {
-			int grassCells = 0;
-			for (int i : PathFinder.NEIGHBOURS9) {
-				if (Dungeon.level.map[pos+i] == Terrain.FURROWED_GRASS
-				|| Dungeon.level.map[pos+i] == Terrain.HIGH_GRASS){
-					grassCells++;
-				}
-			}
-			if (grassCells > 0) dmg = Math.round(dmg * (6-grassCells)/6f);
-
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			//can be ignited, but takes no damage from burning
 			if (src.getClass() == Burning.class){
-				return;
+				return 0;
 			}
 
-			super.damage(dmg, src, damageType);
+			return super.Damage(dmg, src, damageType);
 		}
 
 		@Override
@@ -321,7 +318,15 @@ public abstract class YogFist extends Mob {
 
 			Invisibility.dispel(this);
 			Char enemy = this.enemy;
-			if (hit( this, enemy, true )) {
+			// Build attack context
+			AttackContext context = new AttackContext.Builder(this, enemy)
+					.attackType(AttackContext.AttackType.RANGED)
+					.damageType(GetRangedDamageType())
+					.build();
+
+			// Resolve attack - this handles EVERYTHING internally
+			AttackResult result = CombatResolver.resolve(context);
+			if (result.result == AttackResult.ResultType.HIT) {
 
 				Buff.affect( enemy, Roots.class, 3f );
 
@@ -353,9 +358,31 @@ public abstract class YogFist extends Mob {
 					&& !(Dungeon.level.map[cell] == Terrain.FURROWED_GRASS || Dungeon.level.map[cell] == Terrain.HIGH_GRASS);
 		}
 
+		@Override
+		public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+			int grassCells = 0;
+			for (int i : PathFinder.NEIGHBOURS9) {
+				if (Dungeon.level.map[pos+i] == Terrain.FURROWED_GRASS
+						|| Dungeon.level.map[pos+i] == Terrain.HIGH_GRASS){
+					grassCells++;
+				}
+			}
+			if (grassCells > 0) currentDamage = Math.round(currentDamage * (6-grassCells)/6f);
+			return currentDamage;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == this;
+		}
 	}
 
-	public static class RottingFist extends YogFist {
+	public static class RottingFist extends YogFist implements CombatModifier.OnHitEffect {
 		@Override
 		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rottingfist; }
 
@@ -378,13 +405,13 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src, int damageType) {
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			if (!isInvulnerable(src.getClass())
 					&& !(src instanceof Bleeding)
 					&& buff(Sickle.HarvestBleedTracker.class) == null){
 				dmg = Math.round( dmg * resist( src.getClass() ));
 				if (dmg < 0){
-					return;
+					return 0;
 				}
 				Bleeding b = buff(Bleeding.class);
 				if (b == null){
@@ -394,8 +421,9 @@ public abstract class YogFist extends Mob {
 				b.set(dmg*.6f);
 				b.attachTo(this);
 				sprite.showStatus(CharSprite.WARNING, Messages.titleCase(b.name()) + " " + (int)b.level());
+				return 0;
 			} else{
-				super.damage(dmg, src, damageType);
+				return super.Damage(dmg, src, damageType);
 			}
 		}
 
@@ -405,22 +433,27 @@ public abstract class YogFist extends Mob {
 			GameScene.add(Blob.seed(enemy.pos, 100, ToxicGas.class));
 		}
 
-		@Override
-		public int attackProc( Char enemy, int damage ) {
-			damage = super.attackProc( enemy, damage );
-
-			if (Random.Int( 2 ) == 0) {
-				Buff.affect( enemy, Ooze.class ).set( Ooze.DURATION );
-				enemy.sprite.burst( 0xFF000000, 5 );
-			}
-
-			return damage;
-		}
-
 		{
 			immunities.add(ToxicGas.class);
 		}
 
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			if (Random.Int( 2 ) == 0) {
+				Buff.affect( context.defender, Ooze.class ).set( Ooze.DURATION );
+				context.defender.sprite.burst( 0xFF000000, 5 );
+			}
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == this;
+		}
 	}
 
 	public static class RustedFist extends YogFist {
@@ -428,15 +461,16 @@ public abstract class YogFist extends Mob {
 		public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.rustedfist; }
 
 		@Override
-		public void damage(int dmg, Object src, int damageType) {
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			if (!isInvulnerable(src.getClass()) && !(src instanceof Viscosity.DeferedDamage)){
 				dmg = Math.round( dmg * resist( src.getClass() ));
 				if (dmg >= 0) {
 					Buff.affect(this, Viscosity.DeferedDamage.class).extend(dmg);
 					sprite.showStatus(CharSprite.WARNING, Messages.get(Viscosity.class, "deferred", dmg));
 				}
+				return 0;
 			} else{
-				super.damage(dmg, src, damageType);
+				return super.Damage(dmg, src, damageType);
 			}
 		}
 
@@ -470,9 +504,17 @@ public abstract class YogFist extends Mob {
 
 			Invisibility.dispel(this);
 			Char enemy = this.enemy;
-			if (hit( this, enemy, true )) {
+			// Build attack context
+			AttackContext context = new AttackContext.Builder(this, enemy)
+					.attackType(AttackContext.AttackType.RANGED)
+					.damageType(GetRangedDamageType())
+					.build();
 
-				enemy.damage( damageRoll(AttackType.RANGED_MAGICAL, false), new LightBeam() );
+			// Resolve attack - this handles EVERYTHING internally
+			AttackResult result = CombatResolver.resolve(context);
+			if (result.result == AttackResult.ResultType.HIT) {
+
+				enemy.Damage( damageRoll(AttackContext.AttackType.RANGED, false), new LightBeam(), GetRangedDamageType() );
 				Buff.prolong( enemy, Blindness.class, Blindness.DURATION/2f );
 
 				if (!enemy.isAlive() && enemy == Dungeon.hero) {
@@ -489,9 +531,9 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src, int damageType) {
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			int beforeHP = HP;
-			super.damage(dmg, src, damageType);
+			super.Damage(dmg, src, damageType);
 			if (isAlive() && beforeHP > GetMaxHP()/2 && HP < GetMaxHP()/2){
 				HP = GetMaxHP()/2;
 				Buff.prolong( Dungeon.hero, Blindness.class, Blindness.DURATION*1.5f );
@@ -510,6 +552,7 @@ public abstract class YogFist extends Mob {
 				Buff.prolong( Dungeon.hero, Blindness.class, Blindness.DURATION*3f );
 				GameScene.flash(0x80FFFFFF);
 			}
+			return beforeHP - HP;
 		}
 
 	}
@@ -536,9 +579,17 @@ public abstract class YogFist extends Mob {
 
 			Invisibility.dispel(this);
 			Char enemy = this.enemy;
-			if (hit( this, enemy, true )) {
+			// Build attack context
+			AttackContext context = new AttackContext.Builder(this, enemy)
+					.attackType(AttackContext.AttackType.RANGED)
+					.damageType(GetRangedDamageType())
+					.build();
 
-				enemy.damage( damageRoll(AttackType.RANGED_MAGICAL, false), new DarkBolt() );
+			// Resolve attack - this handles EVERYTHING internally
+			AttackResult result = CombatResolver.resolve(context);
+			if (result.result == AttackResult.ResultType.HIT) {
+
+				enemy.Damage( damageRoll(AttackContext.AttackType.RANGED, false), new DarkBolt(), GetRangedDamageType() );
 
 				Light l = enemy.buff(Light.class);
 				if (l != null){
@@ -559,9 +610,9 @@ public abstract class YogFist extends Mob {
 		}
 
 		@Override
-		public void damage(int dmg, Object src, int damageType) {
+		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			int beforeHP = HP;
-			super.damage(dmg, src, damageType);
+			super.Damage(dmg, src, damageType);
 			if (isAlive() && beforeHP > GetMaxHP()/2 && HP < GetMaxHP()/2){
 				HP = GetMaxHP()/2;
 				Light l = Dungeon.hero.buff(Light.class);
@@ -586,6 +637,7 @@ public abstract class YogFist extends Mob {
 				}
 				GameScene.flash(0, false);
 			}
+			return beforeHP - HP;
 		}
 
 	}

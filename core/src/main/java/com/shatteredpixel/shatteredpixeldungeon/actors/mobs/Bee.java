@@ -31,12 +31,16 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AllyBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Amok;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 //FIXME the AI for these things is becoming a complete mess, should refactor
-public class Bee extends Mob {
+public class Bee extends Mob implements CombatModifier.OnHitEffect {
 	
 	{
 		state = WANDERING;
@@ -47,33 +51,27 @@ public class Bee extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.bee; }
 
-	private int level;
-
-	//-1 refers to a pot that has gone missing.
-	private int potPos;
-	//-1 for no owner
-	private int potHolder;
-	
-	private static final String LEVEL	    = "level";
-	private static final String POTPOS	    = "potpos";
-	private static final String POTHOLDER	= "potholder";
 	private static final String ALIGMNENT   = "alignment";
-	
+
+	private BundleableProperty.Int m_Level = new BundleableProperty.Int("level", 0);
+	private BundleableProperty.Int m_PotPosition = new BundleableProperty.Int("potpos", -1); //-1 refers to a pot that has gone missing.
+	private BundleableProperty.Int m_PotHolder = new BundleableProperty.Int("potholder", -1); //-1 for no owner
+
 	@Override
 	public void storeInBundle( Bundle bundle ) {
 		super.storeInBundle( bundle );
-		bundle.put( LEVEL, level );
-		bundle.put( POTPOS, potPos );
-		bundle.put( POTHOLDER, potHolder );
+		m_Level.Store(bundle);
+		m_PotPosition.Store(bundle);
+		m_PotHolder.Store(bundle);
 		bundle.put( ALIGMNENT, alignment);
 	}
 	
 	@Override
 	public void restoreFromBundle( Bundle bundle ) {
 		super.restoreFromBundle( bundle );
-		spawn( bundle.getInt( LEVEL ) );
-		potPos = bundle.getInt( POTPOS );
-		potHolder = bundle.getInt( POTHOLDER );
+		m_Level.Restore(bundle);
+		m_PotPosition.Restore(bundle);
+		m_PotHolder.Restore(bundle);
 		if (bundle.contains(ALIGMNENT)) alignment = bundle.getEnum( ALIGMNENT, Alignment.class);
 	}
 
@@ -85,52 +83,59 @@ public class Bee extends Mob {
 
 	@Override
 	public int GetMaxHP() {
-		return (2 + level) * 4;
+		return (2 + m_Level.Get()) * 4;
 	}
 
 	@Override
-	public int defenseSkill(Char enemy) {
-		return 9 + level;
+	public int defenseSkill() {
+		return 9 + m_Level.Get();
 	}
 	
 	public void spawn( int level ) {
-		this.level = level;
+		m_Level.Set(level);
 	}
 
 	public void setPotInfo(int potPos, Char potHolder){
-		this.potPos = potPos;
-		if (potHolder == null)
-			this.potHolder = -1;
-		else
-			this.potHolder = potHolder.id();
+		m_PotPosition.Set(potPos);
+		m_PotHolder.Set(potHolder != null ? potHolder.id() : -1);
 	}
 	
 	public int potPos(){
-		return potPos;
+		return m_PotPosition.Get();
 	}
 	
 	public int potHolderID(){
-		return potHolder;
+		return m_PotHolder.Get();
 	}
 	
 	@Override
-	public int attackSkill( Char target ) {
-		return defenseSkill(target);
+	public int attackSkill(  ) {
+		return defenseSkill();
 	}
 	
 	@Override
-	public int damageRoll(AttackType type, boolean isMaxDamage) {
-		if (isMaxDamage) return GetMaxHP()/4;
+	public int damageRoll(AttackContext context) {
+		if (context.isMaxDamage) return GetMaxHP()/4;
 		return Random.NormalIntRange( GetMaxHP() / 10, GetMaxHP() / 4 );
 	}
-	
+
 	@Override
-	public int attackProc( Char enemy, int damage ) {
-		damage = super.attackProc( enemy, damage );
-		if (enemy instanceof Mob) {
-			((Mob)enemy).aggro( this );
+	public int priority() {
+		return CombatModifier.Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		// Only apply when the bee is the attacker
+		return context.attacker == this;
+	}
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		// Make enemy mobs aggro onto the bee to protect the honeypot
+		if (context.defender instanceof Mob) {
+			((Mob)context.defender).aggro(this);
 		}
-		return damage;
 	}
 
 	@Override
@@ -149,19 +154,19 @@ public class Bee extends Mob {
 	@Override
 	protected Char chooseEnemy() {
 		//if the pot is no longer present, default to regular AI behaviour
-		if (alignment == Alignment.ALLY || (potHolder == -1 && potPos == -1)){
+		if (alignment == Alignment.ALLY || (m_PotHolder.Get() == -1 && m_PotPosition.Get() == -1)){
 			return super.chooseEnemy();
 		
 		//if something is holding the pot, target that
-		}else if (Actor.findById(potHolder) != null){
-			return (Char) Actor.findById(potHolder);
+		}else if (Actor.findById(m_PotHolder.Get()) != null){
+			return (Char) Actor.findById(m_PotHolder.Get());
 			
 		//if the pot is on the ground
 		}else {
 			
 			//try to find a new enemy in these circumstances
 			if (enemy == null || !enemy.isAlive() || !Actor.chars().contains(enemy) || state == WANDERING
-					|| Dungeon.level.distance(enemy.pos, potPos) > 3
+					|| Dungeon.level.distance(enemy.pos, m_PotPosition.Get()) > 3
 					|| (alignment == Alignment.ALLY && enemy.alignment == Alignment.ALLY)
 					|| (buff( Amok.class ) == null && enemy.isInvulnerable(getClass()))){
 				
@@ -169,7 +174,7 @@ public class Bee extends Mob {
 				Char closest = null;
 				for (Mob mob : Dungeon.level.mobs) {
 					if (!(mob == this)
-							&& Dungeon.level.distance(mob.pos, potPos) <= 3
+							&& Dungeon.level.distance(mob.pos, m_PotPosition.Get()) <= 3
 							&& mob.alignment != Alignment.NEUTRAL
 							&& !mob.isInvulnerable(getClass())
 							&& !(alignment == Alignment.ALLY && mob.alignment == Alignment.ALLY)) {
@@ -182,7 +187,7 @@ public class Bee extends Mob {
 				if (closest != null){
 					return closest;
 				} else {
-					if (alignment != Alignment.ALLY && Dungeon.level.distance(Dungeon.hero.pos, potPos) <= 3){
+					if (alignment != Alignment.ALLY && Dungeon.level.distance(Dungeon.hero.pos, m_PotPosition.Get()) <= 3){
 						return Dungeon.hero;
 					} else {
 						return null;
@@ -198,16 +203,17 @@ public class Bee extends Mob {
 	}
 
 	@Override
-	protected boolean getCloser(int target) {
+    public boolean getCloser(int target) {
 		if (alignment == Alignment.ALLY && enemy == null && buffs(AllyBuff.class).isEmpty()) {
 			target = Dungeon.hero.pos;
-		} else if (enemy != null && Actor.findById(potHolder) == enemy) {
+		} else if (enemy != null && Actor.findById(m_PotHolder.Get()) == enemy) {
 			target = enemy.pos;
-		} else if (potPos != -1 && (state == WANDERING || Dungeon.level.distance(target, potPos) > 3)) {
-			if (!Dungeon.level.insideMap(potPos)){
-				potPos = -1;
+		} else if (m_PotPosition.Get() != -1 && (state == WANDERING || Dungeon.level.distance(target, m_PotPosition.Get()) > 3)) {
+			if (!Dungeon.level.insideMap(m_PotPosition.Get())){
+				m_PotPosition.Set(-1);
 			} else {
-				this.target = target = potPos;
+				target = m_PotPosition.Get();
+				m_Target.Set(m_PotPosition.Get());
 			}
 		}
 		return super.getCloser( target );

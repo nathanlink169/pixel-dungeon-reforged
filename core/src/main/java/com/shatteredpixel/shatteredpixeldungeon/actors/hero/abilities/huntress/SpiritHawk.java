@@ -39,6 +39,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.ArmorAbility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.DirectableAlly;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShaftParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.ClassArmor;
@@ -145,7 +147,7 @@ public class SpiritHawk extends ArmorAbility {
 		return null;
 	}
 
-	public static class HawkAlly extends DirectableAlly {
+	public static class HawkAlly extends DirectableAlly implements CombatModifier.OnHitEffect {
 
 		{
 			attacksAutomatically = false;
@@ -161,38 +163,13 @@ public class SpiritHawk extends ArmorAbility {
 		private float timeRemaining = 100f;
 
 		@Override
-		public int defenseSkill(Char enemy) {
+		public int defenseSkill() {
 			if (Dungeon.hero.hasTalent(Talent.SWIFT_SPIRIT) &&
 					dodgesUsed < 2*Dungeon.hero.pointsInTalent(Talent.SWIFT_SPIRIT)) {
 				dodgesUsed++;
 				return Char.INFINITE_EVASION;
 			}
-			return super.defenseSkill(enemy);
-		}
-
-		@Override
-		public int attackProc(Char enemy, int damage) {
-			damage = super.attackProc( enemy, damage );
-			switch (Dungeon.hero.pointsInTalent(Talent.GO_FOR_THE_EYES)){
-				case 1:
-					Buff.prolong( enemy, Blindness.class, 2);
-					break;
-				case 2:
-					Buff.prolong( enemy, Blindness.class, 5);
-					break;
-				case 3:
-					Buff.prolong( enemy, Blindness.class, 5);
-					Buff.prolong( enemy, Cripple.class, 2);
-					break;
-				case 4:
-					Buff.prolong( enemy, Blindness.class, 5);
-					Buff.prolong( enemy, Cripple.class, 5);
-					break;
-				default:
-					//do nothing
-			}
-
-			return damage;
+			return super.defenseSkill();
 		}
 
 		@Override
@@ -215,7 +192,7 @@ public class SpiritHawk extends ArmorAbility {
 		}
 
 		@Override
-		protected void spend(float time) {
+        public void spend(float time) {
 			super.spend(time);
 			timeRemaining -= time;
 		}
@@ -272,6 +249,38 @@ public class SpiritHawk extends ArmorAbility {
 			super.restoreFromBundle(bundle);
 			dodgesUsed = bundle.getInt(DODGES_USED);
 			timeRemaining = bundle.getFloat(TIME_REMAINING);
+		}
+
+		@Override
+		public void onHit(AttackContext context, int finalDamage) {
+			switch (Dungeon.hero.pointsInTalent(Talent.GO_FOR_THE_EYES)){
+				case 1:
+					Buff.prolong( context.defender, Blindness.class, 2);
+					break;
+				case 2:
+					Buff.prolong( context.defender, Blindness.class, 5);
+					break;
+				case 3:
+					Buff.prolong( context.defender, Blindness.class, 5);
+					Buff.prolong( context.defender, Cripple.class, 2);
+					break;
+				case 4:
+					Buff.prolong( context.defender, Blindness.class, 5);
+					Buff.prolong( context.defender, Cripple.class, 5);
+					break;
+				default:
+					//do nothing
+			}
+		}
+
+		@Override
+		public int priority() {
+			return Priority.NORMAL;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.attacker == this;
 		}
 	}
 

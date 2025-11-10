@@ -3,6 +3,7 @@ package com.shatteredpixel.shatteredpixeldungeon.sprites;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.watabou.noosa.TextureFilm;
 import com.watabou.utils.Callback;
@@ -78,7 +79,7 @@ public class SpitterSprite extends MobSprite{
                     reset( this, cellToAttack, new SpitterSprite.SpitterShot(), new Callback() {
                         @Override
                         public void call() {
-                            ch.onAttackComplete(Char.AttackType.RANGED_PHYSICAL);
+                            ch.onAttackComplete(AttackContext.AttackType.RANGED);
                         }
                     } );
         } else {

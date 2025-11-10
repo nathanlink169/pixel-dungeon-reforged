@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
@@ -98,11 +99,11 @@ public class Ooze extends Buff {
 
 			acted = true;
 			if (Dungeon.scalingDepth() > 5) {
-				target.damage(1 + Dungeon.scalingDepth() / 5, this);
+				target.Damage(1 + Dungeon.scalingDepth() / 5, this, DamageType.of(DamageType.ACID));
 			} else if (Dungeon.scalingDepth() == 5){
-				target.damage(1, this); //1 dmg per turn vs Goo
+				target.Damage(1, this, DamageType.of(DamageType.ACID)); //1 dmg per turn vs Goo
 			} else if (Random.Int(2) == 0) {
-				target.damage(1, this); //0.5 dmg per turn in sewers
+				target.Damage(1, this, DamageType.of(DamageType.ACID)); //0.5 dmg per turn in sewers
 			}
 
 			if (!target.isAlive() && target == Dungeon.hero) {

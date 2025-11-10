@@ -32,6 +32,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageBonus;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.GenericPreArmourDamageMultiplier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.genericmodifiers.InfiniteAccuracyModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -301,7 +308,7 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		}
 	}
 
-	public static class ParryTracker extends FlavourBuff{
+	public static class ParryTracker extends FlavourBuff implements CombatModifier.EvasionModifier {
 		{ actPriority = HERO_PRIO+1;}
 
 		public boolean parried;
@@ -310,6 +317,21 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		public void detach() {
 			if (!parried && target.buff(Combo.class) != null) target.buff(Combo.class).detach();
 			super.detach();
+		}
+
+		@Override
+		public float modifyEvasion(AttackContext context, float currentEvasion) {
+			return Char.INFINITE_EVASION;
+		}
+
+		@Override
+		public int priority() {
+			return Priority.HIGH;
+		}
+
+		@Override
+		public boolean appliesTo(AttackContext context) {
+			return context.defender == target;
 		}
 	}
 
@@ -347,27 +369,59 @@ public class Combo extends Buff implements ActionIndicator.Action {
 		boolean wasAlly = enemy.alignment == target.alignment;
 		Hero hero = (Hero) target;
 
-		float dmgMulti = 1f;
-		int dmgBonus = 0;
+		float bonusAbilityMulti = 1.0f;
+		int bonusAbilityDamage = 0;
 
 		//variance in damage dealt
 		switch (moveBeingUsed) {
 			case CLOBBER:
-				dmgMulti = 0;
+				bonusAbilityMulti = 0;
 				break;
 			case SLAM:
-				dmgBonus = Math.round(target.drRoll() * count / 5f);
+				bonusAbilityDamage = Math.round(target.drRoll(hero.belongings.attackingWeapon().damageType) * count / 5f);
 				break;
 			case CRUSH:
-				dmgMulti = 0.25f * count;
+				bonusAbilityMulti = 0.25f * count;
 				break;
 			case FURY:
-				dmgMulti = 0.6f;
+				bonusAbilityMulti = 0.6f;
 				break;
 		}
 
 		int oldPos = enemy.pos;
-		if (hero.attack(enemy, dmgMulti, dmgBonus, Char.INFINITE_ACCURACY, hero.belongings.attackingWeapon().damageType, Char.AttackType.MELEE)){
+		InfiniteAccuracyModifier iam = InfiniteAccuracyModifier.AttackerModifier();
+		iam.attachTo(hero);
+
+		GenericPreArmourDamageBonus db = null;
+		GenericPreArmourDamageMultiplier dm = null;
+
+		if (bonusAbilityMulti != 1.0f) {
+			dm = GenericPreArmourDamageMultiplier.AttackerModifier(bonusAbilityMulti);
+			dm.attachTo(hero);
+		}
+		if (bonusAbilityDamage != 0) {
+			db = GenericPreArmourDamageBonus.AttackerModifier(bonusAbilityDamage);
+			db.attachTo(hero);
+		}
+
+		// Build attack context
+		AttackContext context = new AttackContext.Builder(target, enemy)
+				.attackType(AttackContext.AttackType.MELEE)
+				.damageType(hero.belongings.attackingWeapon().damageType)
+				.build();
+
+		// Resolve attack - this handles everything internally
+		AttackResult result = CombatResolver.resolve(context);
+		iam.detach();
+		if (db != null) {
+			db.detach();
+		}
+		if (dm != null) {
+			dm.detach();
+		}
+		bonusAbilityMulti = 1.0f;
+		bonusAbilityDamage = 0;
+		if (result.result == AttackResult.ResultType.HIT) {
 			//special on-hit effects
 			switch (moveBeingUsed) {
 				case CLOBBER:
@@ -400,15 +454,15 @@ public class Combo extends Buff implements ActionIndicator.Action {
 					for (Char ch : Actor.chars()) {
 						if (ch != enemy && ch.alignment == Char.Alignment.ENEMY
 								&& PathFinder.distance[ch.pos] < Integer.MAX_VALUE) {
-							int aoeHit = Math.round(target.damageRoll(Char.AttackType.MELEE, false) * 0.25f * count);
+							int aoeHit = Math.round(target.damageRoll(context) * 0.25f * count);
 							aoeHit /= 2;
-							aoeHit -= ch.drRoll();
+							aoeHit -= ch.drRoll(context.damageType);
 							if (ch.buff(Vulnerable.class) != null) aoeHit *= 1.33f;
 							if (ch instanceof DwarfKing){
 								//change damage type for DK so that crush AOE doesn't count for DK's challenge badge
-								ch.damage(aoeHit, this);
+								ch.Damage(aoeHit, this, context.damageType);
 							} else {
-								ch.damage(aoeHit, target);
+								ch.Damage(aoeHit, target, context.damageType);
 							}
 							ch.sprite.bloodBurstA(target.sprite.center(), aoeHit);
 							ch.sprite.flash();

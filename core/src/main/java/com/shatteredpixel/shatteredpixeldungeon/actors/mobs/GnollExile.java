@@ -31,11 +31,10 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollExileSprite;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.utils.BArray;
 import com.watabou.utils.PathFinder;
@@ -109,7 +108,7 @@ public class GnollExile extends Gnoll {
 			super.beckon(cell);
 		} else {
 			//still attracts if passive, but doesn't remove passive state
-			target = cell;
+			m_Target.Set(cell);
 		}
 	}
 
@@ -127,22 +126,22 @@ public class GnollExile extends Gnoll {
 	}
 
 	//gnoll exiles wander around while passive
-	private class Passive extends Mob.Wandering {
+	private static class Passive extends Mob.Wandering {
 
 		private int seenNotifyCooldown = 0;
 
 		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
 
-			for (Buff b : buffs()){
+			for (Buff b : mob.buffs()){
 				if (b.type == Buff.buffType.NEGATIVE){
 					//swap to aggro if we've been debuffed
-					state = WANDERING;
+					mob.state = mob.WANDERING;
 					return true;
 				}
 			}
 
-			if (fieldOfView[Dungeon.hero.pos] && Dungeon.level.heroFOV[pos]){
+			if (mob.fieldOfView[Dungeon.hero.pos] && Dungeon.level.heroFOV[mob.pos]){
 				if (seenNotifyCooldown <= 0){
 					GLog.p(Messages.get(GnollExile.class, "seen_passive"));
 				}
@@ -153,25 +152,25 @@ public class GnollExile extends Gnoll {
 
 			if (enemyInFOV && justAlerted) {
 
-				if (Dungeon.level.heroFOV[pos]) {
+				if (Dungeon.level.heroFOV[mob.pos]) {
 					GLog.w(Messages.get(GnollExile.class, "seen_aggro"));
 				}
-				return noticeEnemy();
+				return noticeEnemy(mob);
 
 			} else {
 
-				return continueWandering();
+				return continueWandering(mob);
 
 			}
 		}
 	}
 
 	//standard wandering but with a warning that the exile is aggroed
-	private class Wandering extends Mob.Wandering {
+	private static class Wandering extends Mob.Wandering {
 		@Override
-		protected boolean noticeEnemy() {
+		protected boolean noticeEnemy(Mob mob) {
 			GLog.w(Messages.get(GnollExile.class, "seen_aggro"));
-			return super.noticeEnemy();
+			return super.noticeEnemy(mob);
 		}
 	}
 }

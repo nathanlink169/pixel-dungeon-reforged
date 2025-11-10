@@ -155,7 +155,7 @@ public class ControllerHandler implements ControllerListener {
 		else if (mapping.axisLeftX == axisCode)     leftStickPosition.x = value;
 		else if (mapping.axisLeftY == axisCode)     leftStickPosition.y = value;
 
-		//L2 and R2 triggers on Desktop
+			//L2 and R2 triggers on Desktop
 		else if (axisCode == 4 && Gdx.app.getType() == Application.ApplicationType.Desktop && L2Trigger != value) {
 
 			if (value == 1){

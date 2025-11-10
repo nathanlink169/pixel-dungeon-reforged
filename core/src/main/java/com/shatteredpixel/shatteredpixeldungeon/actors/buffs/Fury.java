@@ -24,9 +24,11 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
-public class Fury extends Buff {
+public class Fury extends Buff implements CombatModifier.PreArmorDamageModifier {
 	
 	public static float LEVEL	= 0.5f;
 
@@ -49,5 +51,20 @@ public class Fury extends Buff {
 	@Override
 	public int icon() {
 		return BuffIndicator.FURY;
+	}
+
+	@Override
+	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
+		return (int) (currentDamage * 1.5f);
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker == target;
 	}
 }

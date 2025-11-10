@@ -31,10 +31,11 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Lightning;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SparkParticle;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Shocking;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
@@ -87,14 +88,14 @@ public class WandOfLightning extends DamageWand {
 			}
 			wandProc(ch, chargesPerCast());
 			if (ch == curUser && ch.isAlive()) {
-				ch.damage(Math.round(damageRoll() * multiplier * 0.5f), this, DamageType.MAGIC);
+				ch.Damage(Math.round(damageRoll() * multiplier * 0.5f), this, DamageType.of(DamageType.ELECTRICITY));
 				if (!curUser.isAlive()) {
 					Badges.validateDeathFromFriendlyMagic();
 					Dungeon.fail( this );
 					GLog.n(Messages.get(this, "ondeath"));
 				}
 			} else {
-				ch.damage(Math.round(damageRoll() * multiplier), this, DamageType.MAGIC);
+				ch.Damage(Math.round(damageRoll() * multiplier), this, DamageType.of(DamageType.ELECTRICITY));
 			}
 		}
 	}
@@ -102,7 +103,8 @@ public class WandOfLightning extends DamageWand {
 	@Override
 	public void onHit(MagesStaff staff, Char attacker, Char defender, int damage) {
 		//acts like shocking enchantment
-		new LightningOnHit().proc(staff, attacker, defender, damage);
+		AttackContext context = new AttackContext.Builder(attacker, defender).build();
+		new LightningOnHit().onHit(context, damage);
 	}
 
 	public static class LightningOnHit extends Shocking {

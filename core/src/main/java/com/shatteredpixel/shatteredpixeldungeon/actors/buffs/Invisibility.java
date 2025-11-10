@@ -29,14 +29,17 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroSubClass;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.CloakOfShadows;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.RoundShield;
 import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 
-public class Invisibility extends FlavourBuff {
+public class Invisibility extends FlavourBuff implements CombatModifier.AccuracyModifier {
 
 	public static final float DURATION	= 20f;
 
@@ -120,5 +123,29 @@ public class Invisibility extends FlavourBuff {
 		if (guard != null && guard.hasBlocked){
 			guard.detach();
 		}
+	}
+
+	@Override
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
+		return Char.INFINITE_ACCURACY;
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		if (context.attacker == target) {
+			if (context.attacker instanceof Hero) {
+				if (RingOfForce.fightingUnarmed(Dungeon.hero)) {
+					return true;
+				}
+				return Dungeon.hero.STR >= Dungeon.hero.getWeapon().STRReq();
+			}
+			return true;
+		}
+		return false;
 	}
 }

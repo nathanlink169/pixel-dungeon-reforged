@@ -24,13 +24,18 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.POINT_BLANK;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Momentum;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MissileSprite;
 import com.watabou.noosa.tweeners.AlphaTweener;
@@ -47,7 +52,7 @@ public class HeavyBoomerang extends MissileWeapon {
 		tier = 4;
 		sticky = false;
 
-		damageType = DamageType.BLUDGEONING;
+		damageType = DamageType.of(DamageType.BLUDGEONING);
 	}
 	
 	@Override
@@ -59,12 +64,12 @@ public class HeavyBoomerang extends MissileWeapon {
 	boolean circleBackhit = false;
 
 	@Override
-	protected float adjacentAccFactor(Char owner, Char target) {
+	public float modifyAccuracy(AttackContext context, float currentAccuracy) {
 		if (circleBackhit){
 			circleBackhit = false;
-			return 1.5f;
+			return currentAccuracy * 1.5f;
 		}
-		return super.adjacentAccFactor(owner, target);
+		return super.modifyAccuracy(context, currentAccuracy);
 	}
 
 	@Override

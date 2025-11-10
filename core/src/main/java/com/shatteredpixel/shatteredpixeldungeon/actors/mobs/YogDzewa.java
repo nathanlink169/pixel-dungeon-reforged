@@ -33,9 +33,12 @@ import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Light;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LockedFloor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Sheep;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackResult;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Beam;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
@@ -49,10 +52,9 @@ import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.LarvaSprite;
-import com.shatteredpixel.shatteredpixeldungeon.sprites.YogSprite;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BossHealthBar;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.audio.Music;
@@ -65,6 +67,7 @@ import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 
 public class YogDzewa extends Mob {
@@ -77,13 +80,8 @@ public class YogDzewa extends Mob {
 	@Override
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.yogdzewa; }
 
-	private int phase = 0;
-
-	private float abilityCooldown;
 	private static final int MIN_ABILITY_CD = 10;
 	private static final int MAX_ABILITY_CD = 15;
-
-	private float summonCooldown;
 	private static final int MIN_SUMMON_CD = 10;
 	private static final int MAX_SUMMON_CD = 15;
 
@@ -146,7 +144,7 @@ public class YogDzewa extends Mob {
 	private ArrayList<Integer> targetedCells = new ArrayList<>();
 
 	@Override
-	public int attackSkill(Char target) {
+	public int attackSkill() {
 		return INFINITE_ACCURACY;
 	}
 
@@ -166,10 +164,10 @@ public class YogDzewa extends Mob {
 		//mob logic
 		enemy = chooseEnemy();
 
-		enemySeen = enemy != null && enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0;
+		m_EnemySeen.Set(enemy != null && enemy.isAlive() && fieldOfView[enemy.pos] && enemy.invisible <= 0);
 		//end of char/mob logic
 
-		if (phase == 0){
+		if (m_Phase.Get() == 0){
 			if (Dungeon.hero.GetViewDistance() >= Dungeon.level.distance(pos, Dungeon.hero.pos)) {
 				Dungeon.observe();
 			}
@@ -178,7 +176,7 @@ public class YogDzewa extends Mob {
 			}
 		}
 
-		if (phase == 0){
+		if (m_Phase.Get() == 0){
 			spend(TICK);
 			return true;
 		} else {
@@ -213,11 +211,19 @@ public class YogDzewa extends Mob {
 						Statistics.bossScores[4] -= 500;
 					}
 
-					if (hit( this, ch, true )) {
+					// Build attack context
+					AttackContext context = new AttackContext.Builder(this, enemy)
+							.attackType(AttackContext.AttackType.RANGED)
+							.damageType(GetRangedDamageType())
+							.build();
+
+					// Resolve attack - this handles EVERYTHING internally
+					AttackResult result = CombatResolver.resolve(context);
+					if (result.result == AttackResult.ResultType.HIT) {
 						if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
-							ch.damage(Random.NormalIntRange(30, 50), new Eye.DeathGaze());
+							ch.Damage(Random.NormalIntRange(30, 50), new Eye.DeathGaze(), GetRangedDamageType());
 						} else {
-							ch.damage(Random.NormalIntRange(20, 30), new Eye.DeathGaze());
+							ch.Damage(Random.NormalIntRange(20, 30), new Eye.DeathGaze(), GetRangedDamageType());
 						}
 						if (Dungeon.level.heroFOV[pos]) {
 							ch.sprite.flash();
@@ -235,7 +241,7 @@ public class YogDzewa extends Mob {
 				targetedCells.clear();
 			}
 
-			if (abilityCooldown <= 0){
+			if (m_AbilityCooldown.Get() <= 0){
 
 				int beams = 1 + (GetMaxHP() - HP)/400;
 				HashSet<Integer> affectedCells = new HashSet<>();
@@ -276,14 +282,14 @@ public class YogDzewa extends Mob {
 				spend(GameMath.gate(TICK, (int)Math.ceil(Dungeon.hero.cooldown()), 3*TICK));
 				Dungeon.hero.interrupt();
 
-				abilityCooldown += Random.NormalFloat(MIN_ABILITY_CD, MAX_ABILITY_CD);
-				abilityCooldown -= (phase - 1);
+				m_AbilityCooldown.Add(Random.NormalFloat(MIN_ABILITY_CD, MAX_ABILITY_CD));
+				m_AbilityCooldown.Subtract(m_Phase.Get() - 1);
 
 			} else {
 				spend(TICK);
 			}
 
-			while (summonCooldown <= 0){
+			while (m_SummonCooldown.Get() <= 0){
 
 				Class<?extends Mob> cls = regularSummons.remove(0);
 				Mob summon = Reflection.newInstance(cls);
@@ -319,10 +325,10 @@ public class YogDzewa extends Mob {
 					summon.beckon(Dungeon.hero.pos);
 					Dungeon.level.occupyCell(summon);
 
-					summonCooldown += Random.NormalFloat(MIN_SUMMON_CD, MAX_SUMMON_CD);
-					summonCooldown -= (phase - 1);
+					m_SummonCooldown.Add(Random.NormalFloat(MIN_SUMMON_CD, MAX_SUMMON_CD));
+					m_SummonCooldown.Subtract(m_Phase.Get() - 1);
 					if (findFist() != null){
-						summonCooldown += MIN_SUMMON_CD - (phase - 1);
+						m_SummonCooldown.Add(MIN_SUMMON_CD - (m_Phase.Get() - 1));
 					}
 				} else {
 					break;
@@ -331,15 +337,15 @@ public class YogDzewa extends Mob {
 
 		}
 
-		if (summonCooldown > 0) summonCooldown--;
-		if (abilityCooldown > 0) abilityCooldown--;
+		if (m_SummonCooldown.Get() > 0) m_SummonCooldown.Decrement();
+		if (m_AbilityCooldown.Get() > 0) m_AbilityCooldown.Decrement();
 
 		//extra fast abilities and summons at the final 100 HP
-		if (phase == 5 && abilityCooldown > 2){
-			abilityCooldown = 2;
+		if (m_Phase.Get() == 5 && m_AbilityCooldown.Get() > 2){
+			m_AbilityCooldown.Set(2.0f);
 		}
-		if (phase == 5 && summonCooldown > 3){
-			summonCooldown = 3;
+		if (m_Phase.Get() == 5 && m_SummonCooldown.Get() > 3){
+			m_SummonCooldown.Set(3.0f);
 		}
 
 		return true;
@@ -348,10 +354,10 @@ public class YogDzewa extends Mob {
 	public void processFistDeath(){
 		//normally Yog has no logic when a fist dies specifically
 		//but the very last fist to die does trigger the final phase
-		if (phase == 4 && findFist() == null){
+		if (m_Phase.Get() == 4 && findFist() == null){
 			yell(Messages.get(this, "hope"));
-			summonCooldown = -15; //summon a burst of minions!
-			phase = 5;
+			m_SummonCooldown.Set(-15.0f); //summon a burst of minions!
+			m_Phase.Set(5);
 			BossHealthBar.bleed(true);
 			Game.runOnRenderThread(new Callback() {
 				@Override
@@ -369,37 +375,37 @@ public class YogDzewa extends Mob {
 
 	@Override
 	public boolean isAlive() {
-		return super.isAlive() || phase != 5;
+		return super.isAlive() || m_Phase.Get() != 5;
 	}
 
 	@Override
 	public boolean isInvulnerable(Class effect) {
-		return phase == 0 || findFist() != null || super.isInvulnerable(effect);
+		return m_Phase.Get() == 0 || findFist() != null || super.isInvulnerable(effect);
 	}
 
 	@Override
-	public void damage( int dmg, Object src, int damageType ) {
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 
 		int preHP = HP;
-		super.damage( dmg, src, damageType );
+		super.Damage( dmg, src, damageType );
 
-		if (phase == 0 || findFist() != null) return;
+		if (m_Phase.Get() == 0 || findFist() != null) return 0;
 
-		if (phase < 4) {
-			HP = Math.max(HP, GetMaxHP() - 300 * phase);
-		} else if (phase == 4) {
+		if (m_Phase.Get() < 4) {
+			HP = Math.max(HP, GetMaxHP() - 300 * m_Phase.Get());
+		} else if (m_Phase.Get() == 4) {
 			HP = Math.max(HP, 100);
 		}
 		int dmgTaken = preHP - HP;
 
 		if (dmgTaken > 0) {
-			abilityCooldown -= dmgTaken / 10f;
-			summonCooldown -= dmgTaken / 10f;
+			m_AbilityCooldown.Subtract(dmgTaken / 10f);
+			m_SummonCooldown.Subtract(dmgTaken / 10f);
 		}
 
-		if (phase < 4 && HP <= GetMaxHP() - 300*phase){
+		if (m_Phase.Get() < 4 && HP <= GetMaxHP() - 300*m_Phase.Get()){
 
-			phase++;
+			m_Phase.Increment();
 
 			updateVisibility(Dungeon.level);
 			GLog.n(Messages.get(this, "darkness"));
@@ -415,8 +421,8 @@ public class YogDzewa extends Mob {
 			CellEmitter.get(Dungeon.level.exit()).burst(ShadowParticle.UP, 100);
 			CellEmitter.get(Dungeon.level.exit()+1).burst(ShadowParticle.UP, 25);
 
-			if (abilityCooldown < 5) abilityCooldown = 5;
-			if (summonCooldown < 5) summonCooldown = 5;
+			if (m_AbilityCooldown.Get() < 5) m_AbilityCooldown.Set(5.0f);
+			if (m_SummonCooldown.Get() < 5) m_SummonCooldown.Set(5.0f);
 
 		}
 
@@ -425,7 +431,7 @@ public class YogDzewa extends Mob {
 			if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES))   lock.addTime(dmgTaken/3f);
 			else                                                    lock.addTime(dmgTaken/2f);
 		}
-
+		return preHP - HP;
 	}
 
 	public void addFist(YogFist fist){
@@ -435,8 +441,8 @@ public class YogDzewa extends Mob {
 		CellEmitter.get(Dungeon.level.exit()).burst(ShadowParticle.UP, 100);
 		CellEmitter.get(Dungeon.level.exit()+1).burst(ShadowParticle.UP, 25);
 
-		if (abilityCooldown < 5) abilityCooldown = 5;
-		if (summonCooldown < 5) summonCooldown = 5;
+		if (m_AbilityCooldown.Get() < 5) m_AbilityCooldown.Set(5.0f);
+		if (m_SummonCooldown.Get() < 5) m_SummonCooldown.Set(5.0f);
 
 		int targetPos = Dungeon.level.exit() + Dungeon.level.width();
 
@@ -462,8 +468,8 @@ public class YogDzewa extends Mob {
 
 	public void updateVisibility( Level level ){
 		int viewDistance = 4;
-		if (phase > 1 && isAlive()){
-			viewDistance = Math.max(4 - (phase-1), 1);
+		if (m_Phase.Get() > 1 && isAlive()){
+			viewDistance = Math.max(4 - (m_Phase.Get()-1), 1);
 		}
 		if (Dungeon.isChallenged(Challenges.DARKNESS)) {
 			viewDistance = Math.min(viewDistance, 2);
@@ -551,10 +557,10 @@ public class YogDzewa extends Mob {
 					Music.INSTANCE.play(Assets.Music.HALLS_BOSS, true);
 				}
 			});
-			if (phase == 0) {
-				phase = 1;
-				summonCooldown = Random.NormalFloat(MIN_SUMMON_CD, MAX_SUMMON_CD);
-				abilityCooldown = Random.NormalFloat(MIN_ABILITY_CD, MAX_ABILITY_CD);
+			if (m_Phase.Get() == 0) {
+				m_Phase.Set(1);
+				m_SummonCooldown.Set(Random.NormalFloat(MIN_SUMMON_CD, MAX_SUMMON_CD));
+				m_AbilityCooldown.Set(Random.NormalFloat(MIN_ABILITY_CD, MAX_ABILITY_CD));
 			}
 		}
 	}
@@ -570,24 +576,23 @@ public class YogDzewa extends Mob {
 		return desc;
 	}
 
-	private static final String PHASE = "phase";
-
-	private static final String ABILITY_CD = "ability_cd";
-	private static final String SUMMON_CD = "summon_cd";
-
 	private static final String FIST_SUMMONS = "fist_summons";
 	private static final String REGULAR_SUMMONS = "regular_summons";
 	private static final String CHALLENGE_SUMMONS = "challenges_summons";
 
 	private static final String TARGETED_CELLS = "targeted_cells";
 
+	private BundleableProperty.Int m_Phase = new BundleableProperty.Int("phase", 0);
+	private BundleableProperty.Float m_AbilityCooldown = new BundleableProperty.Float("ability_cd", 0);
+	private BundleableProperty.Float m_SummonCooldown = new BundleableProperty.Float("summon_cd", 0);
+
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(PHASE, phase);
+		m_Phase.Store(bundle);
+		m_AbilityCooldown.Store(bundle);
+		m_SummonCooldown.Store(bundle);
 
-		bundle.put(ABILITY_CD, abilityCooldown);
-		bundle.put(SUMMON_CD, summonCooldown);
 
 		bundle.put(FIST_SUMMONS, fistSummons.toArray(new Class[0]));
 		bundle.put(CHALLENGE_SUMMONS, challengeSummons.toArray(new Class[0]));
@@ -603,14 +608,13 @@ public class YogDzewa extends Mob {
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		phase = bundle.getInt(PHASE);
-		if (phase != 0) {
+		m_Phase.Restore(bundle);
+		m_AbilityCooldown.Restore(bundle);
+		m_SummonCooldown.Restore(bundle);
+		if (m_Phase.Get() != 0) {
 			BossHealthBar.assignBoss(this);
-			if (phase == 5) BossHealthBar.bleed(true);
+			if (m_Phase.Get() == 5) BossHealthBar.bleed(true);
 		}
-
-		abilityCooldown = bundle.getFloat(ABILITY_CD);
-		summonCooldown = bundle.getFloat(SUMMON_CD);
 
 		fistSummons.clear();
 		Collections.addAll(fistSummons, bundle.getClassArray(FIST_SUMMONS));

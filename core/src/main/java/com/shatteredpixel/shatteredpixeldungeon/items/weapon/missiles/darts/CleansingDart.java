@@ -28,55 +28,66 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Chill;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfCleansing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
-public class CleansingDart extends TippedDart {
+public class CleansingDart extends TippedDart implements CombatModifier.PostArmorDamageModifier {
 	
 	{
 		image = ItemSpriteSheet.CLEANSING_DART;
 	}
-	
-	@Override
-	public int proc(Char attacker, final Char defender, int damage) {
 
+	@Override
+	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
+		return context.attacker.alignment == context.defender.alignment ? 0 : currentDamage;
+	}
+
+	@Override
+	protected void applyDartEffect(Char attacker, Char defender) {
+		// Don't affect hero during charged shot AoE
 		if (processingChargedShot && defender == attacker) {
-			//do nothing to the hero when processing charged shot
-		} else if (attacker.alignment == defender.alignment){
+			return;
+		}
+
+		if (attacker.alignment == defender.alignment) {
+			// Cleanse allies
 			PotionOfCleansing.cleanse(defender, PotionOfCleansing.Cleanse.DURATION*2f);
-			return 0;
 		} else {
-			for (Buff b : defender.buffs()){
+			// Remove positive buffs from enemies
+			for (Buff b : defender.buffs()) {
 				if (!(b instanceof ChampionEnemy)
 						&& b.type == Buff.buffType.POSITIVE
-						&& !(b instanceof Crossbow.ChargedShot)){
+						&& !(b instanceof Crossbow.ChargedShot)) {
 					b.detach();
 				}
 			}
-			//for when cleansed effects were keeping defender alive (e.g. raging brutes)
-			if (!defender.isAlive()){
+
+			// Handle mobs that die when cleansed (raging brutes)
+			if (!defender.isAlive()) {
 				defender.die(attacker);
-				return super.proc(attacker, defender, damage);
 			}
+
+			// Make cleansed mobs wander away
 			if (defender instanceof Mob) {
-				//need to delay this so damage from the dart doesn't break wandering
-				new FlavourBuff(){
-					{actPriority = VFX_PRIO;}
+				new FlavourBuff() {
+					{ actPriority = VFX_PRIO; }
 					public boolean act() {
-						if (((Mob) defender).state == ((Mob) defender).HUNTING || ((Mob) defender).state == ((Mob) defender).FLEEING){
-							((Mob) defender).state = ((Mob) defender).WANDERING;
+						Mob mob = (Mob)defender;
+						if (mob.state == mob.HUNTING || mob.state == mob.FLEEING) {
+							mob.state = mob.WANDERING;
 						}
-						((Mob) defender).beckon(Dungeon.level.randomDestination(defender));
+						mob.beckon(Dungeon.level.randomDestination(defender));
 						defender.sprite.showLost();
 						return super.act();
 					}
 				}.attachTo(defender);
 			}
 		}
-
-		return super.proc(attacker, defender, damage);
 	}
 }

@@ -131,7 +131,7 @@ public class MineLargeRoom extends CaveRoom {
 			int sapperPos = level.pointToCell(random(5));
 			GnollSapper s = new GnollSapper();
 			s.pos = sapperPos;
-			s.spawnPos = s.pos;
+			s.SetSpawnPosition(s.pos);
 			level.mobs.add(s);
 
 			int guardPos;

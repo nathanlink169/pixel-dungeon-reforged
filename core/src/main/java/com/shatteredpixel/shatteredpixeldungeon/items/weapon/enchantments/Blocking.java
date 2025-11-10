@@ -28,6 +28,8 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
@@ -38,37 +40,45 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.watabou.noosa.Image;
 import com.watabou.utils.Random;
 
-public class Blocking extends Weapon.Enchantment {
+public class Blocking extends Weapon.Enchantment implements CombatModifier.OnHitEffect {
 	
 	private static ItemSprite.Glowing BLUE = new ItemSprite.Glowing( 0x0000FF );
-	
-	@Override
-	public int proc(Weapon weapon, Char attacker, Char defender, int damage) {
-		
-		int level = Math.max( 0, weapon.buffedLvl() );
 
-		// lvl 0 - 10%
-		// lvl 1 ~ 12%
-		// lvl 2 ~ 14%
-		float procChance = (level+4f)/(level+40f) * procChanceMultiplier(attacker);
-		if (Random.Float() < procChance){
-			float powerMulti = Math.max(1f, procChance);
-
-			BlockBuff b = Buff.affect(attacker, BlockBuff.class);
-			int shield = Math.round(powerMulti * (2 + weapon.buffedLvl()));
-			b.setShield(shield);
-			attacker.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
-			attacker.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 5);
-		}
-		
-		return damage;
-	}
-	
 	@Override
 	public ItemSprite.Glowing glowing() {
 		return BLUE;
 	}
-	
+
+	@Override
+	public void onHit(AttackContext context, int finalDamage) {
+		int level = Math.max( 0, context.attacker.getWeapon().buffedLvl() );
+
+		// lvl 0 - 10%
+		// lvl 1 ~ 12%
+		// lvl 2 ~ 14%
+		float procChance = (level+4f)/(level+40f) * procChanceMultiplier(context.attacker);
+		if (Random.Float() < procChance){
+			float powerMulti = Math.max(1f, procChance);
+
+			BlockBuff b = Buff.affect(context.attacker, BlockBuff.class);
+			int shield = Math.round(powerMulti * (2 + context.attacker.getWeapon().buffedLvl()));
+			b.setShield(shield);
+			context.attacker.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
+			context.attacker.sprite.emitter().burst(Speck.factory(Speck.LIGHT), 5);
+		}
+
+	}
+
+	@Override
+	public int priority() {
+		return Priority.NORMAL;
+	}
+
+	@Override
+	public boolean appliesTo(AttackContext context) {
+		return context.attacker.getWeapon() != null && context.attacker.getWeapon().enchantment == this;
+	}
+
 	public static class BlockBuff extends ShieldBuff {
 
 		{

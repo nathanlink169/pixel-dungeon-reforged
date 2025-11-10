@@ -30,36 +30,24 @@ import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Bless;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ChampionEnemy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cursed;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Daze;
-import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hex;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.HeroClass;
-import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatResolver;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Chains;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Effects;
-import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Pushing;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
-import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.FerretTuft;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
-import com.shatteredpixel.shatteredpixeldungeon.messages.Languages;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
-import com.watabou.utils.Random;
 
 public class Guard extends Mob {
-
-	//they can only use their chains once
-	private boolean chainsUsed = false;
 
 	{
 		HUNTING = new Hunting();
@@ -68,7 +56,7 @@ public class Guard extends Mob {
 	public Constants.mobs.mobsBase GetConstants() { return Constants.mobs.guard; }
 
 	private boolean chain(int target){
-		if ((chainsUsed && !getRandomizerEnabled(RandomTraits.CHAIN_MASTER)) || enemy.properties().contains(Property.IMMOVABLE))
+		if ((m_ChainsUsed.Get() && !getRandomizerEnabled(RandomTraits.CHAIN_MASTER)) || enemy.properties().contains(Property.IMMOVABLE))
 			return false;
 
 		Ballistica chain = new Ballistica(pos, target, Ballistica.PROJECTILE);
@@ -90,7 +78,7 @@ public class Guard extends Mob {
 				return false;
 			} else {
 				final int newPosFinal = newPos;
-				this.target = newPos;
+				this.m_Target.Set(newPos);
 
 				if (sprite.visible || enemy.sprite.visible) {
 					yell(Messages.get(this, "scorpion"));
@@ -102,9 +90,8 @@ public class Guard extends Mob {
 							new Callback() {
 						public void call() {
 							boolean didHit = true;
-							boolean[] tuftDodged = { false };
 							if (getRandomizerEnabled(RandomTraits.RUSTY_AIM)) {
-								didHit = checkRandomChainHit(enemy, tuftDodged);
+								didHit = checkRandomChainHit(enemy);
 							}
 
 							if (didHit) {
@@ -119,17 +106,7 @@ public class Guard extends Mob {
 								spend(1.0f);
 
 								if (enemy.sprite != null){
-									if (tuftDodged[0]){
-										//dooking is a playful sound Ferrets can make, like low pitched chirping
-										// I doubt this will translate, so it's only in English
-										if (Messages.lang() == Languages.ENGLISH && Random.Int(10) == 0) {
-											enemy.sprite.showStatusWithIcon(CharSprite.NEUTRAL, "dooked", FloatingText.TUFT);
-										} else {
-											enemy.sprite.showStatusWithIcon(CharSprite.NEUTRAL, enemy.defenseVerb(), FloatingText.TUFT);
-										}
-									} else {
-										enemy.sprite.showStatus(CharSprite.NEUTRAL, enemy.defenseVerb());
-									}
+									enemy.sprite.showStatus(CharSprite.NEUTRAL, enemy.defenseVerb());
 								}
 							}
 							next();
@@ -140,61 +117,16 @@ public class Guard extends Mob {
 				}
 			}
 		}
-		chainsUsed = true;
+		m_ChainsUsed.Set(true);
 		return true;
 	}
 
-	private boolean checkRandomChainHit(Char ch, boolean[] tuftDodged) {
-		float acuStat = this.attackSkill( ch );
-		float defStat = ch.defenseSkill( this );
+	private boolean checkRandomChainHit(Char ch) {
+		AttackContext context = new AttackContext.Builder(this, ch)
+				.attackType(AttackContext.AttackType.RANGED)
+				.build();
 
-		acuStat *= 1.5f; // All attacks are 50% more accurate in reforged.
-
-		if (ch.buff(Talent.ArtificerFoodEvasionBonus.class) != null) {
-			if (((Hero)ch).pointsInTalent(Talent.QUICK_CALIBRATION) == 2 || Random.Int(4) == 0) {
-				defStat = INFINITE_EVASION;
-			}
-		}
-
-		//if accuracy or evasion are large enough, treat them as infinite.
-		//note that infinite evasion beats infinite accuracy
-		if (defStat >= INFINITE_EVASION){
-			return false;
-		} else if (acuStat >= INFINITE_ACCURACY){
-			return true;
-		}
-
-		float acuRoll = Random.Float( acuStat );
-		if (this.buff(Bless.class) != null) acuRoll *= 1.25f;
-		if (this.buff(   Hex.class) != null) acuRoll *= 0.8f;
-		if (this.buff(  Daze.class) != null) acuRoll *= 0.5f;
-		if (this.buff(Cursed.class) != null) acuRoll *= 0.9f;
-		for (ChampionEnemy buff : this.buffs(ChampionEnemy.class)){
-			acuRoll *= buff.evasionAndAccuracyFactor();
-		}
-		acuRoll *= AscensionChallenge.statModifier(this);
-		float defRoll = Random.Float( defStat );
-		if (ch.buff(Bless.class) != null) defRoll *= 1.25f;
-		if (ch.buff(   Hex.class) != null) defRoll *= 0.8f;
-		if (ch.buff(  Daze.class) != null) defRoll *= 0.5f;
-		if (ch.buff(Cursed.class) != null) defRoll *= 0.7f;
-		for (ChampionEnemy buff : ch.buffs(ChampionEnemy.class)){
-			defRoll *= buff.evasionAndAccuracyFactor();
-		}
-		defRoll *= AscensionChallenge.statModifier(ch);
-		if (Dungeon.hero.heroClass != HeroClass.CLERIC
-				&& Dungeon.hero.hasTalent(Talent.BLESS)
-				&& ch.alignment == Alignment.ALLY){
-			// + 3%/5%
-			defRoll *= 1.01f + 0.02f*Dungeon.hero.pointsInTalent(Talent.BLESS);
-		}
-
-		if (defRoll < acuRoll && (defRoll* FerretTuft.evasionMultiplier()) >= acuRoll){
-			tuftDodged[0] = true;
-		}
-		defRoll *= FerretTuft.evasionMultiplier();
-
-		return acuRoll >= defRoll;
+		return CombatResolver.checkHit(context);
 	}
 
 	private void pullEnemy( Char enemy, int pullPos ){
@@ -228,39 +160,40 @@ public class Guard extends Mob {
 		return super.createLoot(itemSlot);
 	}
 
-	private final String CHAINSUSED = "chainsused";
+	private BundleableProperty.Bool m_ChainsUsed = new BundleableProperty.Bool("chainsused", false);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(CHAINSUSED, chainsUsed);
+		m_ChainsUsed.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		chainsUsed = bundle.getBoolean(CHAINSUSED);
+		m_ChainsUsed.Restore(bundle);
 	}
-	
-	private class Hunting extends Mob.Hunting{
+
+	private static class Hunting extends Mob.Hunting{
 		@Override
-		public boolean act( boolean enemyInFOV, boolean justAlerted ) {
-			enemySeen = enemyInFOV;
+		public boolean act( Mob mob, boolean enemyInFOV, boolean justAlerted ) {
+			Guard g = (Guard)mob;
+			g.m_EnemySeen.Set(enemyInFOV);
 
 			int maxDistance = 5;
 			if (getRandomizerEnabled(RandomTraits.SHORT_LEASH)) maxDistance = 3;
 			
-			if ((!chainsUsed || getRandomizerEnabled(RandomTraits.CHAIN_MASTER))
+			if ((!g.m_ChainsUsed.Get() || getRandomizerEnabled(RandomTraits.CHAIN_MASTER))
 					&& enemyInFOV
-					&& !isCharmedBy( enemy )
-					&& !canAttack( enemy )
-					&& Dungeon.level.distance( pos, enemy.pos ) < maxDistance
+					&& !g.isCharmedBy( g.enemy )
+					&& !g.canAttack( g.enemy )
+					&& Dungeon.level.distance( g.pos, g.enemy.pos ) < maxDistance
 
 					
-					&& chain(enemy.pos)){
-				return !(sprite.visible || enemy.sprite.visible);
+					&& g.chain(g.enemy.pos)){
+				return !(g.sprite.visible || g.enemy.sprite.visible);
 			} else {
-				return super.act( enemyInFOV, justAlerted );
+				return super.act( g, enemyInFOV, justAlerted );
 			}
 			
 		}

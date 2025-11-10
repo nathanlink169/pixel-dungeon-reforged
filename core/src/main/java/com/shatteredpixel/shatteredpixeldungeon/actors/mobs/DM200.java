@@ -40,10 +40,11 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vertigo;
 import com.shatteredpixel.shatteredpixeldungeon.items.Generator;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
-import com.shatteredpixel.shatteredpixeldungeon.items.weapon.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.mechanics.Ballistica;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
@@ -101,29 +102,30 @@ public class DM200 extends Mob {
 		}
 	}
 
-	private int ventCooldown = 0;
-	public int nextWeapon = 1;
+	public int GetNextWeapon() {
+		return m_NextWeapon.Get();
+	}
 
-	private static final String VENT_COOLDOWN = "vent_cooldown";
-	private static final String NEXT_WEAPON = "next_weapon";
+	private BundleableProperty.Int m_VentCooldown = new BundleableProperty.Int("vent_cooldown", 0);
+	private BundleableProperty.Int m_NextWeapon = new BundleableProperty.Int("next_weapon", 1);
 
 	@Override
 	public void storeInBundle(Bundle bundle) {
 		super.storeInBundle(bundle);
-		bundle.put(VENT_COOLDOWN, ventCooldown);
-		bundle.put(NEXT_WEAPON, nextWeapon);
+		m_VentCooldown.Store(bundle);
+		m_NextWeapon.Store(bundle);
 	}
 
 	@Override
 	public void restoreFromBundle(Bundle bundle) {
 		super.restoreFromBundle(bundle);
-		ventCooldown = bundle.getInt( VENT_COOLDOWN );
-		nextWeapon = bundle.getInt(NEXT_WEAPON);
+		m_VentCooldown.Restore(bundle);
+		m_NextWeapon.Restore(bundle);
 	}
 
 	@Override
 	protected boolean act() {
-		ventCooldown--;
+		m_VentCooldown.Set(m_VentCooldown.Get() - 1);
 		return super.act();
 	}
 
@@ -135,7 +137,7 @@ public class DM200 extends Mob {
 	private void zap( ){
 		spend( TICK );
 
-		if (nextWeapon == 1) {
+		if (m_NextWeapon.Get() == 1) {
 			Ballistica trajectory = new Ballistica(pos, enemy.pos, Ballistica.STOP_TARGET);
 
 			for (int i : trajectory.subPath(0, trajectory.dist)) {
@@ -150,7 +152,7 @@ public class DM200 extends Mob {
 			}
 		}
 		else {
-			final Ballistica shot = new Ballistica( pos, target, Ballistica.PROJECTILE);
+			final Ballistica shot = new Ballistica( pos, m_Target.Get(), Ballistica.PROJECTILE);
 			WandOfBlastWave.BlastWave.blast(shot.collisionPos);
 			Sample.INSTANCE.play( Assets.Sounds.BLAST );
 
@@ -166,7 +168,7 @@ public class DM200 extends Mob {
 				Char ch = Actor.findChar(shot.collisionPos + i);
 
 				if (ch != null){
-					if (ch.alignment != Char.Alignment.ALLY) ch.damage(Random.Int(2, 8), this);
+					if (ch.alignment != Char.Alignment.ALLY) ch.Damage(Random.Int(2, 8), this, DamageType.of(DamageType.EXPLOSIVE));
 
 					//do not push chars that are dieing over a pit, or that move due to the damage
 					if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
@@ -183,7 +185,7 @@ public class DM200 extends Mob {
 			//throws the char at the center of the blast
 			Char ch = Actor.findChar(shot.collisionPos);
 			if (ch != null){
-				ch.damage(Random.Int(2, 8), this, DamageType.MAGIC);
+				ch.Damage(Random.Int(2, 8), this, DamageType.of(DamageType.EXPLOSIVE));
 
 				//do not push chars that are dieing over a pit, or that move due to the damage
 				if ((ch.isAlive() || ch.flying || !Dungeon.level.pit[ch.pos])
@@ -197,16 +199,16 @@ public class DM200 extends Mob {
 		}
 
 		if (getRandomizerEnabled(RandomTraits.CONCUSSION_CANNON) && Random.Int(2) == 0) {
-			ventCooldown = Random.Int(10, 20);
-			nextWeapon = 2;
+			m_VentCooldown.Set(Random.Int(10, 20));
+			m_NextWeapon.Set(2);
 		} else {
-			ventCooldown = Random.Int(20, 30);
-			nextWeapon = 1;
+			m_VentCooldown.Set(Random.Int(20, 30));
+			m_NextWeapon.Set(1);
 		}
 	}
 
 	protected boolean canVent(int target){
-		if (ventCooldown > 0) return false;
+		if (m_VentCooldown.Get() > 0) return false;
 		PathFinder.buildDistanceMap(target, BArray.not(Dungeon.level.solid, null), Dungeon.level.distance(pos, target)+1);
 		//vent can go around blocking terrain, but not through it
 		if (PathFinder.distance[pos] == Integer.MAX_VALUE){
@@ -218,48 +220,49 @@ public class DM200 extends Mob {
 		return true;
 	}
 
-	private class Hunting extends Mob.Hunting{
+	private static class Hunting extends Mob.Hunting{
 
 		@Override
-		public boolean act(boolean enemyInFOV, boolean justAlerted) {
-			if (!enemyInFOV || canAttack(enemy)) {
-				return super.act(enemyInFOV, justAlerted);
+		public boolean act(Mob mob, boolean enemyInFOV, boolean justAlerted) {
+			DM200 dm = (DM200) mob;
+			if (!enemyInFOV || dm.canAttack(dm.enemy)) {
+				return super.act(dm, enemyInFOV, justAlerted);
 			} else {
-				enemySeen = true;
-				target = enemy.pos;
+				dm.m_EnemySeen.Set(true);
+				dm.m_Target.Set(dm.enemy.pos);
 
-				int oldPos = pos;
+				int oldPos = dm.pos;
 
-				if (distance(enemy) >= 1 && Random.Int(100/distance(enemy)) == 0 && canVent(target)){
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( enemy.pos );
+				if (dm.distance(dm.enemy) >= 1 && Random.Int(100/dm.distance(dm.enemy)) == 0 && dm.canVent(dm.m_Target.Get())){
+					if (dm.sprite != null && (dm.sprite.visible || dm.enemy.sprite.visible)) {
+						dm.sprite.zap( dm.enemy.pos );
 						return false;
 					} else {
-						zap();
+						dm.zap();
 						return true;
 					}
 
-				} else if (getCloser( target ) && !getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
+				} else if (dm.getCloser( dm.m_Target.Get() ) && !getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
 					// Prioritize moving closer if we're not able to move through corridors
-					spend( 1 / speed() );
-					return moveSprite( oldPos,  pos );
+					dm.spend( 1 / dm.speed() );
+					return dm.moveSprite( oldPos,  dm.pos );
 
-				} else if (canVent(target)) {
+				} else if (dm.canVent(dm.m_Target.Get())) {
 					// If we can move through corridors, prioritize venting
-					if (sprite != null && (sprite.visible || enemy.sprite.visible)) {
-						sprite.zap( enemy.pos );
+					if (dm.sprite != null && (dm.sprite.visible || dm.enemy.sprite.visible)) {
+						dm.sprite.zap( dm.enemy.pos );
 						return false;
 					} else {
-						zap();
+						dm.zap();
 						return true;
 					}
 
-				} else if (getCloser( target ) && getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
-					spend( 1 / speed() );
-					return moveSprite( oldPos,  pos );
+				} else if (dm.getCloser( dm.m_Target.Get() ) && getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
+					dm.spend( 1 / dm.speed() );
+					return dm.moveSprite( oldPos,  dm.pos );
 
 				} else {
-					spend( TICK );
+					dm.spend( TICK );
 					return true;
 				}
 

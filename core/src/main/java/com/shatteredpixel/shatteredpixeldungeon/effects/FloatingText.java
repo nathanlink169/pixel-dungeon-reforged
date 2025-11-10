@@ -38,6 +38,7 @@ import com.watabou.utils.Callback;
 import com.watabou.utils.SparseArray;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 public class FloatingText extends RenderedTextBlock {
 
@@ -50,25 +51,24 @@ public class FloatingText extends RenderedTextBlock {
 	public static int NO_ICON   = -1;
 
 	//combat damage icons
-	public static int PHYS_DMG          = 0;
-	public static int PHYS_DMG_NO_BLOCK = 1;
-	public static int MAGIC_DMG         = 2;
-	public static int PICK_DMG          = 3;
-
-	//debuff/dot damage icons
-	public static int HUNGER    = 5;
-	public static int BURNING   = 6;
-	public static int SHOCKING  = 7;
-	public static int FROST     = 8;
-	public static int WATER     = 9;
-	public static int BLEEDING  = 10;
-	public static int TOXIC     = 11;
-	public static int CORROSION = 12;
-	public static int POISON    = 13;
-	public static int OOZE      = 14;
-	public static int DEFERRED  = 15;
-	public static int CORRUPTION= 16;
-	public static int AMULET    = 17;
+	public static int BLUDGEONING = 0;
+	public static int PIERCING = 1;
+	public static int SLASHING = 2;
+	public static int ACID = 3;
+	public static int COLD = 4;
+	public static int ELECTRICITY = 5;
+	public static int EXPLOSION = 6;
+	public static int FIRE = 7;
+	public static int POISON = 8;
+	public static int SONIC = 9;
+	public static int WATER = 10;
+	public static int POSITIVE_ENERGY = 11;
+	public static int NEGATIVE_ENERGY = 12;
+	public static int FORCE = 13;
+	public static int HUNGER = 14;
+	public static int AMULET = 15;
+	public static int BLEEDING = 16;
+	public static int DEFERRED = 17;
 
 	//positive icons
 	public static int HEALING   = 18;
@@ -84,6 +84,7 @@ public class FloatingText extends RenderedTextBlock {
 	public static int TUFT      = 26;
 
 	private Image icon;
+	private Image[] icons; // TODO: Multiicon should support 1 icon too. I'm not sure where all floating text is used, I don't want to break existing features
 	private boolean iconLeft;
 
 	private float timeLeft;
@@ -100,23 +101,34 @@ public class FloatingText extends RenderedTextBlock {
 	@Override
 	public void update() {
 		super.update();
-		
+
 		if (timeLeft >= 0) {
 			if ((timeLeft -= Game.elapsed) <= 0) {
 				kill();
 			} else {
 				float p = timeLeft / LIFESPAN;
 				alpha( p > 0.5f ? 1 : p * 2 );
-				
+
 				float yMove = (DISTANCE / LIFESPAN) * Game.elapsed;
 				y -= yMove;
 				for (RenderedText t : words){
 					t.y -= yMove;
 				}
 
+				// Handle single icon (original behavior)
 				if (icon != null){
 					icon.alpha(p > 0.5f ? 1 : p * 2);
 					icon.y -= yMove;
+				}
+
+				// Handle multiple icons
+				if (icons != null){
+					for (Image img : icons) {
+						if (img != null) {
+							img.alpha(p > 0.5f ? 1 : p * 2);
+							img.y -= yMove;
+						}
+					}
 				}
 			}
 		}
@@ -124,7 +136,46 @@ public class FloatingText extends RenderedTextBlock {
 
 	@Override
 	protected synchronized void layout() {
+		// For multi-icons, we need to reserve space on the left
+		float iconOffset = 0f;
+
+		if (icons != null && icons.length > 0){
+			float iconSpacing = 1f;
+			for (Image img : icons) {
+				if (img != null) {
+					iconOffset += img.width() + iconSpacing;
+				}
+			}
+		}
+
+		// Temporarily shift this.x to reserve space for icons
+		float originalX = this.x;
+		if (iconOffset > 0) {
+			this.x += iconOffset;
+		}
+
+		// Now layout the text with the shifted x position
 		super.layout();
+
+		// Restore this.x
+		this.x = originalX;
+
+		// Position the icons at the original x position
+		if (icons != null && icons.length > 0){
+			float currentX = originalX;
+			float iconSpacing = 1f;
+
+			for (Image img : icons) {
+				if (img != null) {
+					img.x = currentX;
+					img.y = this.y;
+					PixelScene.align(img);
+					currentX += img.width() + iconSpacing;
+				}
+			}
+		}
+
+		// Single icon layout
 		if (icon != null){
 			if (iconLeft){
 				icon.x = left();
@@ -139,9 +190,20 @@ public class FloatingText extends RenderedTextBlock {
 	@Override
 	public float width() {
 		float width = super.width();
+
 		if (icon != null){
 			width += icon.width()-0.5f;
 		}
+
+		if (icons != null){
+			float iconSpacing = 1f;
+			for (Image img : icons) {
+				if (img != null) {
+					width += img.width() + iconSpacing;
+				}
+			}
+		}
+
 		return width;
 	}
 
@@ -165,6 +227,8 @@ public class FloatingText extends RenderedTextBlock {
 	public void reset( float x, float y, String text, int color, int iconIdx, boolean left ) {
 		
 		revive();
+
+		icons = null;
 		
 		zoom( 1 / (float)PixelScene.defaultZoom );
 
@@ -181,6 +245,7 @@ public class FloatingText extends RenderedTextBlock {
 			}
 		} else {
 			icon = null;
+			align(LEFT_ALIGN);
 		}
 
 		setPos(
@@ -188,6 +253,47 @@ public class FloatingText extends RenderedTextBlock {
 			PixelScene.align( Camera.main, y - height())
 		);
 		
+		timeLeft = LIFESPAN;
+	}
+
+	public void resetMultiIcon( float x, float y, String text, int color, int[] iconIndices ) {
+
+		revive();
+
+		zoom( 1 / (float)PixelScene.defaultZoom );
+
+		text( text );
+		hardlight( color );
+
+		icon = null;  // Clear single icon
+
+		align(LEFT_ALIGN);
+
+		// Create array of icon images
+		ArrayList<Image> validIcons = new ArrayList<>();
+		for (int idx : iconIndices) {
+			if (idx != NO_ICON) {
+				Image img = new Image( Assets.Effects.TEXT_ICONS);
+				img.frame(iconFilm.get(idx));
+				add(img);
+				validIcons.add(img);
+			}
+		}
+
+		// Convert to array
+		if (validIcons.size() > 0) {
+			icons = validIcons.toArray(new Image[0]);
+		} else {
+			icons = null;
+		}
+
+		iconLeft = false; // Multi-icons always show on right
+
+		setPos(
+				PixelScene.align( Camera.main, x - width() / 2),
+				PixelScene.align( Camera.main, y - height())
+		);
+
 		timeLeft = LIFESPAN;
 	}
 	
@@ -212,6 +318,28 @@ public class FloatingText extends RenderedTextBlock {
 				}
 			}
 		});
+	}
+
+	/**
+	 * Show floating text with multiple icons
+	 * Icons will be displayed in a horizontal row
+	 */
+	public static void show( float x, float y, int key, String text, int color, int[] iconIndices ) {
+		Game.runOnRenderThread(new Callback() {
+			@Override
+			public void call() {
+				FloatingText txt = GameScene.status();
+				if (txt != null){
+					txt.resetMultiIcon(x, y, text, color, iconIndices);
+					if (key != -1) push(txt, key);
+				}
+			}
+		});
+	}
+
+	// Convenience method without key
+	public static void show( float x, float y, String text, int color, int[] iconIndices ) {
+		show(x, y, -1, text, color, iconIndices);
 	}
 	
 	private static void push( FloatingText txt, int key ) {

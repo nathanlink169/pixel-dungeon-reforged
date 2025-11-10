@@ -78,7 +78,7 @@ public class GoldenMimic extends Mimic {
 		if (sprite != null) sprite.idle();
 		if (Actor.chars().contains(this) && Dungeon.level.heroFOV[pos]) {
 			enemy = Dungeon.hero;
-			target = Dungeon.hero.pos;
+			m_Target.Set(Dungeon.hero.pos);
 			GLog.w(Messages.get(this, "reveal") );
 			CellEmitter.get(pos).burst(Speck.factory(Speck.STAR), 10);
 			Sample.INSTANCE.play(Assets.Sounds.MIMIC, 1, 0.85f);
@@ -94,7 +94,7 @@ public class GoldenMimic extends Mimic {
 	protected void generatePrize( boolean useDecks ) {
 		super.generatePrize( useDecks );
 		//all existing prize items are guaranteed uncursed, and have a 50% chance to be +1 if they were +0
-		for (Item i : items){
+		for (Item i : m_Items.Get()){
 			if (i instanceof EquipableItem || i instanceof Wand){
 				i.cursed = false;
 				i.cursedKnown = true;
