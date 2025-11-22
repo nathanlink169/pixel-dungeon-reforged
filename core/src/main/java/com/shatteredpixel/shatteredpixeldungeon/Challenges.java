@@ -134,8 +134,7 @@ public class Challenges {
 	}
 
 	public static boolean IsChallengeUnlocked(int mask) {
-		//return (m_UnlockedChallenges & mask) != 0;
-		return mask == STRONGER_BOSSES;
+		return (m_UnlockedChallenges & mask) != 0;
 	}
 
 	public static final String UNLOCKED_CHALLENGES_KEY = "unlocked_challenges_key";

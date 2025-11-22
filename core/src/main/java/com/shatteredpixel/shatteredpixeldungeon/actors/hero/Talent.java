@@ -89,6 +89,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
@@ -100,6 +101,7 @@ import com.watabou.utils.Random;
 import com.watabou.utils.Reflection;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -218,7 +220,7 @@ public enum Talent {
 	//Constructor T3
 	CONSTRUCT_VISION(203, 3), CONSTRUCT_MOBILITY(204, 3), CONSTRUCT_LETHALITY(205, 3),
 	//Armorer T3
-	ARMOR_MOD_LIGHT(206, 3), ARMOR_MOD_INFINITE_FALLING(207, 3), ARMOR_MOD_EMERGENCY_DEFENSE(208, 3),
+	WEAPON_MOD_AUTOLOAD(206, 3), ARMOR_MOD_INFINITE_FALLING(207, 3), ARMOR_MOD_EMERGENCY_DEFENSE(208, 3),
 	//Quickdraw T4
 	POWERFUL_SHOT(209, 4), DOUBLE_BARREL(210, 4), MULTISHOT(211, 4),
 	//Truesight T4
@@ -768,14 +770,42 @@ public enum Talent {
 			}
 		}
 
-		if (talent == PATTERN_RECOGNITION && !ShardOfOblivion.passiveIDDisabled()) {
+		if (talent == PATTERN_RECOGNITION) {
+			ArrayList<Class> potions = new ArrayList<>(Arrays.asList(Dungeon.hero.PatternRecognitionPotions.Get()));
 			for (Potion p : hero.belongings.getAllItems(Potion.class)) {
-				p.identify(false);
+				if (!p.isKnown()) {
+					if (hero.pointsInTalent(PATTERN_RECOGNITION) == 2) {
+						p.setKnown();
+					} else {
+						if (!potions.contains(p.getClass())) {
+							potions.add(p.getClass());
+							if (Random.Int(2) == 0) {
+								p.setKnown();
+							}
+						}
+					}
+				}
+			}
+			if (hero.pointsInTalent(PATTERN_RECOGNITION) == 1) {
+				Class[] potionArray = new Class[potions.size()];
+				for (int i = 0; i < potionArray.length; ++i) {
+					potionArray[i] = potions.get(i);
+				}
+				Dungeon.hero.PatternRecognitionPotions.Set(potionArray);
+			} else {
+				Dungeon.hero.PatternRecognitionPotions.Reset();
 			}
 		}
 
 		if (talent == EFFECTIVE_SHOT) {
 			Buff.affect(hero, EffectiveShotTracker.class);
+		}
+
+		if (talent == WEAPON_MOD_AUTOLOAD) {
+			Gun.AutoReloadTracker t = hero.buff(Gun.AutoReloadTracker.class);
+			if (t != null) {
+				t.HandleTalentPurchase();
+			}
 		}
 	}
 
@@ -1140,11 +1170,25 @@ public enum Talent {
 		if (hero.pointsInTalent(THIEFS_INTUITION) == 2){
 			if (item instanceof Ring) ((Ring) item).setKnown();
 		}
-		if (hero.hasTalent(PATTERN_RECOGNITION)) {
-			if (item instanceof Potion) ((Potion) item).setKnown();
-
-			if (hero.pointsInTalent(PATTERN_RECOGNITION) == 2) {
-				item.cursedKnown = true;
+		if (hero.hasTalent(PATTERN_RECOGNITION) && item instanceof Potion) {
+			Potion potion = (Potion) item;
+			if (!((Potion) item).isKnown()) {
+				if (hero.pointsInTalent(PATTERN_RECOGNITION) == 2) {
+					potion.setKnown();
+				} else {
+					ArrayList<Class> potions = new ArrayList<>(Arrays.asList(Dungeon.hero.PatternRecognitionPotions.Get()));
+					if (!potions.contains(potion.getClass())) {
+						potions.add(potion.getClass());
+						if (Random.Int(2) == 0) {
+							potion.setKnown();
+						}
+						Class[] potionArray = new Class[potions.size()];
+						for (int i = 0; i < potionArray.length; ++i) {
+							potionArray[i] = potions.get(i);
+						}
+						Dungeon.hero.PatternRecognitionPotions.Set(potionArray);
+					}
+				}
 			}
 		}
 	}
@@ -1403,7 +1447,7 @@ public enum Talent {
 				Collections.addAll(tierTalents, CONSTRUCT_VISION, CONSTRUCT_MOBILITY, CONSTRUCT_LETHALITY);
 				break;
 			case ARMORER:
-				Collections.addAll(tierTalents, ARMOR_MOD_LIGHT, ARMOR_MOD_INFINITE_FALLING, ARMOR_MOD_EMERGENCY_DEFENSE);
+				Collections.addAll(tierTalents, WEAPON_MOD_AUTOLOAD, ARMOR_MOD_INFINITE_FALLING, ARMOR_MOD_EMERGENCY_DEFENSE);
 				break;
 		}
 		for (Talent talent : tierTalents){

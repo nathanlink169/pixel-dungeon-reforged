@@ -62,6 +62,22 @@ public class Ringbox extends Artifact {
         }
     }
 
+    @Override
+    public boolean doEquip(Hero hero) {
+        if (super.doEquip(hero)){
+            if (cursed) {
+                if (hero.belongings.misc instanceof Ring && !hero.belongings.misc.cursed) {
+                    hero.belongings.misc.doUnequip(hero, true);
+                }
+                if (hero.belongings.ring != null && !hero.belongings.ring.cursed) {
+                    hero.belongings.ring.doUnequip(hero, true);
+                }
+            }
+            return true;
+        }
+        return false;
+    }
+
     private static final String RING1 = "ring1";
     private static final String RING2 = "ring2";
     private static final String RING3 = "ring3";
@@ -498,13 +514,13 @@ public class Ringbox extends Artifact {
             exp += Math.round(levelPortion*100);
 
             //past the soft charge cap, gaining  charge from leveling is slowed.
-            if (charge > 5+(level()*2)){
-                levelPortion *= (5+((float)level()*2))/charge;
+            if (charge > 6+(level()*2)){
+                levelPortion *= (6+((float)level()*2))/charge;
             }
             partialCharge += levelPortion*6f;
 
-            if (exp > 100+level()*100 && level() < levelCap){
-                exp -= 100+level()*100;
+            if (exp > 75+level()*75 && level() < levelCap){
+                exp -= 75+level()*75;
                 GLog.p( Messages.get(Ringbox.class, "levelup") );
                 upgrade();
                 if (level() == 3) {

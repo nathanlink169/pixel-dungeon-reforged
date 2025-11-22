@@ -43,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.BlobEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SacrificialParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.special.SacrificeRoom;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -172,6 +173,9 @@ public class SacrificialFire extends Blob {
 				} else if (ch instanceof Swarm && ((Swarm) ch).GetMaxHP() == 0){
 					//give 1 exp for child swarms, instead of 0
 					exp = 1;
+				} else if (ch instanceof WandOfLivingEarth.EarthGuardian) {
+					// This makes it easily cheeseable if we allow this
+					exp = 0;
 				} else if (((Mob) ch).GetXP() > 0) {
 					exp = 1 + ((Mob)ch).GetXP();
 				}

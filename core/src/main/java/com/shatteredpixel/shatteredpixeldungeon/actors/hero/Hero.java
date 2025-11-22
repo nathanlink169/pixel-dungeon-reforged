@@ -173,6 +173,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.AttackIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.ui.QuickSlotButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.StatusPane;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndHero;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndOptions;
@@ -326,6 +327,8 @@ public class Hero extends Char {
 	private static final String EXPERIENCE	= "exp";
 	private static final String CONSTRUCT_RESPAWN_TIMER = "construct_respawn_timer";
 	protected static final String TAG_HT    = "HT";
+
+	public BundleableProperty.ClassArray PatternRecognitionPotions = new BundleableProperty.ClassArray("pattern_recognition_potions");
 	
 	@Override
 	public void storeInBundle( Bundle bundle ) {
@@ -352,6 +355,8 @@ public class Hero extends Char {
 		}
 
 		belongings.storeInBundle( bundle );
+
+		PatternRecognitionPotions.Store(bundle);
 	}
 	
 	@Override
@@ -377,6 +382,8 @@ public class Hero extends Char {
 		}
 
 		belongings.restoreFromBundle( bundle );
+
+		PatternRecognitionPotions.Restore(bundle);
 	}
 	
 	public static void preview( GamesInProgress.Info info, Bundle bundle ) {

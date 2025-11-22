@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.ChangesScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BallistaSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DemonGooSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ElementalSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.FiendSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GhostSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.GnollSprite;
@@ -58,6 +59,11 @@ public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
 		add_Coming_Soon(changeInfos);
+
+		ChangeInfo changes3 = new ChangeInfo("v0.3", true, "");
+		changes3.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes3);
+		add_v0_3_1_Changes(changeInfos);
 		add_v0_3_0_Changes(changeInfos);
 
 		ChangeInfo changes2 = new ChangeInfo("v0.2", true, "");
@@ -108,9 +114,41 @@ public class pdr_v0_X_Changes {
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
 	}
 
+	public static void add_v0_3_1_Changes(ArrayList<ChangeInfo> changeInfos) {
+		ChangeInfo changes = new ChangeInfo("v0.3.1", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(HeroSprite.avatar(HeroClass.ARTIFICER, 1), "Artificer Tweaks",
+				"**A few Artificer reworks, a bit of a buff to the Armourer and a nerf to a few talents and to Quickdraw.** I don't expect this will bring the Artificer fully to the intended power level, but it should bring it a little closer.\n\n" +
+						"**-** Reloading: The Artificer will now passively reload the Homemade Railgun. You can still manually reload it, but if you do not, it will load itself after 100 turns.\n" +
+						"**-** Pattern Recognition: One point gives the Artificer a 50% chance to identify a potion type on pickup, and two points guarantees identification. (previously one point would guarantee potion identification, and two points would identify if an item was cursed or not)",
+						"**-** Armour Modification Light has been replaced with Weapon Modification Autoload. Each point reduces the automatic reload by 20 turns, to a minimum of 40.\n" +
+						"**-** Armour Modification Emergency Defense has been buffed, granting an additional +6 armour rather than +2.\n" +
+						"**-** Quickdraw Multishot: Instead of granting an extra shot each point for a maximum of 6 shots, points 1 and 3 will now increase the explosion radius.\n" +
+						"**-** Quickdraw Double Barrel: Each shot gains a chance to fire one extra time, as opposed to two.\n" +
+						"**-** Quickdraw Energy Cost: 65 -> 60"));
+
+		changes.addButton( new ChangeButton(new Image(new ElementalSprite.Fire()), "Combat Rework Nerfs",
+				"A few enemies were a little too high damaging after the combat rework, due to dealing energy damage rather than physical. For now, I'm bringing their damage down to compensate for it being default unblockable.\n" +
+						"**-** Elemental melee damage goes from 20-25 -> 5-12\n" +
+						"**-** Newborn Fire Elemental melee damage goes from 10-12 -> 4-6\n" +
+						"**-** Evil Eye melee damage goes from 20-30 -> 5-15\n" +
+						"**-** Unholy Priest damage type goes from Negative Energy -> Slashing, matching other skeletons"));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Fixed the following bugs:\n" +
+
+						"**-** Removed debug code that enforced only one modifier available\n" +
+						"**-** Prevented the player from closing the reward for the demon hall quest without accepting a reward\n" +
+						"**-** Wyrm will no longer turn invisible\n" +
+						"**-** Demon halls quest will no longer place four separate journal markers\n" +
+						"**-** Wand of Displacement now has a proper description for Battlemage"));
+	}
+
 	public static void add_v0_3_0_Changes(ArrayList<ChangeInfo> changeInfos) {
 
-		ChangeInfo changes = new ChangeInfo("v0.3.0", true, "");
+		ChangeInfo changes = new ChangeInfo("v0.3.0", false, "");
 		changes.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes);
 
@@ -143,7 +181,7 @@ public class pdr_v0_X_Changes {
 						"**-** Force: Pure magic.",
 						"^A special thank you to players for helping to test this version early. In particular, thank you to discord users baddreams0862, born_killer, elgransersuperior999, and miaomix2688.^"));
 
-		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.RATION), "Hunger Buff",
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.RATION), "Hunger Nerf",
 				"Hunger was a little too forgiving, so I'm partially reverting the changing from version 1.1.\n\n" +
 						"**-** Time to go hungry: 450 -> 350\n" +
 						"**-** Time to start starving: 200 -> 175\n" +

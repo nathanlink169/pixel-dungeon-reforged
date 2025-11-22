@@ -57,7 +57,7 @@ import java.util.ArrayList;
 public class Quickdraw extends ArmorAbility {
 
 	{
-		baseChargeUse = 65f;
+		baseChargeUse = 60f;
 	}
 
 	@Override
@@ -92,7 +92,13 @@ public class Quickdraw extends ArmorAbility {
 		}
 
 		int chanceToRepeat = hero.pointsInTalent(Talent.DOUBLE_BARREL);
-		int count = 2 + hero.pointsInTalent(Talent.MULTISHOT);
+		int count = 2;
+		if (hero.pointsInTalent(Talent.MULTISHOT) >= 2) {
+			++count;
+			if (hero.pointsInTalent(Talent.MULTISHOT) >= 4) {
+				++count;
+			}
+		}
 		for (int i = 0; i < count; ++i) {
 			if (!fire(hero, primaryTargets, closeTargets, sleepingTargets, gun, i == 0)) {
 				break;
@@ -100,9 +106,6 @@ public class Quickdraw extends ArmorAbility {
 
 			if (chanceToRepeat > 0) {
 				if (Random.Int(10) < chanceToRepeat) {
-					if (!fire(hero, primaryTargets, closeTargets, sleepingTargets, gun, false)) {
-						break;
-					}
 					if (!fire(hero, primaryTargets, closeTargets, sleepingTargets, gun, false)) {
 						break;
 					}
@@ -136,7 +139,15 @@ public class Quickdraw extends ArmorAbility {
 
 		hero.sprite.turnTo( hero.pos, thisTarget.pos );
 
-		ArrayList<Mob> mobsHit = gun.fire(hero, thisTarget.pos, playSFX, playSFX);
+		int radius = 1;
+		if (hero.pointsInTalent(Talent.MULTISHOT) >= 1) {
+			++radius;
+			if (hero.pointsInTalent(Talent.MULTISHOT) >= 3) {
+				++radius;
+			}
+		}
+
+		ArrayList<Mob> mobsHit = gun.fire(hero, thisTarget.pos, playSFX, playSFX, radius);
 		if (!mobsHit.isEmpty()) {
 			int chanceToKnockback = hero.pointsInTalent(Talent.POWERFUL_SHOT) * 2;
 			if (chanceToKnockback > 0) {

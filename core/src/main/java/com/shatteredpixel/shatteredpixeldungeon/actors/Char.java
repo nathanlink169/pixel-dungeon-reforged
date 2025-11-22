@@ -505,6 +505,10 @@ public abstract class Char extends Actor {
 	}
 
 	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
+		if (isInvulnerable(src.getClass())) {
+			return 0;
+		}
+
 		if (HP <= 0) {
 			int shielding = 0;
 			ArrayList<ShieldBuff> buffs = new ArrayList<>(buffs(ShieldBuff.class));

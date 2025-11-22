@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldo
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.GreaterHaste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SoulMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.PowerOfMany;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.AuraOfProtection;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.GuidingLight;
@@ -39,12 +40,14 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.LifeLinkSpell
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.ShieldOfLight;
 import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TargetHealthIndicator;
 import com.watabou.utils.Random;
 
@@ -203,7 +206,6 @@ public class TalentManager implements
 
 	@Override
 	public void onHit(AttackContext context, int finalDamage) {
-		// LETHAL_DEFENSE - cooldown reduction on kill
 		if (context.attacker == Dungeon.hero) {
 			checkLethalDefense(context);
 			checkLethalHaste(context);
@@ -216,7 +218,7 @@ public class TalentManager implements
 
 	@Override
 	public void onDamage(AttackContext context, int damageDealt) {
-		// Stats tracking, badge validation, etc.
+		applySoulSiphon(context, damageDealt);
 	}
 
 	// ============================================
@@ -513,6 +515,27 @@ public class TalentManager implements
 
 		if (context.defender.alignment == Char.Alignment.ENEMY) {
 			Buff.affect(Dungeon.hero, GreaterHaste.class).set(2 + 2*Dungeon.hero.pointsInTalent(Talent.LETHAL_HASTE));
+		}
+	}
+
+	private void applySoulSiphon(AttackContext context, int finalDamage) {
+		if (Dungeon.hero.subClass != HeroSubClass.WARLOCK) return;
+
+		// Check if the defender has SoulMark
+		if (context.defender.buff(SoulMark.class) == null) return;
+
+		// Heal based on damage dealt: 50% or 100% based on talent level
+		int healing = Math.round(finalDamage * 0.5f * Dungeon.hero.pointsInTalent(Talent.SOUL_SIPHON));
+
+		if (healing > 0 && Dungeon.hero.HP < Dungeon.hero.GetMaxHP()) {
+			if (context.attacker == Dungeon.hero) {
+				Dungeon.hero.HP = Math.min(Dungeon.hero.HP + healing, Dungeon.hero.GetMaxHP());
+				Dungeon.hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(healing), FloatingText.HEALING);
+			} else {
+				healing = Math.round(healing * 0.4f * Dungeon.hero.pointsInTalent(Talent.SOUL_SIPHON) / 3.0f);
+				Dungeon.hero.HP = Math.min(Dungeon.hero.HP + healing, Dungeon.hero.GetMaxHP());
+				Dungeon.hero.sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(healing), FloatingText.HEALING);
+			}
 		}
 	}
 }

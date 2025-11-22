@@ -134,10 +134,10 @@ public class Brute extends Mob {
 		
 		@Override
 		public boolean act() {
-			
+
+			// Force HP to stay at 0 while enraged
 			if (target.HP > 0){
-				detach();
-				return true;
+				target.HP = 0;
 			}
 
 			if (Brute.getRandomizerEnabled(RandomTraits.STAND_YOUR_GROUND)) {

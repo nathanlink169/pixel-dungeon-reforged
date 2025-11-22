@@ -38,7 +38,9 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.particles.ShadowParticle
 import com.shatteredpixel.shatteredpixeldungeon.items.EquipableItem;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.Armor;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Ringbox;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
@@ -146,6 +148,16 @@ public class ScrollOfRemoveCurse extends InventoryScroll {
 			}
 			if (item instanceof Wand){
 				((Wand) item).updateLevel();
+			}
+			if (item instanceof Ring) {
+				if (hero.belongings.artifact instanceof Ringbox && hero.belongings.artifact.cursed) {
+					GLog.n(Messages.get(ScrollOfRemoveCurse.class, "unequipring"));
+					((Ring) item).doUnequip(hero, true);
+				}
+				if (hero.belongings.misc instanceof Ringbox && hero.belongings.misc.cursed) {
+					GLog.n(Messages.get(ScrollOfRemoveCurse.class, "unequipring"));
+					((Ring) item).doUnequip(hero, true);
+				}
 			}
 		}
 		

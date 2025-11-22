@@ -14,8 +14,8 @@ allprojects {
         appName = 'Pixel Dungeon Reforged'
         appPackageName = 'com.nathanpringle.pixeldungeonreforged'
 
-        appVersionCode = 864
-        appVersionName = '0.3.0.0'
+        appVersionCode = 867
+        appVersionName = '0.3.1.1'
 
         appJavaCompatibility = JavaVersion.VERSION_11
 

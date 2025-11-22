@@ -191,6 +191,7 @@ public class HalfRipper extends NPC {
     }
 
     public void ascend() {
+        Notes.remove(Notes.Landmark.HALF_RIPPER, Quest.depth());
         if (Dungeon.depth == 21) {
             // Finished!
             Statistics.questScores[4] += 2000;
@@ -426,6 +427,9 @@ public class HalfRipper extends NPC {
 
     @Override
     public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
+        if (!Quest.started()) {
+            return 0;
+        }
         if (dmg > 0) {
             if (Quest.corrupted() && Quest.depth != 24) {
                 yell(Messages.get(this, "take_damage_corrupted"));
@@ -614,7 +618,9 @@ public class HalfRipper extends NPC {
                 GLog.n("%s: \"%s\" ", Messages.titleCase(Messages.get(HalfRipper.class, "name")), Messages.get(HalfRipper.class, "abandon_reaction"));
             }
             Quest.failed = true;
-            Notes.remove( Notes.Landmark.HALF_RIPPER );
+            for (int i = 21; i <= 25; ++i) {
+                Notes.remove(Notes.Landmark.HALF_RIPPER, i);
+            }
             Quest.abandoned = true;
         }
 

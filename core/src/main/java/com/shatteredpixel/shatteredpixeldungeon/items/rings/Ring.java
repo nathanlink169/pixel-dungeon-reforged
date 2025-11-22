@@ -139,6 +139,19 @@ public abstract class Ring extends KindofMisc {
 	}
 
 	@Override
+	public boolean doEquip(final Hero hero) {
+		if (hero.belongings.artifact instanceof Ringbox && hero.belongings.artifact.cursed) {
+			GLog.n(Messages.get(Ring.class, "cursed_ringbox"));
+			return false;
+		}
+		if (hero.belongings.misc instanceof Ringbox && hero.belongings.misc.cursed) {
+			GLog.n(Messages.get(Ring.class, "cursed_ringbox"));
+			return false;
+		}
+		return super.doEquip(hero);
+	}
+
+	@Override
 	public boolean doUnequip( Hero hero, boolean collect, boolean single ) {
 		if (super.doUnequip( hero, collect, single )) {
 

@@ -132,7 +132,7 @@ public class RipperDemon extends Mob implements CombatModifier.AccuracyModifier,
 
 	@Override
 	public void onDamage(AttackContext context, int damageDealt) {
-		if (Random.Int( 2 ) == 0) {
+		if (Random.Int( 4 ) == 0) {
 			Buff.affect( enemy, Bleeding.class ).set( damageDealt );
 		}
 		if (getRandomizerEnabled(RandomTraits.HEMORRHAGE)) {

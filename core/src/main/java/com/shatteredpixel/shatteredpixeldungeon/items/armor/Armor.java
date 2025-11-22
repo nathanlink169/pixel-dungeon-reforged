@@ -318,9 +318,6 @@ public abstract class Armor extends EquipableItem implements CombatModifier.Evas
 	@Override
 	public void activate(Char ch) {
 		if (seal != null) Buff.affect(ch, BrokenSeal.WarriorShield.class).setArmor(this);
-		if (ch instanceof Hero && ((Hero) ch).hasTalent(Talent.ARMOR_MOD_LIGHT)){
-			Buff.affect(ch, Armor.ArmorerLightCharger.class);
-		}
 	}
 
 	public void affixSeal(BrokenSeal seal){
@@ -434,7 +431,7 @@ public abstract class Armor extends EquipableItem implements CombatModifier.Evas
 						break;
 				}
 				if ((float)Dungeon.hero.HP / (float)Dungeon.hero.GetMaxHP() <= hpThreshold) {
-					artificerDamageReduction += 2;
+					artificerDamageReduction += 6;
 				}
 			}
 		}
@@ -960,45 +957,13 @@ public abstract class Armor extends EquipableItem implements CombatModifier.Evas
 
 		@Override
 		public boolean attachTo( Char target ) {
-			if (super.attachTo( target )) {
-				if (Dungeon.hero != null) {
-					switch (Dungeon.hero.pointsInTalent(Talent.ARMOR_MOD_LIGHT)) {
-						case 1:
-							cooldown = 40;
-							break;
-						case 2:
-							cooldown = 30;
-							break;
-						case 3:
-							cooldown = 20;
-							break;
-					}
-				}
-				return true;
-			} else {
-				return false;
-			}
+			return false;
 		}
 
 		@Override
 		public boolean act() {
-			if (cooldown > 0) {
-				--cooldown;
-			}
-			if (expectedDurationRemaining > 0) {
-				--expectedDurationRemaining;
-			}
-
-			ActionIndicator.setAction(this);
-			spend(TICK);
+			detach();
 			return true;
-		}
-
-		@Override
-		public void fx(boolean on) {
-			if (on && Dungeon.hero.subClass == HeroSubClass.ARMORER && Dungeon.hero.hasTalent(Talent.ARMOR_MOD_LIGHT)) {
-				ActionIndicator.setAction(this);
-			}
 		}
 
 		@Override
@@ -1057,29 +1022,6 @@ public abstract class Armor extends EquipableItem implements CombatModifier.Evas
 
 		@Override
 		public void doAction() {
-			if (!Dungeon.hero.hasTalent(Talent.ARMOR_MOD_LIGHT)){
-				return;
-			}
-
-			if (cooldown > 0) {
-				GLog.w(Messages.get(this, "not_ready", cooldown));
-				return;
-			}
-
-			if (Dungeon.hero.buff(Light.class) != null) {
-				GLog.w(Messages.get(this, "already_has_light"));
-				return;
-			}
-
-			Buff.affect(Dungeon.hero, Light.class, 10);
-			expectedDurationRemaining = 11;
-
-			switch (Dungeon.hero.pointsInTalent(Talent.ARMOR_MOD_LIGHT)) {
-				case 1:	cooldown = 40; break;
-				case 2:	cooldown = 30; break;
-				case 3:	cooldown = 20; break;
-			}
-
 			ActionIndicator.setAction(this);
 		}
 	}

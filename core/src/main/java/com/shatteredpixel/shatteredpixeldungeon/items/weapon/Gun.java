@@ -3,6 +3,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.ARCSHIELDING;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.VOLATILE_CHAIN;
+import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.WEAPON_MOD_AUTOLOAD;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
@@ -10,7 +11,9 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Barrier;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldown;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.FlavourBuff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invisibility;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
@@ -29,7 +32,9 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.CellSelector;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
+import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
 import com.watabou.noosa.audio.Sample;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
 
 import java.util.ArrayList;
@@ -41,7 +46,7 @@ public class Gun extends Weapon {
     public static final String AC_RELOAD        = "RELOAD";
     public static final float TIME_TO_RELOAD	= 6f;
 
-    private boolean isLoaded = true;
+    private BundleableProperty.Bool m_IsLoaded = new BundleableProperty.Bool("is_loaded", true);
 
     {
         image = ItemSpriteSheet.GUN;
@@ -55,13 +60,13 @@ public class Gun extends Weapon {
     }
 
     @Override
-    public boolean GetUsesTargetting() { return isLoaded; }
+    public boolean GetUsesTargetting() { return m_IsLoaded.Get(); }
 
     @Override
     public ArrayList<String> actions(Hero hero) {
         ArrayList<String> actions = super.actions(hero);
         actions.remove(AC_EQUIP);
-        if (isLoaded) {
+        if (m_IsLoaded.Get()) {
             actions.add(AC_SHOOT);
         }
         else {
@@ -75,10 +80,10 @@ public class Gun extends Weapon {
 
         super.execute(hero, action);
 
-        if (action.equals(AC_SHOOT) && !isLoaded) {
+        if (action.equals(AC_SHOOT) && !m_IsLoaded.Get()) {
             action = AC_RELOAD;
         } else
-        if (action.equals(AC_RELOAD) && isLoaded) {
+        if (action.equals(AC_RELOAD) && m_IsLoaded.Get()) {
             action = AC_SHOOT;
         }
 
@@ -95,7 +100,7 @@ public class Gun extends Weapon {
     }
 
     public void SetIsLoaded(boolean value) {
-        isLoaded = value;
+        m_IsLoaded.Set(value);
         updateQuickslot();
     }
 
@@ -158,7 +163,7 @@ public class Gun extends Weapon {
 
     @Override
     public int max(int lvl) {
-        int dmg = 8 + (8*Dungeon.hero.lvl/5)
+        int dmg = 6 + (6*Dungeon.hero.lvl/5)
                 + RingOfSharpshooting.levelDamageBonus(Dungeon.hero)
                 + (curseInfusionBonus ? 2 + Dungeon.hero.lvl/15 : 0);
         return Math.max(0, dmg);
@@ -197,19 +202,32 @@ public class Gun extends Weapon {
         return false;
     }
 
-    // replace adaptive minefield
-    // return all enemies directly hit by beam for powerful shot quickdraw
-    public ArrayList<Mob> fire(final Hero user, final int cell, final boolean playSFX, final boolean spendTime) {
+    @Override
+    public void storeInBundle(Bundle bundle) {
+        super.storeInBundle(bundle);
+        m_IsLoaded.Store(bundle);
+    }
+
+    @Override
+    public void restoreFromBundle(Bundle bundle) {
+        super.restoreFromBundle(bundle);
+        m_IsLoaded.Restore(bundle);
+    }
+
+    // Main fire implementation with explosion radius support
+// explosionRadius: 1 = 3x3, 2 = 5x5, 3 = 7x7, etc.
+    public ArrayList<Mob> fire(final Hero user, final int cell, final boolean playSFX, final boolean spendTime, int explosionRadius) {
         ArrayList<Mob> mobs = new ArrayList<>();
         ArrayList<Char> alreadyDamagedMobs = new ArrayList<>();
-        ArrayList<Integer> positionsToDamage = new ArrayList<Integer>();
-        final Ballistica beam = new Ballistica( curUser.pos, cell, Ballistica.STOP_SOLID);
+        ArrayList<Integer> positionsToDamage = new ArrayList<>();
+        final Ballistica beam = new Ballistica(curUser.pos, cell, Ballistica.STOP_SOLID);
         int lastHitEnemyID = -1;
 
+        // ARCSHIELDING talent handling
         if (user.hasTalent(ARCSHIELDING)) {
             float threshold = 0.25f;
             if (user.pointsInTalent(ARCSHIELDING) == 2) threshold = 0.4f;
-            if (user.HP/(float)user.GetMaxHP() <= threshold) {
+            if (user.HP / (float) user.GetMaxHP() <= threshold) {
                 int shielding = 3;
                 if (user.pointsInTalent(ARCSHIELDING) == 2) shielding = 5;
                 Buff.affect(Dungeon.hero, Barrier.class).setShield(shielding);
@@ -218,15 +236,14 @@ public class Gun extends Weapon {
 
         int maxDistance = Math.min(level() * 2 + 12, beam.dist);
 
+        // Find all characters in the beam path
         ArrayList<Char> chars = new ArrayList<>();
         for (int c : beam.subPath(1, maxDistance)) {
-
             Char ch;
-            if ((ch = Actor.findChar( c )) != null) {
-
+            if ((ch = Actor.findChar(c)) != null) {
                 if (ch instanceof Mob && ((Mob) ch).state == ((Mob) ch).PASSIVE
-                        && !(Dungeon.level.mapped[c] || Dungeon.level.visited[c])){
-                    //avoid harming undiscovered passive chars
+                        && !(Dungeon.level.mapped[c] || Dungeon.level.visited[c])) {
+                    // avoid harming undiscovered passive chars
                 } else {
                     if (!(ch instanceof Mob && ch.alignment == Char.Alignment.ALLY)) {
                         chars.add(ch);
@@ -240,109 +257,132 @@ public class Gun extends Weapon {
             }
         }
 
+        // Damage directly hit characters and their adjacent enemies
         for (Char ch : chars) {
-            ch.Damage( damageRoll(false, true), this, DamageType.of(DamageType.EXPLOSIVE) );
-
-            for (int o : PathFinder.NEIGHBOURS8) {
-                int position = ch.pos + o;
-                Mob adjacent = Dungeon.level.findMob(position);
-                if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
-                    alreadyDamagedMobs.add(adjacent);
-                    if (adjacent.state == adjacent.PASSIVE && !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])){
-                        //avoid harming undiscovered passive chars
-                    } else {
-                        if (!(adjacent.alignment == Char.Alignment.ALLY)) {
-                            adjacent.Damage( damageRoll(false, true) / 2, this, EnumSet.of(DamageType.EXPLOSIVE));
-                        }
-                    }
-                }
-
-                positionsToDamage.add(ch.pos + o);
+            if (ch instanceof Mob) {
+                mobs.add((Mob) ch);
             }
+            ch.Damage(damageRoll(false, true), this, DamageType.of(DamageType.EXPLOSIVE));
+            ch.sprite.flash();
 
             positionsToDamage.add(ch.pos);
-            ch.sprite.flash();
+            damageAdjacentEnemies(ch.pos, chars, alreadyDamagedMobs, positionsToDamage, explosionRadius);
         }
 
-        if (playSFX) {
-            Sample.INSTANCE.play(Assets.Sounds.BLAST);
-        }
-
+        // Damage enemies adjacent to collision point
         positionsToDamage.add(beam.collisionPos);
-        for (int o : PathFinder.NEIGHBOURS8) {
-            int position = beam.collisionPos + o;
-            Mob adjacent = Dungeon.level.findMob(position);
-            if (adjacent != null && !chars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
-                alreadyDamagedMobs.add(adjacent);
-                if (adjacent.state == adjacent.PASSIVE && !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])){
-                    //avoid harming undiscovered passive chars
-                } else {
-                    if (!(adjacent.alignment == Char.Alignment.ALLY)) {
-                        adjacent.Damage( damageRoll(false, true) / 2, this, EnumSet.of(DamageType.EXPLOSIVE));
-                    }
-                }
-            }
-            positionsToDamage.add(position);
-        }
+        damageAdjacentEnemies(beam.collisionPos, chars, alreadyDamagedMobs, positionsToDamage, explosionRadius);
 
+        // Handle timing
         if (spendTime) {
             user.sprite.operate(user.pos);
             user.spendAndNext(1.0f);
         }
 
-        for (Integer p : positionsToDamage) {
-
-            if (p < 0 || p >= Dungeon.level.map.length) {
-                continue;
-            }
-
-            if (Dungeon.level.map[p] == Terrain.EMPTY ||
-                    Dungeon.level.map[p] == Terrain.EMPTY_DECO ||
-                    Dungeon.level.map[p] == Terrain.OPEN_DOOR ||
-                    Dungeon.level.map[p] == Terrain.GRASS ||
-                    Dungeon.level.map[p] == Terrain.FURROWED_GRASS ||
-                    Dungeon.level.flamable[p]) {
-                Dungeon.level.destroy(p);
-                if (Dungeon.level.map[p] == Terrain.EMPTY ||
-                        Dungeon.level.map[p] == Terrain.EMPTY_DECO ||
-                        Dungeon.level.map[p] == Terrain.OPEN_DOOR ||
-                        Dungeon.level.map[p] == Terrain.GRASS ||
-                        Dungeon.level.map[p] == Terrain.FURROWED_GRASS ||
-                        Dungeon.level.flamable[p]) {
-                    Level.set(p, Terrain.EMBERS);
-                }
-                GameScene.updateMap( p );
-            }
-
-            if (Dungeon.level.heroFOV[p]) {
-                CellEmitter.get(p).burst(SmokeParticle.FACTORY, 8);
-            }
+        // Play sound effects
+        if (playSFX) {
+            Sample.INSTANCE.play(Assets.Sounds.BLAST);
         }
 
+        // Burn terrain
+        burnTerrain(positionsToDamage);
+
+        // EFFECTIVE_SHOT talent handling
         if (user.hasTalent(EFFECTIVE_SHOT)) {
             if (user.buff(EffectiveShotCooldown.class) == null) {
                 Buff.affect(user, EffectiveShotCooldown.class).set(7 - (user).pointsInTalent(EFFECTIVE_SHOT));
-            }
-            else {
+            } else {
                 EffectiveShotCooldown cd = user.buff(EffectiveShotCooldown.class);
                 if (cd.left == 1) {
                     cd.detach();
-                }
-                else {
+                } else {
                     cd.left--;
                 }
             }
         }
 
+        // Visual beam effect
         Invisibility.dispel();
-        curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld( beam.collisionPos )));
+        curUser.sprite.parent.add(new Beam.GunRay(curUser.sprite.center(), DungeonTilemap.raisedTileCenterToWorld(beam.collisionPos)));
 
+        // VOLATILE_CHAIN talent handling
         if (Dungeon.hero.hasTalent(VOLATILE_CHAIN) && lastHitEnemyID != -1) {
             Buff.prolong(Dungeon.hero, Talent.VolatileChainTracker.class, 5f).object = lastHitEnemyID;
         }
 
         Dungeon.observe();
         return mobs;
+    }
+
+    // Helper: Get all cells for explosion based on radius
+    private ArrayList<Integer> getExplosionCells(int centerPos, int radius) {
+        ArrayList<Integer> cells = new ArrayList<>();
+        int width = Dungeon.level.width();
+
+        for (int y = -radius; y <= radius; y++) {
+            for (int x = -radius; x <= radius; x++) {
+                cells.add(centerPos + x + y * width);
+            }
+        }
+
+        return cells;
+    }
+
+    // Helper: Damage enemies adjacent to a position
+    private void damageAdjacentEnemies(int centerPos, ArrayList<Char> directlyHitChars,
+                                       ArrayList<Char> alreadyDamagedMobs,
+                                       ArrayList<Integer> positionsToDamage,
+                                       int explosionRadius) {
+        ArrayList<Integer> explosionCells = getExplosionCells(centerPos, explosionRadius);
+
+        for (int position : explosionCells) {
+            Mob adjacent = Dungeon.level.findMob(position);
+
+            if (adjacent != null && !directlyHitChars.contains(adjacent) && !alreadyDamagedMobs.contains(adjacent)) {
+                alreadyDamagedMobs.add(adjacent);
+
+                // Skip undiscovered passive chars
+                if (adjacent.state == adjacent.PASSIVE &&
+                        !(Dungeon.level.mapped[position] || Dungeon.level.visited[position])) {
+                    continue;
+                }
+
+                // Damage non-ally enemies
+                if (adjacent.alignment != Char.Alignment.ALLY) {
+                    adjacent.Damage(damageRoll(false, true) / 2, this, EnumSet.of(DamageType.EXPLOSIVE));
+                }
+            }
+
+            positionsToDamage.add(position);
+        }
+    }
+
+    // Helper: Burn terrain at damaged positions
+    private void burnTerrain(ArrayList<Integer> positionsToDamage) {
+        for (Integer p : positionsToDamage) {
+            if (p < 0 || p >= Dungeon.level.map.length) {
+                continue;
+            }
+
+            int terrain = Dungeon.level.map[p];
+
+            // Check if terrain can be burned/destroyed
+            if (terrain == Terrain.EMPTY ||
+                    terrain == Terrain.EMPTY_DECO ||
+                    terrain == Terrain.OPEN_DOOR ||
+                    terrain == Terrain.GRASS ||
+                    terrain == Terrain.FURROWED_GRASS ||
+                    Dungeon.level.flamable[p]) {
+
+                Level.set(p, Terrain.EMBERS);
+                GameScene.updateMap(p);
+            }
+
+            // Show smoke particle effects
+            if (Dungeon.level.heroFOV[p]) {
+                CellEmitter.get(p).burst(SmokeParticle.FACTORY, 8);
+            }
+        }
     }
 
     public class Bullet extends MissileWeapon {
@@ -359,8 +399,8 @@ public class Gun extends Weapon {
         @Override
         public void onSelect( Integer target ) {
             if (target != null) {
-                fire(curUser, target, true, true);
-                isLoaded = false;
+                fire(curUser, target, true, true, 1);
+                m_IsLoaded.Set(false);
                 updateQuickslot();
             }
         }
@@ -372,7 +412,29 @@ public class Gun extends Weapon {
 
     @Override
     public String status() {
-        if (isLoaded) return "1/1";
+        if (m_IsLoaded.Get()) return "1/1";
         return "0/1";
+    }
+
+    public static class AutoReloadTracker extends FlavourBuff {
+
+        public static int GetDuration() {
+            return 100 - Dungeon.hero.pointsInTalent(WEAPON_MOD_AUTOLOAD) * 20;
+        }
+
+        @Override
+        public boolean act() {
+            Gun gun = Dungeon.hero.belongings.getItem(Gun.class);
+            gun.SetIsLoaded(true);
+            Dungeon.hero.interrupt();
+            return super.act();
+        }
+
+        public void HandleTalentPurchase() {
+            Gun gun = Dungeon.hero.belongings.getItem(Gun.class);
+            if (gun != null) {
+                spendConstant(-20);
+            }
+        }
     }
 }

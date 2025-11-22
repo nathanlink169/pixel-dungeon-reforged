@@ -44,8 +44,9 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 
-public class DemonSpawner extends Mob implements CombatModifier.PostArmorDamageModifier, CombatModifier.OnDamageEffect {
+public class DemonSpawner extends Mob {
 	{
 		state = PASSIVE;
 	}
@@ -174,30 +175,19 @@ public class DemonSpawner extends Mob implements CombatModifier.PostArmorDamageM
 	}
 
 	@Override
-	public int modifyPostArmorDamage(AttackContext context, int currentDamage) {
-		if (currentDamage >= 20){
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
+		if (dmg >= 20){
 			//takes 20/21/22/23/24/25/26/27/28/29/30 dmg
 			// at   20/22/25/29/34/40/47/55/64/74/85 incoming dmg
-			currentDamage = 19 + (int)(Math.sqrt(8*(currentDamage - 19) + 1) - 1)/2;
+			dmg = 19 + (int)(Math.sqrt(8*(dmg - 19) + 1) - 1)/2;
 		}
-		return currentDamage;
-	}
 
-	@Override
-	public void onDamage(AttackContext context, int damageDealt) {
-		m_SpawnCooldown.Set(m_SpawnCooldown.Get() - damageDealt);
+		dmg = super.Damage(dmg, src, damageType);
+
+		m_SpawnCooldown.Set(m_SpawnCooldown.Get() - dmg);
 		if (Dungeon.isChallenged(Challenges.STRONGER_BOSSES)) {
-			m_SpawnCooldown.Set(m_SpawnCooldown.Get() - damageDealt);
+			m_SpawnCooldown.Set(m_SpawnCooldown.Get() - dmg);
 		}
-	}
-
-	@Override
-	public int priority() {
-		return Priority.NORMAL;
-	}
-
-	@Override
-	public boolean appliesTo(AttackContext context) {
-		return context.defender == this;
+		return dmg;
 	}
 }

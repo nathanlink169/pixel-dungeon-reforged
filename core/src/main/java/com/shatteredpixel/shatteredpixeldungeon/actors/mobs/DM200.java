@@ -242,7 +242,7 @@ public class DM200 extends Mob {
 						return true;
 					}
 
-				} else if (dm.getCloser( dm.m_Target.Get() ) && !getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
+				} else if (!getRandomizerEnabled(RandomTraits.COMPACT_DESIGN) && dm.getCloser( dm.m_Target.Get() )) {
 					// Prioritize moving closer if we're not able to move through corridors
 					dm.spend( 1 / dm.speed() );
 					return dm.moveSprite( oldPos,  dm.pos );
@@ -257,7 +257,7 @@ public class DM200 extends Mob {
 						return true;
 					}
 
-				} else if (dm.getCloser( dm.m_Target.Get() ) && getRandomizerEnabled(RandomTraits.COMPACT_DESIGN)) {
+				} else if (getRandomizerEnabled(RandomTraits.COMPACT_DESIGN) && dm.getCloser( dm.m_Target.Get() )) {
 					dm.spend( 1 / dm.speed() );
 					return dm.moveSprite( oldPos,  dm.pos );
 

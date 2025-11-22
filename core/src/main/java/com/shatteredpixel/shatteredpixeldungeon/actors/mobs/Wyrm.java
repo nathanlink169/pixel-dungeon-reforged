@@ -321,6 +321,7 @@ public class Wyrm extends Mob
 
         int oldpos = pos;
         pos = dashPos;
+        Dungeon.level.occupyCell(this);
         spend(TICK);
         Actor.add(new Pushing(this, oldpos, pos));
     }

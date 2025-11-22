@@ -201,14 +201,10 @@ public class Swarm extends Mob implements CombatModifier.OnDamageEffect, CombatM
 			float damagePerType = (float) currentDamage / context.damageType.size();
 
 			for (DamageType type : context.damageType) {
-				if (getRandomizerEnabled(RandomTraits.DAMAGE_RESISTANCE)) {
-					if (type == DamageType.PIERCING || type == DamageType.SLASHING) {
-						damage += damagePerType / 2;
-					}
-				} else if (getRandomizerEnabled(RandomTraits.MAGIC_VULNERABILITY)) {
-					if (DamageType.IsDamageEnergy(type)) {
-						damage += damagePerType * 3.0f;
-					}
+				if (getRandomizerEnabled(RandomTraits.DAMAGE_RESISTANCE) && (type == DamageType.PIERCING || type == DamageType.SLASHING)) {
+					damage += damagePerType / 2;
+				} else if (getRandomizerEnabled(RandomTraits.MAGIC_VULNERABILITY) && DamageType.IsDamageEnergy(type)) {
+					damage += damagePerType * 3.0f;
 				} else {
 					damage += damagePerType;
 				}

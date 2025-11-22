@@ -30,6 +30,7 @@ import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.SacrificialFire;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Vulnerable;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Weakness;
@@ -49,6 +50,8 @@ import com.watabou.utils.PathFinder;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 
 public class Ghoul extends Mob implements CombatModifier.OnDamageEffect {
 	{
@@ -197,23 +200,27 @@ public class Ghoul extends Mob implements CombatModifier.OnDamageEffect {
 	}
 
 	@Override
+	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
+		if (getRandomizerEnabled(RandomTraits.SHARED_PAIN) && !(src instanceof Ghoul)) {
+			HashSet<Mob> allMobs = Dungeon.level.mobs;
+			for (Mob m : allMobs) {
+				if (m instanceof Ghoul && m != this) {
+					if (distance(m) < 10) {
+						m.Damage(dmg / 10, this, DamageType.of(DamageType.NONE));
+					}
+				}
+			}
+		}
+		return super.Damage(dmg, src, damageType);
+	}
+
+	@Override
 	public void onDamage(AttackContext context, int damageDealt) {
 		if (context.attacker == this) {
 			if (getRandomizerEnabled(RandomTraits.DRAINING_CLAWS)) {
 				if (Random.Int(10) == 0) {
 					Buff.affect(context.defender, Weakness.class);
 					Buff.affect(context.defender, Vulnerable.class);
-				}
-			}
-		}
-		else if (context.defender == this) {
-			if (getRandomizerEnabled(RandomTraits.SHARED_PAIN)) {
-				for (Mob m : Dungeon.level.mobs) {
-					if (m instanceof Ghoul) {
-						if (distance(m) < 5) {
-							m.Damage(damageDealt / 10, this, DamageType.of(DamageType.NONE));
-						}
-					}
 				}
 			}
 		}

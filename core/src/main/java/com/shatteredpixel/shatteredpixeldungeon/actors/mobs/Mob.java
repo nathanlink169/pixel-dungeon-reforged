@@ -765,11 +765,11 @@ public abstract class Mob extends Char {
 	}
 
 	protected EnumSet<DamageType> GetMeleeDamageType() {
-		return GetConstants().getMeleeDmgType();
+		return GetConstants().getMeleeDamageType();
 	}
 
 	protected EnumSet<DamageType> GetRangedDamageType() {
-		return GetConstants().getRangedDmgType();
+		return GetConstants().getRangedDamageType();
 	}
 	
 	@Override
