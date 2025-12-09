@@ -726,7 +726,7 @@ public abstract class Armor extends EquipableItem implements CombatModifier.Evas
 	public int STRReq(int lvl){
 		int req = STRReq(tier, lvl);
 		if (masteryPotionBonus){
-			req -= 2;
+			req -= 4;
 		}
 		return req;
 	}

@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Electricity;
 import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.ToxicGas;
@@ -42,6 +43,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Cripple;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Haste;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Hunger;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Invulnerability;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LifeLink;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.LostInventory;
@@ -97,6 +99,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFireblast;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfFrost;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLightning;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfLivingEarth;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Blazing;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.enchantments.Grim;
@@ -113,6 +116,7 @@ import com.shatteredpixel.shatteredpixeldungeon.plants.Swiftthistle;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.MobSprite;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.BArray;
 import com.watabou.utils.Bundlable;
@@ -527,9 +531,43 @@ public abstract class Char extends Actor {
 		// this to a combat modifier.
 		dmg = ShieldBuff.processDamage(this, dmg, src);
 
+        // TODO: This is the type of thing the combat system rework was supposed to fix, but unfortunately
+        // I screwed up, and damage that does not go through the combat system does not get affected
+        // by this sort of thing. I need a bigger change, but that's not now.
+        WandOfLivingEarth.RockArmor ra = buff(WandOfLivingEarth.RockArmor.class);
+        if (ra != null && dmg > 0) {
+            dmg = ra.absorb(dmg);
+        }
+
 		if (dmg <= 0) {
 			return 0; // Shield absorbed it all
 		}
+
+        // TODO: In new damage system, this should be handled internally
+        if (!(src instanceof LifeLink || src instanceof Hunger) && buff(LifeLink.class) != null){
+            HashSet<LifeLink> links = buffs(LifeLink.class);
+            for (LifeLink link : links.toArray(new LifeLink[0])){
+                if (Actor.findById(link.object) == null){
+                    links.remove(link);
+                    link.detach();
+                }
+            }
+            dmg = (int)Math.ceil(dmg / (float)(links.size()+1));
+            for (LifeLink link : links){
+                Char ch = (Char)Actor.findById(link.object);
+                if (ch != null) {
+                    ch.Damage(dmg, link, damageType);
+                    if (!ch.isAlive()) {
+                        link.detach();
+                        if (ch == Dungeon.hero){
+                            Badges.validateDeathFromFriendlyMagic();
+                            Dungeon.fail(src);
+                            GLog.n( Messages.get(LifeLink.class, "ondeath") );
+                        }
+                    }
+                }
+            }
+        }
 
 		if (dmg >= HP) {
 			dmg = HP;

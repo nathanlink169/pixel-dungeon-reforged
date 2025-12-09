@@ -85,6 +85,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Blacksmith;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.ConstructHero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CellEmitter;
 import com.shatteredpixel.shatteredpixeldungeon.effects.CheckedCell;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -197,7 +198,7 @@ import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.function.Consumer;
 
-public class Hero extends Char {
+public class Hero extends Char implements CombatModifier.OnDamageEffect {
 
 	{
 		actPriority = HERO_PRIO;
@@ -710,7 +711,7 @@ public class Hero extends Char {
 			return false;
 		}
 	}
-	
+
 	public float attackDelay() {
 		if (buff(Talent.LethalMomentumTracker.class) != null){
 			buff(Talent.LethalMomentumTracker.class).detach();
@@ -720,27 +721,21 @@ public class Hero extends Char {
 		float delay = 1f;
 
 		if (!RingOfForce.fightingUnarmed(this)) {
-			
-			return delay * belongings.attackingWeapon().timeToUse();
-			
+			delay *= belongings.attackingWeapon().timeToUse();
 		} else {
-			//Normally putting furor speed on unarmed attacks would be unnecessary
-			//But there's going to be that one guy who gets a furor+force ring combo
-			//This is for that one guy, you shall get your fists of fury!
-			float speed = RingOfFuror.attackSpeedMultiplier(this);
-
-			//ditto for furor + sword dance!
 			if (buff(Scimitar.SwordDance.class) != null){
-				speed += 0.6f;
+				delay *= 1f / (RingOfFuror.attackSpeedMultiplier(this) + 0.6f);
+			} else {
+				delay *= 1f / RingOfFuror.attackSpeedMultiplier(this);
 			}
 
-			//and augments + brawler's stance! My goodness, so many options now compared to 2014!
 			if (RingOfForce.unarmedGetsWeaponAugment(this)){
 				delay *= belongings.weapon.augment.delayFactor();
 			}
-
-			return delay/speed;
 		}
+
+		float speed = RingOfFuror.attackSpeedMultiplier(this);
+		return delay / speed;
 	}
 
 	@Override
@@ -2589,7 +2584,23 @@ public class Hero extends Char {
 			super.next();
 	}
 
-	public static interface Doom {
+    @Override
+    public void onDamage(AttackContext context, int damageDealt) {
+        Berserk berserk = Buff.affect(this, Berserk.class);
+        berserk.damage(damageDealt);
+    }
+
+    @Override
+    public int priority() {
+        return Priority.NORMAL;
+    }
+
+    @Override
+    public boolean appliesTo(AttackContext context) {
+        return context.defender == this && subClass == HeroSubClass.BERSERKER;
+    }
+
+    public static interface Doom {
 		public void onDeath();
 	}
 

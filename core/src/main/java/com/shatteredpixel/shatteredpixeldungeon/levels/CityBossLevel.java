@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.DwarfKing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Mob;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.Imp;
 import com.shatteredpixel.shatteredpixeldungeon.items.Heap;
 import com.shatteredpixel.shatteredpixeldungeon.items.Item;
@@ -256,9 +257,16 @@ public class CityBossLevel extends Level {
 		return null;
 	}
 
-	@Override
-	protected void createMobs() {
-	}
+    @Override
+    public void createMobs() {
+        HalfRipper.Quest.spawn(this, impShop);
+    }
+
+    @Override
+    public void returnTo() {
+        HalfRipper.Quest.spawn(this, impShop);
+        super.returnTo();
+    }
 
 	public Actor addRespawner() {
 		return null;

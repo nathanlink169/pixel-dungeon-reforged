@@ -71,6 +71,12 @@ public class WandOfDisplacement extends DamageWand {
     }
 
     private void swap(Char ch1, Char ch2) {
+        if (ch1.properties().contains(Char.Property.IMMOVABLE) || ch2.properties().contains(Char.Property.IMMOVABLE)) {
+            return;
+        }
+        if (ch1.properties().contains(Char.Property.STATIC) || ch2.properties().contains(Char.Property.STATIC)) {
+            return;
+        }
         int pos1 = ch1.pos;
         moveChar(ch1, ch2.pos);
         moveChar(ch2, pos1);

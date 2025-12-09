@@ -61,15 +61,6 @@ public class WndHalfRipperRewards extends Window {
         super();
         this.rewards = rewards;
 
-        PointerArea blocker = new PointerArea( 0, 0, PixelScene.uiCamera.width, PixelScene.uiCamera.height ) {
-            @Override
-            protected void onClick( PointerEvent event ) {
-                // Do nothing - this prevents dismissing the window
-            }
-        };
-        blocker.camera = PixelScene.uiCamera;
-        add(blocker);
-
         final String titleKey = (HalfRipper.Quest.corrupted() ? "escape_title_corrupted" : "escape_title");
         final String descKey = (HalfRipper.Quest.corrupted() ? "escape_desc_corrupted" : "escape_desc");
 
@@ -148,11 +139,6 @@ public class WndHalfRipperRewards extends Window {
         resize(WIDTH, (int) scrollBtn.bottom() + BTN_GAP);
     }
 
-    @Override
-    public void onBackPressed() {
-        // Do nothing - prevents back button/outside clicks from dismissing
-    }
-
     private void selectReward( Item reward ) {
 
         hide();
@@ -178,6 +164,7 @@ public class WndHalfRipperRewards extends Window {
         } else {
             GLog.n("%s", Messages.get(HalfRipper.class, "farewell"));
         }
+        HalfRipper.Quest.SetRewardsGiven();
     }
 
     private class RewardWindow extends WndInfoItem {

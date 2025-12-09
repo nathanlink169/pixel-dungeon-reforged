@@ -37,10 +37,10 @@ public class Acidic extends Scorpio {
 	@Override
 	public void onDamage(AttackContext context, int damageDealt) {
 		if (context.attacker == this) {
-			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
+			Buff.affect(context.defender, Ooze.class).set( Ooze.DURATION );
 		}
 		else if (context.defender == this && context.distance == 1) {
-			Buff.affect(enemy, Ooze.class).set( Ooze.DURATION );
+			Buff.affect(context.attacker, Ooze.class).set( Ooze.DURATION );
 		}
 
 		if (super.appliesTo(context)) {

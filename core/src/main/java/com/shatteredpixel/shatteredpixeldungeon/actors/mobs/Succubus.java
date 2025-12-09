@@ -143,26 +143,23 @@ public class Succubus extends Mob implements CombatModifier.PreArmorDamageModifi
 
 	@Override
 	public boolean appliesTo(AttackContext context) {
-		// Only applies when:
-		// 1. Succubus is the DEFENDER (taking damage)
-		// 2. Has PARTIAL_RESISTANCE trait enabled
-		// 3. Attacker is charmed by THIS succubus
-		if (context.defender != this) {
-			return false;
-		}
-
-		if (!getRandomizerEnabled(RandomTraits.PARTIAL_RESISTANCE)) {
-			return false;
-		}
-
-		// Check if attacker is charmed by this specific succubus
-		Charm charm = context.attacker.buff(Charm.class);
-		return charm != null && charm.object == this.id();
+		return context.attacker == this || context.defender == this;
 	}
 
 	@Override
 	public int modifyPreArmorDamage(AttackContext context, int currentDamage) {
-		return currentDamage / 2; // 50% damage reduction
+        // Only applies when:
+        // 1. Succubus is the DEFENDER (taking damage)
+        // 2. Has PARTIAL_RESISTANCE trait enabled
+        // 3. Attacker is charmed by THIS succubus
+        if (context.defender == this && getRandomizerEnabled(RandomTraits.PARTIAL_RESISTANCE)) {
+            // Check if attacker is charmed by this specific succubus
+            Charm charm = context.attacker.buff(Charm.class);
+            if (charm != null && charm.object == this.id()) {
+                return currentDamage / 2; // 50% damage reduction
+            }
+        }
+        return currentDamage;
 	}
 
 	private static final String BLINK_CD = "blink_cd";
@@ -182,42 +179,44 @@ public class Succubus extends Mob implements CombatModifier.PreArmorDamageModifi
 
 	@Override
 	public void onHit(AttackContext context, int finalDamage) {
-		if (enemy.buff(Charm.class) != null ){
-			int shield = (HP - GetMaxHP()) + (5 + finalDamage);
-			if (shield > 0){
-				HP = GetMaxHP();
-				if (shield < 5){
-					sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5-shield), FloatingText.HEALING);
-				}
+        if (context.attacker == this) {
+            if (enemy.buff(Charm.class) != null) {
+                int shield = (HP - GetMaxHP()) + (5 + finalDamage);
+                if (shield > 0) {
+                    HP = GetMaxHP();
+                    if (shield < 5) {
+                        sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(5 - shield), FloatingText.HEALING);
+                    }
 
-				Buff.affect(this, Barrier.class).setShield(shield);
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
-			} else {
-				HP += 5 + finalDamage;
-				sprite.showStatusWithIcon(CharSprite.POSITIVE, "5", FloatingText.HEALING);
-			}
-			if (Dungeon.level.heroFOV[pos]) {
-				Sample.INSTANCE.play( Assets.Sounds.CHARMS );
-			}
-		} else {
-			boolean shouldCharm;
-			if (getRandomizerEnabled(RandomTraits.CHARMING_DEMON)) {
-				shouldCharm = Random.Int(3) <= 1;
-			} else if (getRandomizerEnabled(RandomTraits.WEAK_ENCHANTMENT)) {
-				shouldCharm = Random.Int(10) == 0;
-			} else {
-				shouldCharm = Random.Int(3) == 0;
-			}
-			if (shouldCharm) {
-				Charm c = Buff.affect(enemy, Charm.class, Charm.DURATION / 2f);
-				c.object = id();
-				c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
-				if (Dungeon.level.heroFOV[enemy.pos]) {
-					enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
-					Sample.INSTANCE.play(Assets.Sounds.CHARMS);
-				}
-			}
-		}
+                    Buff.affect(this, Barrier.class).setShield(shield);
+                    sprite.showStatusWithIcon(CharSprite.POSITIVE, Integer.toString(shield), FloatingText.SHIELDING);
+                } else {
+                    HP += 5 + finalDamage;
+                    sprite.showStatusWithIcon(CharSprite.POSITIVE, "5", FloatingText.HEALING);
+                }
+                if (Dungeon.level.heroFOV[pos]) {
+                    Sample.INSTANCE.play(Assets.Sounds.CHARMS);
+                }
+            } else {
+                boolean shouldCharm;
+                if (getRandomizerEnabled(RandomTraits.CHARMING_DEMON)) {
+                    shouldCharm = Random.Int(3) <= 1;
+                } else if (getRandomizerEnabled(RandomTraits.WEAK_ENCHANTMENT)) {
+                    shouldCharm = Random.Int(10) == 0;
+                } else {
+                    shouldCharm = Random.Int(3) == 0;
+                }
+                if (shouldCharm) {
+                    Charm c = Buff.affect(enemy, Charm.class, Charm.DURATION / 2f);
+                    c.object = id();
+                    c.ignoreNextHit = true; //so that the -5 duration from succubus hit is ignored
+                    if (Dungeon.level.heroFOV[enemy.pos]) {
+                        enemy.sprite.centerEmitter().start(Speck.factory(Speck.HEART), 0.2f, 5);
+                        Sample.INSTANCE.play(Assets.Sounds.CHARMS);
+                    }
+                }
+            }
+        }
 	}
 
 	public enum RandomTraits {

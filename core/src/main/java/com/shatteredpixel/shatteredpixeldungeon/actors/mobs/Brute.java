@@ -27,9 +27,17 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.mobs;
 import com.shatteredpixel.shatteredpixeldungeon.Constants;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.Randomizer;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.AscensionChallenge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Charm;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Dread;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ShieldBuff;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Terror;
+import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent;
+import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.npcs.HalfRipper;
 import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
 import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
 import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
@@ -74,6 +82,27 @@ public class Brute extends Mob {
 			triggerEnrage();
 		}
 	}
+
+    // This is real hacky but I can't figure out why the brute will sometimes remain alive even
+    // though the dungeon thinks it's dead.
+    @Override
+    public boolean act() {
+        if (!isAlive()) {
+            die(null);
+        }
+        return super.act();
+    }
+
+    public void destroy() {
+        m_HasRaged.Set(true);
+        if (buff(BruteRage.class) != null) {
+            buff(BruteRage.class).detach();
+        }
+        if (buff(ArmoredBrute.ArmoredRage.class) != null) {
+            buff(ArmoredBrute.ArmoredRage.class).detach();
+        }
+        super.destroy();
+    }
 
 	@Override
 	public synchronized boolean isAlive() {

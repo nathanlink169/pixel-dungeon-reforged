@@ -46,7 +46,9 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MeleeWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.HallsLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
 import com.shatteredpixel.shatteredpixeldungeon.levels.RegularLevel;
+import com.shatteredpixel.shatteredpixeldungeon.levels.Terrain;
 import com.shatteredpixel.shatteredpixeldungeon.levels.rooms.Room;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
@@ -59,6 +61,7 @@ import com.watabou.utils.BArray;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.Callback;
 import com.watabou.utils.PathFinder;
+import com.watabou.utils.Point;
 import com.watabou.utils.Random;
 
 import java.util.EnumSet;
@@ -82,6 +85,10 @@ public class HalfRipper extends NPC {
     protected static class Wandering extends Mob.Wandering{
         @Override
         protected int randomDestination(Mob mob) {
+            if (Dungeon.depth == 20) {
+                return mob.pos;
+            }
+
             int pos = super.randomDestination(mob);
             //cannot wander onto heaps or the level exit
             if (Dungeon.level.heaps.get(pos) != null ||
@@ -196,12 +203,6 @@ public class HalfRipper extends NPC {
             // Finished!
             Statistics.questScores[4] += 2000;
             Quest.complete();
-            Game.runOnRenderThread(new Callback() {
-                @Override
-                public void call() {
-                    GameScene.show(new WndHalfRipperRewards(generateRewards()));
-                }
-            });
         } else {
             Statistics.questScores[4] += 1000;
             Quest.depth--;
@@ -347,11 +348,19 @@ public class HalfRipper extends NPC {
 
         sprite.turnTo( pos, c.pos );
 
-        if (c != Dungeon.hero){
+        if (c != Dungeon.hero) {
             return true;
         }
 
-        if (!Quest.given) {
+        if (Quest.completed()) {
+            Game.runOnRenderThread(new Callback() {
+                @Override
+                public void call() {
+                    GameScene.show(new WndHalfRipperRewards(generateRewards()));
+                }
+            });
+        }
+        else if (!Quest.given) {
             String msg = "";
             switch (Dungeon.hero.heroClass){
                 case WARRIOR:   msg += Messages.get(HalfRipper.this, "intro_quest_warrior"); break;
@@ -442,6 +451,9 @@ public class HalfRipper extends NPC {
 
     @Override
     public boolean add( Buff buff ) {
+        if (alignment == Alignment.ALLY) {
+            return super.add(buff);
+        }
         return false;
     }
 
@@ -458,6 +470,11 @@ public class HalfRipper extends NPC {
         private static boolean started;
         private static boolean failed;
         private static boolean completed;
+        private static boolean givenRewards;
+        public static void SetRewardsGiven() {
+            givenRewards = true;
+            checkNeedToKill();
+        }
         private static int depth;
         private static int hp;
         private static boolean corrupted;
@@ -476,6 +493,7 @@ public class HalfRipper extends NPC {
         private static final String DEPTH       = "depth";
         private static final String HP          = "hp";
         private static final String CORRUPTED   = "corrupted";
+        private static final String GIVEN_REWARDS = "given_rewards";
         private static final String POS         = "pos";
         private static final String SPAWNED_ABANDONED_RIPPER = "spawned abandoned ripper";
 
@@ -496,6 +514,7 @@ public class HalfRipper extends NPC {
                 node.put( POS, pos );
                 node.put( SPAWNED_ABANDONED_RIPPER, spawnedAbandonedRipper);
                 node.put( ABANDONED, abandoned);
+                node.put( GIVEN_REWARDS, givenRewards);
             }
 
             bundle.put( NODE, node );
@@ -516,6 +535,7 @@ public class HalfRipper extends NPC {
                 pos = node.getInt(POS);
                 spawnedAbandonedRipper = node.getBoolean(SPAWNED_ABANDONED_RIPPER);
                 abandoned = node.getBoolean(ABANDONED);
+                givenRewards = node.getBoolean(GIVEN_REWARDS);
             }
         }
 
@@ -531,9 +551,10 @@ public class HalfRipper extends NPC {
             pos = -1;
             spawnedAbandonedRipper = false;
             abandoned = false;
+            givenRewards = false;
         }
 
-        public static void spawn(HallsLevel level, Room room ) {
+        public static void spawn(Level level, Room room ) {
             if (!Quest.spawned && Dungeon.depth == 24) {
 
                 HalfRipper hr = new HalfRipper();
@@ -549,6 +570,25 @@ public class HalfRipper extends NPC {
                 failed = false;
                 corrupted = (Random.Int(6) == 0);
 
+            } else if (Quest.completed() && Dungeon.depth == 20 && !givenRewards) {
+                boolean alreadySpawned = false;
+                if (level.mobs != null) {
+                    for (Mob m : level.mobs) {
+                        if (m instanceof HalfRipper) {
+                            alreadySpawned = true;
+                            break;
+                        }
+                    }
+                }
+                if (!alreadySpawned) {
+                    Point center = room.center();
+                    center.y++;
+
+                    HalfRipper hr = new HalfRipper();
+                    hr.pos = level.pointToCell(center);
+                    hr.HP = Quest.hp;
+                    level.mobs.add( hr );
+                }
             } else if (Quest.spawned && Dungeon.depth == Quest.depth && !failed && !completed) {
                 boolean alreadySpawned = false;
                 if (level.mobs != null) {
@@ -597,6 +637,9 @@ public class HalfRipper extends NPC {
 
         public static void checkNeedToKill() {
             if (Quest.started() && (Quest.failed() || Quest.completed())) {
+                if (Dungeon.depth == 20 && !Quest.givenRewards) {
+                    return;
+                }
                 if (Dungeon.level.mobs != null) {
                     for (Mob m : Dungeon.level.mobs) {
                         if (m instanceof HalfRipper) {
@@ -631,7 +674,7 @@ public class HalfRipper extends NPC {
         public static boolean failed() { return failed; }
         public static void complete() {
             completed = true;
-            depth = -1;
+            depth = 20;
             pos = -1;
         }
         public static int depth() { return depth; }
