@@ -114,6 +114,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.Ringbox;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.bags.MagicalHolster;
@@ -122,7 +123,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.GoldenKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.IronKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.Key;
-import com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey;
+import com.shatteredpixel.shatteredpixeldungeon.items.keys.WornKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.Potion;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfExperience;
 import com.shatteredpixel.shatteredpixeldungeon.items.potions.PotionOfHealing;
@@ -139,6 +140,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfTenacity;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.Scroll;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.ScrollOfMagicMapping;
 import com.shatteredpixel.shatteredpixeldungeon.items.scrolls.exotic.ScrollOfChallenge;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.LuckyDice;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.ThirteenLeafClover;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
@@ -1222,13 +1224,24 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 				
 				hasKey = true;
 				
+			} else if (door == Terrain.HERO_LKD_DR){
+
+				if (belongings.getItem(WornKey.class) != null
+						&& !belongings.getItem(WornKey.class).cursed){
+					GLog.i(Messages.get(WornKey.class, "locked_with_key"));
+					ready();
+					return false;
+				} else {
+					hasKey = true;
+				}
+
 			} else if (door == Terrain.CRYSTAL_DOOR
 					&& Notes.keyCount(new CrystalKey(Dungeon.depth)) > 0) {
 
 				hasKey = true;
 
 			} else if (door == Terrain.LOCKED_EXIT
-					&& Notes.keyCount(new SkeletonKey(Dungeon.depth)) > 0) {
+					&& Notes.keyCount(new WornKey(Dungeon.depth)) > 0) {
 
 				hasKey = true;
 				
@@ -1943,6 +1956,9 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 		if (source != AscensionChallenge.class) {
 			this.exp += exp;
 		}
+
+		exp = (int) (exp * LuckyDice.expMultiplier());
+
 		float percent = exp/(float)maxExp();
 
 		EtherealChains.chainsRecharge chains = buff(EtherealChains.chainsRecharge.class);
@@ -2340,12 +2356,23 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 
 			int doorCell = ((HeroAction.Unlock)curAction).dst;
 			int door = Dungeon.level.map[doorCell];
-			
-			if (Dungeon.level.distance(pos, doorCell) <= 1) {
+
+			SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
+			SkeletonKey.KeyReplacementTracker keyUseTrack = buff(SkeletonKey.KeyReplacementTracker.class);
+
+			if (skele != null && skele.isCursed() && Random.Int(6) != 0){
+				GLog.n(Messages.get(this, "key_distracted"));
+				spendAndNext(2*Key.TIME_TO_UNLOCK);
+				Buff.affect(this, Hunger.class).affectHunger(-4);
+			} else if (Dungeon.level.distance(pos, doorCell) <= 1) {
 				boolean hasKey = true;
 				if (door == Terrain.LOCKED_DOOR) {
 					hasKey = Notes.remove(new IronKey(Dungeon.depth));
 					if (hasKey) Level.set(doorCell, Terrain.DOOR);
+				} else if (door == Terrain.HERO_LKD_DR) {
+					hasKey = true;
+					Level.set(doorCell, Terrain.DOOR);
+					GLog.i( Messages.get(SkeletonKey.class, "force_lock"));
 				} else if (door == Terrain.CRYSTAL_DOOR) {
 					hasKey = Notes.remove(new CrystalKey(Dungeon.depth));
 					if (hasKey) {
@@ -2354,7 +2381,7 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 						CellEmitter.get( doorCell ).start( Speck.factory( Speck.DISCOVER ), 0.025f, 20 );
 					}
 				} else {
-					hasKey = Notes.remove(new SkeletonKey(Dungeon.depth));
+					hasKey = Notes.remove(new WornKey(Dungeon.depth));
 					if (hasKey) Level.set(doorCell, Terrain.UNLOCKED_EXIT);
 				}
 				
@@ -2368,8 +2395,16 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 		} else if (curAction instanceof HeroAction.OpenChest) {
 			
 			Heap heap = Dungeon.level.heaps.get( ((HeroAction.OpenChest)curAction).dst );
-			
-			if (Dungeon.level.distance(pos, heap.pos) <= 1){
+			SkeletonKey.keyRecharge skele = buff(SkeletonKey.keyRecharge.class);
+			SkeletonKey.KeyReplacementTracker keyUseTrack = buff(SkeletonKey.KeyReplacementTracker.class);
+
+			if (skele != null && skele.isCursed()
+					&& (heap.type == Type.LOCKED_CHEST || heap.type == Type.CRYSTAL_CHEST)
+					&& Random.Int(6) != 0){
+				GLog.n(Messages.get(this, "key_distracted"));
+				spend(2*Key.TIME_TO_UNLOCK);
+				Buff.affect(this, Hunger.class).affectHunger(-4);
+			} else if (Dungeon.level.distance(pos, heap.pos) <= 1){
 				boolean hasKey = true;
 				if (heap.type == Type.SKELETON || heap.type == Type.REMAINS) {
 					Sample.INSTANCE.play( Assets.Sounds.BONES );

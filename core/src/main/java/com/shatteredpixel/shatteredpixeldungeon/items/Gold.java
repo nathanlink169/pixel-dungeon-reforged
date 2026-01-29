@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
@@ -92,7 +93,17 @@ public class Gold extends Item {
 	@Override
 	public Item random() {
 		quantity = Random.IntRange( 30 + Dungeon.depth * 10, 60 + Dungeon.depth * 20 );
+		switch (SPDSettings.difficulty()) {
+			case 1:
+				quantity = (int) (quantity * 1.2f);
+				break;
+			case 2:
+				quantity = (int) (quantity * 0.9f);
+				break;
+			case 4:
+				quantity = (int) (quantity * 0.8f);
+				break;
+		}
 		return this;
 	}
-
 }

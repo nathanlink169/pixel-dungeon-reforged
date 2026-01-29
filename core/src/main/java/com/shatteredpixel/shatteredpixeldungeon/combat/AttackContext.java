@@ -71,14 +71,14 @@ public class AttackContext {
         this.attackType = builder.attackType;
         this.damageType = builder.damageType;
         this.baseAccuracy = builder.attacker.attackSkill();
-        this.baseEvasion = builder.defender.defenseSkill();
+        this.baseEvasion = (builder.defender != null ? builder.defender.defenseSkill() : 0);
         this.startingAttackerHP = builder.attacker.HP;
-        this.startingDefenderHP = builder.defender.HP;
+        this.startingDefenderHP = builder.defender != null ? builder.defender.HP : 0;
         this.isSurpriseAttack = builder.defender instanceof Mob && ((Mob) builder.defender).surprisedBy(builder.attacker);
         this.isMaxDamage = builder.forceMaxDamage || (this.isSurpriseAttack && SPDSettings.difficulty() == 1);
-        this.baseArmour = builder.defender.drRoll(this.damageType);
+        this.baseArmour = builder.defender != null ? builder.defender.drRoll(this.damageType) : 0;
         this.attackerPosition = builder.attacker.pos;
-        this.defenderPosition = builder.defender.pos;
+        this.defenderPosition = builder.defender != null ? builder.defender.pos : 0;
         this.distance = Dungeon.level.distance(attackerPosition, defenderPosition);
         this.playHitSound = builder.attacker.hitSound();
         this.showSurpriseVisual = builder.attacker.surpriseVisual();

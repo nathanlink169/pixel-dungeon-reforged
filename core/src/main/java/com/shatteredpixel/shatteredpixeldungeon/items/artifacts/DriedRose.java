@@ -659,6 +659,15 @@ public class DriedRose extends Artifact {
 			
 			return dmg;
 		}
+
+		@Override
+		protected EnumSet<DamageType> GetMeleeDamageType() {
+			if (rose != null && rose.weapon != null){
+				return rose.weapon.damageType;
+			}
+			return DamageType.of(DamageType.BLUDGEONING);
+		}
+
 		@Override
 		public int Damage(int dmg, Object src, EnumSet<DamageType> damageType) {
 			int toReturn = super.Damage( dmg, src, damageType );

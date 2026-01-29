@@ -616,21 +616,7 @@ public class Dungeon {
 	}
 	
 	public static boolean souNeeded() {
-		int souLeftThisSet;
-		//3 SOU each floor set
-		int totalSOUs;
-		switch (difficulty) {
-			case 1: // Easy has 4
-				totalSOUs = 4;
-				break;
-			case 4: // Impossible has 2
-				totalSOUs = 2;
-				break;
-			default: // Medium and Hard have 3
-				totalSOUs = 3;
-				break;
-		}
-		souLeftThisSet = totalSOUs - (LimitedDrops.UPGRADE_SCROLLS.count - (depth / 5) * totalSOUs);
+		int souLeftThisSet = 3 - (LimitedDrops.UPGRADE_SCROLLS.count - (depth / 5) * 3);
 		if (souLeftThisSet <= 0) return false;
 
 		int floorThisSet = (depth % 5);

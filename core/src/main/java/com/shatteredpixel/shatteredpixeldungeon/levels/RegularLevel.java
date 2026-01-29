@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.levels;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.Statistics;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -53,6 +54,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.journal.RegionLorePage;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.CrystalKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.GoldenKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.keys.Key;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.CrackedSpyglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MimicTooth;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
@@ -389,12 +391,18 @@ public abstract class RegularLevel extends Level {
 	
 	@Override
 	protected void createItems() {
+		int offset = 0;
+		if (SPDSettings.difficulty() == 1) {
+			offset = 1;
+		} else if (SPDSettings.difficulty() == 4) {
+			offset = -1;
+		}
 		
 		// drops 3/4/5 items 60%/30%/10% of the time
-		int nItems = 3 + Random.chances(new float[]{6, 3, 1});
+		int nItems = 3 + Random.chances(new float[]{6, 3, 1}) + offset;
 
 		if (feeling == Feeling.LARGE){
-			nItems += 2;
+			nItems += 2 + offset;
 		}
 		
 		for (int i=0; i < nItems; i++) {
@@ -690,6 +698,18 @@ public abstract class RegularLevel extends Level {
 			}
 		Random.popGenerator();
 
+		//extra spyglass loot
+		Random.pushGenerator(Random.Long());
+		int items = (int)(Random.Float() + CrackedSpyglass.extraLootChance());
+		for (int i = 0; i < items; i++){
+			int cell = randomDropCell();
+			if (map[cell] == Terrain.HIGH_GRASS || map[cell] == Terrain.FURROWED_GRASS) {
+				map[cell] = Terrain.GRASS;
+				losBlocking[cell] = false;
+			}
+			drop( Generator.randomUsingDefaults(), cell).hidden = true;
+		}
+		Random.popGenerator();
 	}
 
 	private static HashMap<Document, Dungeon.LimitedDrops> limitedDocs = new HashMap<>();

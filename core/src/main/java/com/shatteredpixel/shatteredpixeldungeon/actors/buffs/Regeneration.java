@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.SpiritForm;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.ChaliceOfBlood;
@@ -43,7 +44,15 @@ public class Regeneration extends Buff {
 
 	private float partialRegen = 0f;
 
-	private static final float REGENERATION_DELAY = 10; //1HP every 10 turns
+	private float GetRegenerationDelay() {
+		switch (SPDSettings.difficulty()) {
+			case 1:
+				return 7.5f;
+			case 4:
+				return 12.5f;
+		}
+		return 10.0f;
+	}
 	
 	@Override
 	public boolean act() {
@@ -68,7 +77,7 @@ public class Regeneration extends Buff {
 					}
 				}
 
-				float delay = REGENERATION_DELAY;
+				float delay = GetRegenerationDelay();
 				if (chaliceLevel != -1 && target.buff(MagicImmune.class) == null) {
 					if (chaliceCursed) {
 						delay *= 1.5f;

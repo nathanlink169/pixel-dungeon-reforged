@@ -58,11 +58,12 @@ import java.util.ArrayList;
 public class pdr_v0_X_Changes {
 
 	public static void addAllChanges( ArrayList<ChangeInfo> changeInfos ){
-		add_Coming_Soon(changeInfos);
+		// add_Coming_Soon(changeInfos);
 
 		ChangeInfo changes3 = new ChangeInfo("v0.3", true, "");
 		changes3.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes3);
+		add_v0_3_2_Changes(changeInfos);
 		add_v0_3_1_Changes(changeInfos);
 		add_v0_3_0_Changes(changeInfos);
 
@@ -112,6 +113,32 @@ public class pdr_v0_X_Changes {
 
 		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.ARMOR_LEATHER), "Armour Rework",
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
+	}
+
+	public static void add_v0_3_2_Changes(ArrayList<ChangeInfo> changeInfos) {
+		ChangeInfo changes = new ChangeInfo("v0.3.2", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.ARTIFACT_KEY), "New Artifact and Trinket!",
+				"Two new equipment items have been added to the game. **These were both pulled in from Shattered Pixel Dungeon 3.3.2!**\n" +
+						"\n" +
+						"The **Skeleton Key** is a new Artifact that grants the player new ways to control the dungeon environment! It can be used to open almost any lock in the dungeon, lock doors that weren't previously locked, and create temporary magical walls! The existing skeleton key item (dropped by Goo) has been renamed to 'worn key',\n" +
+						"\n" +
+						"The **Cracked Spyglass** is a new Trinket that's a sort of milder version of the Mimic's Tooth. It generates extra items in the dungeon, but those items are very hard to see, so keep your eyes peeled!"));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.LUCKY_DICE), "Another New Trinket!",
+				"Yet another new trinket!\n" +
+						"\n" +
+						"The **Lucky Dice** is a new Trinket that gives a passive bonus to all XP gain! Every time an enemy is killed, however, you roll the dice. If it comes up wrong, a random item in your inventory is cursed!"));
+
+		changes.addButton( new ChangeButton(Icons.get(Icons.MEDIUM), "Difficulty Updates",
+				"Previously, updates would set your maximum health a little higher or lower, but more importantly, easy would give you an extra scroll of upgrade and impossible would remove one. Those were rather dramatic updates, so I've changed it up to affect more things, but also be more subtle.\n" +
+						"\n" +
+						"**-** Easy and Impossible no longer updates the number of Scrolls of Upgrade per region.\n" +
+						"**-** Easy and Impossible change the base health regeneration (1 per 10 turns default, 1 per 7.5 turns for easy and 1 per 12.5 for impossible.\n" +
+						"**-** Easy and Impossible change the number of items dropped per floor (3-5 default or 5-7 on large floors, 4-6 for easy or 7-9 on large floors, 2-4 for impossible or 3-5 on large floors)\n" +
+						"**-** Amount of gold dropped changes based on difficulty (+20% for easy, -10% for hard, -20% for impossible)\n"));
 	}
 
 	public static void add_v0_3_1_Changes(ArrayList<ChangeInfo> changeInfos) {

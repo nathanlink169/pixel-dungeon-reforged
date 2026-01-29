@@ -50,6 +50,10 @@ public class ShatteredPixelDungeon extends Game {
 	public ShatteredPixelDungeon( PlatformSupport platform ) {
 		super( sceneClass == null ? WelcomeScene.class : sceneClass, platform );
 
+		com.watabou.utils.Bundle.addAlias(
+				com.shatteredpixel.shatteredpixeldungeon.items.keys.WornKey.class,
+				"com.shatteredpixel.shatteredpixeldungeon.items.keys.SkeletonKey" );
+
 		// pre-PDR v 0.2.1
 		com.watabou.utils.Bundle.addAlias(
 				com.shatteredpixel.shatteredpixeldungeon.plants.Blindweed.BlindweedSeed.class,

@@ -42,6 +42,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HolyTome;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.HornOfPlenty;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.MasterThievesArmband;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SandalsOfNature;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SkeletonKey;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TalismanOfForesight;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.TimekeepersHourglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.UnstableSpellbook;
@@ -240,6 +241,8 @@ public class SpiritForm extends ClericSpell {
 
 		} else if (effect instanceof UnstableSpellbook){
 			((UnstableSpellbook) effect).doReadEffect(Dungeon.hero);
+		} else if (effect instanceof SkeletonKey) {
+			GameScene.selectCell(((SkeletonKey) effect).targeter);
 		}
 	}
 

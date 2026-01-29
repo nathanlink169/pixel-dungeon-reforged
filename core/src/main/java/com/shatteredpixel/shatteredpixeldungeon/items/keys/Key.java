@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.journal.Catalog;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.windows.WndJournal;
+import com.shatteredpixel.shatteredpixeldungeon.items.artifacts.SkeletonKey;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 
@@ -62,6 +63,11 @@ public abstract class Key extends Item {
 		Sample.INSTANCE.play( Assets.Sounds.ITEM );
 		hero.spendAndNext( TIME_TO_PICK_UP );
 		GameScene.updateKeyDisplay();
+
+		if (hero.buff(SkeletonKey.KeyReplacementTracker.class) != null){
+			hero.buff(SkeletonKey.KeyReplacementTracker.class).processExcessKeys();
+		}
+
 		return true;
 	}
 
