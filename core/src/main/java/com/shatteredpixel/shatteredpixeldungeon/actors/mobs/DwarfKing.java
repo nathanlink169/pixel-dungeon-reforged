@@ -521,6 +521,10 @@ public class DwarfKing extends Mob {
 	@Override
 	public void die(Object cause) {
 
+		if (m_Phase.Get() < 3) {
+			return;
+		}
+
 		GameScene.bossSlain();
 
 		super.die( cause );

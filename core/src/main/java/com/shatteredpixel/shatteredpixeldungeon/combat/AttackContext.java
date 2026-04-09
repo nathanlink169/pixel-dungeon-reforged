@@ -75,7 +75,7 @@ public class AttackContext {
         this.startingAttackerHP = builder.attacker.HP;
         this.startingDefenderHP = builder.defender != null ? builder.defender.HP : 0;
         this.isSurpriseAttack = builder.defender instanceof Mob && ((Mob) builder.defender).surprisedBy(builder.attacker);
-        this.isMaxDamage = builder.forceMaxDamage || (this.isSurpriseAttack && SPDSettings.difficulty() == 1);
+        this.isMaxDamage = builder.forceMaxDamage || (this.isSurpriseAttack && Dungeon.difficulty == 1);
         this.baseArmour = builder.defender != null ? builder.defender.drRoll(this.damageType) : 0;
         this.attackerPosition = builder.attacker.pos;
         this.defenderPosition = builder.defender != null ? builder.defender.pos : 0;

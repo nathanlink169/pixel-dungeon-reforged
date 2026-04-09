@@ -33,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.scenes.GameScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 import com.shatteredpixel.shatteredpixeldungeon.tiles.DungeonTilemap;
 import com.shatteredpixel.shatteredpixeldungeon.utils.BundleableProperty;
+import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.utils.Bundle;
 import com.watabou.utils.PathFinder;
@@ -102,6 +103,13 @@ public class Gun extends Weapon {
     public void SetIsLoaded(boolean value) {
         m_IsLoaded.Set(value);
         updateQuickslot();
+
+        if (Dungeon.hero.buff(AutoReloadTracker.class) != null) {
+            Dungeon.hero.buff(AutoReloadTracker.class).detach();
+        }
+        if (!value) {
+            Buff.affect(Dungeon.hero, AutoReloadTracker.class, AutoReloadTracker.GetDuration());
+        }
     }
 
     @Override
@@ -310,6 +318,8 @@ public class Gun extends Weapon {
             Buff.prolong(Dungeon.hero, Talent.VolatileChainTracker.class, 5f).object = lastHitEnemyID;
         }
 
+        Buff.affect(Dungeon.hero, AutoReloadTracker.class, AutoReloadTracker.GetDuration());
+
         Dungeon.observe();
         return mobs;
     }
@@ -426,7 +436,7 @@ public class Gun extends Weapon {
         public boolean act() {
             Gun gun = Dungeon.hero.belongings.getItem(Gun.class);
             gun.SetIsLoaded(true);
-            Dungeon.hero.interrupt();
+            GLog.p( Messages.get(this, "auto_reload") );
             return super.act();
         }
 

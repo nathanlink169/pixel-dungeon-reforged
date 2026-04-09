@@ -167,7 +167,7 @@ public enum HeroClass {
 			Dungeon.hero.belongings.identify();
 		}
 
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			new ScrollHolder().collect();
 			new PotionBandolier().collect();
 			new MagicalHolster().collect();
@@ -431,7 +431,7 @@ public enum HeroClass {
 	
 	public boolean isUnlocked(){
 		//always unlock on debug builds
-		if (DeviceCompat.isDebug()) return true;
+		/*if (DeviceCompat.isDebug()) return true;
 
 		switch (this){
 			case WARRIOR: default:
@@ -448,7 +448,8 @@ public enum HeroClass {
 				return Badges.isUnlocked(Badges.Badge.UNLOCK_CLERIC);
 			case ARTIFICER:
 				return Badges.isUnlocked(Badges.Badge.UNLOCK_ARTIFICER);
-		}
+		}*/
+		return true;
 	}
 	
 	public String unlockMsg() {

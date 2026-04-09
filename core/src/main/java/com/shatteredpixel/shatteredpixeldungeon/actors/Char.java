@@ -534,10 +534,15 @@ public abstract class Char extends Actor {
         // TODO: This is the type of thing the combat system rework was supposed to fix, but unfortunately
         // I screwed up, and damage that does not go through the combat system does not get affected
         // by this sort of thing. I need a bigger change, but that's not now.
-        WandOfLivingEarth.RockArmor ra = buff(WandOfLivingEarth.RockArmor.class);
-        if (ra != null && dmg > 0) {
-            dmg = ra.absorb(dmg);
-        }
+		for (DamageType type : damageType) {
+			if (DamageType.IsDamagePhysical(type)) {
+				WandOfLivingEarth.RockArmor ra = buff(WandOfLivingEarth.RockArmor.class);
+				if (ra != null && dmg > 0) {
+					dmg = ra.absorb(dmg);
+				}
+				break;
+			}
+		}
 
 		if (dmg <= 0) {
 			return 0; // Shield absorbed it all
@@ -921,6 +926,8 @@ public abstract class Char extends Actor {
 		DEMONIC,
 		INORGANIC ( new HashSet<Class>(),
 				new HashSet<Class>( Arrays.asList(Bleeding.class, ToxicGas.class, Poison.class) )),
+		GHOST ( new HashSet<Class>( Arrays.asList(Corrosion.class)),
+				new HashSet<Class>( Arrays.asList(Ooze.class))),
 		FIERY ( new HashSet<Class>( Arrays.asList(WandOfFireblast.class, Elemental.FireElemental.class)),
 				new HashSet<Class>( Arrays.asList(Burning.class, Blazing.class))),
 		ICY ( new HashSet<Class>( Arrays.asList(WandOfFrost.class, Elemental.FrostElemental.class)),

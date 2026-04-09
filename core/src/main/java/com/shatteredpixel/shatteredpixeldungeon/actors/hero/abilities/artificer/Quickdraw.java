@@ -67,7 +67,16 @@ public class Quickdraw extends ArmorAbility {
 		ArrayList<Mob> sleepingTargets = new ArrayList<>();
 
 		for (Mob m : hero.getVisibleEnemies()) {
-			if (new Ballistica( hero.pos, m.pos, Ballistica.STOP_SOLID ).collisionPos == m.pos) {
+			Ballistica b = new Ballistica(hero.pos, m.pos, Ballistica.STOP_SOLID);
+			boolean hitTarget = false;
+			for (int t : b.path) {
+				if (t == m.pos) {
+					hitTarget = true;
+					break;
+				}
+			}
+
+			if (hitTarget) {
 				// Valid target. Target rules:
 				// Do not attack sleeping targets unless there is nothing else to attack.
 				// Prioritize targets that are not in melee distance (harder to hit)

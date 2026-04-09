@@ -155,7 +155,7 @@ public enum Rankings {
 			size = records.size();
 		}
 
-		if (rec.customSeed.isEmpty() && !SPDSettings.creative()) {
+		if (rec.customSeed.isEmpty() && !Dungeon.creative) {
 			totalNumber++;
 			if (win) {
 				wonNumber++;
@@ -168,7 +168,7 @@ public enum Rankings {
 	}
 
 	private int score( boolean win ) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return 0;
 		}
 		return (Statistics.goldCollected + Dungeon.hero.lvl * (win ? 26 : Dungeon.depth ) * 100) * (win ? 2 : 1);
@@ -176,7 +176,7 @@ public enum Rankings {
 
 	//assumes a ranking is loaded, or game is ending
 	public int calculateScore(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return 0;
 		}
 
@@ -230,7 +230,7 @@ public enum Rankings {
 
 		}
 
-		Statistics.chalMultiplier = (float)Math.pow(1.25, Challenges.activeChallenges());
+		Statistics.chalMultiplier = Challenges.GetChallengeMultiplier();
 		Statistics.chalMultiplier = Math.round(Statistics.chalMultiplier*20f)/20f;
 
 		Statistics.totalScore = Statistics.progressScore + Statistics.treasureScore + Statistics.exploreScore

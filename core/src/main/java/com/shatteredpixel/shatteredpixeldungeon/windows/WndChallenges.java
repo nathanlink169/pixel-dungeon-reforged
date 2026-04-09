@@ -60,6 +60,8 @@ public class WndChallenges extends Window {
 
 		super();
 
+		Challenges.load();
+
 		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK).scale(1f/defaultZoom);
 		float h = (Camera.main.height - insets.top - insets.bottom) * 0.8f;
 

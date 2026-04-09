@@ -330,7 +330,7 @@ public class Badges {
 	}
 
 	public static void validateMonstersSlain() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -365,7 +365,7 @@ public class Badges {
 	}
 	
 	public static void validateGoldCollected() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -401,7 +401,7 @@ public class Badges {
 	}
 	
 	public static void validateLevelReached() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -436,7 +436,7 @@ public class Badges {
 	}
 	
 	public static void validateStrengthAttained() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -471,7 +471,7 @@ public class Badges {
 	}
 	
 	public static void validateFoodEaten() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -506,7 +506,7 @@ public class Badges {
 	}
 	
 	public static void validateItemsCrafted() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -541,7 +541,7 @@ public class Badges {
 	}
 
 	public static void validateHazardAssists() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -552,7 +552,7 @@ public class Badges {
 	}
 	
 	public static void validatePiranhasKilled() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -567,7 +567,7 @@ public class Badges {
 	}
 	
 	public static void validateItemLevelAquired( Item item ) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -616,7 +616,7 @@ public class Badges {
 	}
 	
 	public static void validateAllBagsBought( Item bag ) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -648,7 +648,7 @@ public class Badges {
 
 	//several badges all tie into catalog completion
 	public static void validateCatalogBadges(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -732,7 +732,7 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromFire() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -744,7 +744,7 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromPoison() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -756,7 +756,7 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromGas() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -768,7 +768,7 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromHunger() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -780,7 +780,7 @@ public class Badges {
 	}
 
 	public static void validateDeathFromFalling() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -792,7 +792,7 @@ public class Badges {
 	}
 
 	public static void validateDeathFromEnemyMagic() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -804,7 +804,7 @@ public class Badges {
 	}
 	
 	public static void validateDeathFromFriendlyMagic() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -816,7 +816,7 @@ public class Badges {
 	}
 
 	public static void validateDeathFromSacrifice() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -828,7 +828,7 @@ public class Badges {
 	}
 
 	public static void validateDeathFromGrimOrDisintTrap() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -840,7 +840,7 @@ public class Badges {
 	}
 	
 	private static void validateDeathFromAll() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -902,7 +902,7 @@ public class Badges {
 	}
 	
 	public static void validateBossSlain(Mob m) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -969,7 +969,7 @@ public class Badges {
 	}
 
 	public static void validateBossChallengeCompleted(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1003,7 +1003,7 @@ public class Badges {
 	}
 	
 	public static void validateMastery() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1037,7 +1037,7 @@ public class Badges {
 	}
 
 	public static void validateRatmogrify(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1045,7 +1045,7 @@ public class Badges {
 	}
 	
 	public static void validateMageUnlock(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1055,7 +1055,7 @@ public class Badges {
 	}
 	
 	public static void validateRogueUnlock(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1065,7 +1065,7 @@ public class Badges {
 	}
 	
 	public static void validateHuntressUnlock(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1075,7 +1075,7 @@ public class Badges {
 	}
 
 	public static void validateDuelistUnlock(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1096,7 +1096,7 @@ public class Badges {
 	}
 
 	public static void validateClericUnlock(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1106,7 +1106,7 @@ public class Badges {
 	}
 
 	public static void validateArtificerUnlock() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1116,7 +1116,7 @@ public class Badges {
 	}
 	
 	public static void validateMasteryCombo( int n ) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1128,7 +1128,7 @@ public class Badges {
 	}
 	
 	public static void validateVictory() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1156,7 +1156,7 @@ public class Badges {
 	}
 
 	public static void validateTakingTheMick(Object cause){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1169,7 +1169,7 @@ public class Badges {
 	}
 
 	public static void validateNoKilling() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1182,7 +1182,7 @@ public class Badges {
 	}
 	
 	public static void validateGrimWeapon() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1194,7 +1194,7 @@ public class Badges {
 	}
 
 	public static void validateManyBuffs(){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1206,7 +1206,7 @@ public class Badges {
 	}
 	
 	public static void validateGamesPlayed() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1235,7 +1235,7 @@ public class Badges {
 	}
 
 	public static void validateHighScore( int score ){
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1269,7 +1269,7 @@ public class Badges {
 	}
 	
 	public static void validateHappyEnd() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1288,7 +1288,7 @@ public class Badges {
 	}
 
 	public static void validateChampion( int challenges ) {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return;
 		}
 
@@ -1311,7 +1311,7 @@ public class Badges {
 	
 	private static void displayBadge( Badge badge ) {
 
-		if (SPDSettings.creative() || badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
+		if (Dungeon.creative || badge == null || (badge.type != BadgeType.JOURNAL && !Dungeon.customSeedText.isEmpty())) {
 			return;
 		}
 		
@@ -1337,7 +1337,7 @@ public class Badges {
 	}
 	
 	public static void unlock( Badge badge ){
-		if (!SPDSettings.creative() && !isUnlocked(badge) && (badge.type == BadgeType.JOURNAL || Dungeon.customSeedText.isEmpty())){
+		if (!Dungeon.creative && !isUnlocked(badge) && (badge.type == BadgeType.JOURNAL || Dungeon.customSeedText.isEmpty())){
 			global.add( badge );
 			saveNeeded = true;
 		}

@@ -514,6 +514,10 @@ public class YogDzewa extends Mob {
 	@Override
 	public void die( Object cause ) {
 
+		if (m_Phase.Get() < 5) {
+			return;
+		}
+
 		Bestiary.skipCountingEncounters = true;
 		for (Mob mob : (Iterable<Mob>)Dungeon.level.mobs.clone()) {
 			if (mob instanceof Larva || mob instanceof YogRipper || mob instanceof YogEye || mob instanceof YogScorpio) {

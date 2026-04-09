@@ -63,7 +63,7 @@ public class Thorns extends Armor.Glyph implements CombatModifier.OnHitEffect {
 
 	@Override
 	public boolean appliesTo(AttackContext context) {
-		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this;
+		return context.defender.getArmor() != null && context.defender.getArmor().glyph == this && context.attackType == AttackContext.AttackType.MELEE;
 	}
 
 	@Override

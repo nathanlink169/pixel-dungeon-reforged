@@ -32,6 +32,7 @@ import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.scenes.ChangesScene;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.BallistaSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
+import com.shatteredpixel.shatteredpixeldungeon.sprites.ConstructSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.DemonGooSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ElementalSprite;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.FiendSprite;
@@ -63,6 +64,7 @@ public class pdr_v0_X_Changes {
 		ChangeInfo changes3 = new ChangeInfo("v0.3", true, "");
 		changes3.hardlight(Window.TITLE_COLOR);
 		changeInfos.add(changes3);
+		add_v0_3_3_Changes(changeInfos);
 		add_v0_3_2_Changes(changeInfos);
 		add_v0_3_1_Changes(changeInfos);
 		add_v0_3_0_Changes(changeInfos);
@@ -113,6 +115,40 @@ public class pdr_v0_X_Changes {
 
 		changes.addButton(new ChangeButton(new ItemSprite(ItemSpriteSheet.ARMOR_LEATHER), "Armour Rework",
 				"The current armour system in the game is very basic, with only one armour for each tier. I'd like to introduce some variety. For example, armour that protects for more but makes you slow, armour that increases evasion but gives 0 protection, etc."));
+	}
+
+	public static void add_v0_3_3_Changes(ArrayList<ChangeInfo> changeInfos) {
+		ChangeInfo changes = new ChangeInfo("v0.3.3", false, "");
+		changes.hardlight(Window.TITLE_COLOR);
+		changeInfos.add(changes);
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.WANDERERS_MAP), "New Trinket!",
+				"A new trinket has been added to the game! The Wanderers Map increases the size of generated floors, while also increasing the loot found!**"));
+
+		changes.addButton( new ChangeButton(new ItemSprite(ItemSpriteSheet.LUCKY_DICE), "Another New Trinket!",
+				"Lucky Dice were a bit of a flop, partly because they were bugged.\n" +
+						"\n" +
+						"**-** Lucky Dice now actually increases your exp gain!\n" +
+						"**-** Lucky dice now has an 0.5% chance to curse per level rather than 2.5%. This means that for every 10 enemies you kill, you have a 9.5%/14%/18.2%/22.3% chance to have an item cursed (rather than the previous 40%/54%/65%/73%)"));
+
+		changes.addButton( new ChangeButton(new Image(new ConstructSprite()), "Small Construct Rework",
+				"Previously, the Construct was a little delicate, but hit like a truck. I'd like to make it a bit more survivable, but tone its damage down a bit. It should help you out, not be the star of the show. \n" +
+						"**-** Construct damage type changed from True damage to Slashing damage (enemy damage reduction will now affect the construct)\n" +
+						"**-** Construct health changed from 50% of your max health to 75%."));
+
+		changes.addButton(new ChangeButton(new Image(Assets.Sprites.SPINNER, 144, 0, 16, 16), Messages.get(ChangesScene.class, "bugfixes"),
+				"Squashed a LOT of longstanding bugs. Here are just the notable ones:\n" +
+
+						"**-** Cursed Ringbox description fixed\n" +
+						"**-** Hold Fast no longer disables your armour\n" +
+						"**-** Quickdraw ability can target enemies again\n" +
+						"**-** Truesight no longer crashes game when used at the start of a floor\n" +
+						"**-** Flying enemies will no longer forget to fly when reloading the game\n" +
+						"**-** Dwarf King and Yog Dweza can no longer have phases skipped by assassinating them\n" +
+						"**-** Ice elementals should no longer be able to permastun players\n" +
+						"**-** Artificer Auto-Reload features works again\n" +
+						"**-** Shard of Oblivion now properly prevents auto-identification of items\n" +
+						"**-** Turning creative mode on for a run should no longer infect all other runs with creative mode too"));
 	}
 
 	public static void add_v0_3_2_Changes(ArrayList<ChangeInfo> changeInfos) {

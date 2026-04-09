@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.levels.rooms.modifierunlocks;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
 import com.shatteredpixel.shatteredpixeldungeon.levels.Level;
@@ -60,7 +61,7 @@ public abstract class ModifierUnlockRoom extends Room {
 	public static int GetDepth() { return m_DepthToSpawn; }
 
 	public static void initForRun() {
-		if (!SPDSettings.creative()) {
+		if (!Dungeon.creative) {
 			do {
 				m_DepthToSpawn = Random.Int(25);
 			} while (m_DepthToSpawn % 5 == 0);

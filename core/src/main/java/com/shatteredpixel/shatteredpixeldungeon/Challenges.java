@@ -87,6 +87,28 @@ public class Challenges {
 			ADAPTIVE
 	};
 
+	public static float GetChallengeMultiplier() {
+		float toReturn = 1.0f;
+		for (int i=0; i < Challenges.NAME_IDS.length; i++) {
+			if ((Challenges.MASKS[i] & activeChallenges()) > 0) {
+				toReturn *= GetScoreMultiplier(MASKS[i]);
+			}
+		}
+		return toReturn;
+	}
+
+	private static float GetScoreMultiplier(int challenge) {
+		switch (challenge) {
+			case HORDE:
+			case ADAPTIVE:
+				return 1.5f;
+			case RANDOMIZER:
+				return 1.1f;
+		}
+
+		return 1.25f; // default to 1.25f
+	}
+
 	public static int activeChallenges(){
 		int chCount = 0;
 		for (int ch : Challenges.MASKS){
@@ -131,6 +153,15 @@ public class Challenges {
 		m_UnlockedChallenges |= toUnlock;
 		Save();
 		return index;
+	}
+
+	// Debug
+	public static void UnlockAllChallenges() {
+		for (int i = 1; i < MAX_VALUE; i = i << 1)
+		{
+			m_UnlockedChallenges |= i;
+		}
+		Save();
 	}
 
 	public static boolean IsChallengeUnlocked(int mask) {

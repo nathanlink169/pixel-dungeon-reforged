@@ -24,6 +24,8 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import static com.shatteredpixel.shatteredpixeldungeon.scenes.PixelScene.defaultZoom;
+
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Challenges;
@@ -55,6 +57,7 @@ import com.shatteredpixel.shatteredpixeldungeon.ui.TalentButton;
 import com.shatteredpixel.shatteredpixeldungeon.ui.TalentsPane;
 import com.shatteredpixel.shatteredpixeldungeon.ui.Window;
 import com.shatteredpixel.shatteredpixeldungeon.utils.DungeonSeed;
+import com.watabou.noosa.Camera;
 import com.watabou.noosa.ColorBlock;
 import com.watabou.noosa.Game;
 import com.watabou.noosa.Group;
@@ -62,6 +65,8 @@ import com.watabou.noosa.Image;
 import com.watabou.noosa.audio.Sample;
 import com.watabou.noosa.ui.Component;
 import com.watabou.utils.DeviceCompat;
+import com.watabou.utils.PlatformSupport;
+import com.watabou.utils.RectF;
 
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -69,7 +74,7 @@ import java.util.Locale;
 public class WndRanking extends WndTabbed {
 	
 	private static final int WIDTH			= 115;
-	private static final int HEIGHT			= 144;
+	private int HEIGHT			= 144;
 	
 	private static WndRanking INSTANCE;
 	
@@ -79,6 +84,10 @@ public class WndRanking extends WndTabbed {
 	public WndRanking( final Rankings.Record rec ) {
 		
 		super();
+
+		RectF insets = Game.platform.getSafeInsets(PlatformSupport.INSET_BLK).scale(1f/defaultZoom);
+		HEIGHT = (int) ((Camera.main.height - insets.top - insets.bottom) * 0.8f);
+
 		resize( WIDTH, HEIGHT );
 
 		if (INSTANCE != null){
@@ -437,6 +446,9 @@ public class WndRanking extends WndTabbed {
 			float pos = 0;
 
 			for (int i=0; i < Challenges.NAME_IDS.length; i++) {
+
+				if ((Dungeon.challenges & Challenges.MASKS[i]) == 0)
+					continue;
 
 				final String challenge = Challenges.NAME_IDS[i];
 

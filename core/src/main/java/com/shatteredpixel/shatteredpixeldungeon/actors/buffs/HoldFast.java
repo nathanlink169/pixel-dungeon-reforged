@@ -93,7 +93,7 @@ public class HoldFast extends Buff implements CombatModifier.ArmorModifier {
 
 	@Override
 	public int modifyArmor(AttackContext context, int currentArmor) {
-		return armorBonus();
+		return currentArmor + armorBonus();
 	}
 
 	@Override

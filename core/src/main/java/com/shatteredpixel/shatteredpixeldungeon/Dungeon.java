@@ -219,7 +219,7 @@ public class Dungeon {
 	private static int m_Energy;
 
 	public static int GetGold() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return 9999;
 		}
 		return m_Gold;
@@ -234,7 +234,7 @@ public class Dungeon {
 	}
 
 	public static int GetEnergy() {
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			return 9999;
 		}
 		return m_Energy;
@@ -466,7 +466,7 @@ public class Dungeon {
 		// the artificer only gains mind vision when going to new levels.
 		if (Dungeon.hero != null) {
 			if (Dungeon.hero.pointsInTalent(Talent.MECHANICAL_GOGGLES) == 3) {
-				Buff.affect( hero, MindVision.class, 1 );
+				Buff.affect( hero, MindVision.class, 0.0f ); // why does a duration of 0 give 1 turn?!
 			}
 		}
 		

@@ -116,7 +116,7 @@ public class WndGame extends Window {
 		if (SPDSettings.intro()) curBtn.enable(false);
 
 		// Spawn Enemy
-		if (Dungeon.hero != null && Dungeon.hero.isAlive() && SPDSettings.creative()) {
+		if (Dungeon.hero != null && Dungeon.hero.isAlive() && Dungeon.creative) {
 			addButton(curBtn = new RedButton(Messages.get(this, "spawnmob")) {
 				@Override
 				protected void onClick() {

@@ -54,7 +54,7 @@ public class ConstructHero extends DirectableAlly implements ActionIndicator.Act
 
     @Override
     public int GetMaxHP() {
-        return (int)(Dungeon.hero.GetMaxHP() * 0.5f);
+        return (int)(Dungeon.hero.GetMaxHP() * 0.75f);
     }
 
     @Override

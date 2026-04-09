@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
+import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ArtifactRecharge;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Buff;
@@ -32,6 +33,7 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.EffectiveShotCooldo
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.GreaterHaste;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.MonkEnergy;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Recharging;
+import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SnipersMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.SoulMark;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.abilities.cleric.PowerOfMany;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.spells.AuraOfProtection;
@@ -44,6 +46,8 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.FloatingText;
 import com.shatteredpixel.shatteredpixeldungeon.items.BrokenSeal;
 import com.shatteredpixel.shatteredpixeldungeon.items.KindOfWeapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Gun;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.SpiritBow;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Crossbow;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Flail;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.MissileWeapon;
@@ -209,6 +213,7 @@ public class TalentManager implements
 		if (context.attacker == Dungeon.hero) {
 			checkLethalDefense(context);
 			checkLethalHaste(context);
+			checkSnipersMark(context);
 		}
 	}
 
@@ -515,6 +520,36 @@ public class TalentManager implements
 
 		if (context.defender.alignment == Char.Alignment.ENEMY) {
 			Buff.affect(Dungeon.hero, GreaterHaste.class).set(2 + 2*Dungeon.hero.pointsInTalent(Talent.LETHAL_HASTE));
+		}
+	}
+
+	private void checkSnipersMark(AttackContext context) {
+		if (Dungeon.hero.subClass == HeroSubClass.SNIPER) {
+			Weapon wep = Dungeon.hero.belongings.attackingWeapon();
+			if (wep instanceof MissileWeapon && !(wep instanceof SpiritBow.SpiritArrow)){
+					Actor.add(new Actor() {
+
+						{
+							actPriority = VFX_PRIO;
+						}
+
+						@Override
+						protected boolean act() {
+							if (context.defender.isAlive()) {
+								if (Dungeon.hero.hasTalent(Talent.SHARED_UPGRADES)){
+									int levelBonus = Math.min( 2*Dungeon.hero.pointsInTalent(Talent.SHARED_UPGRADES), wep.buffedLvl() );
+									// bonus dmg is 16.67% x weapon level, max of 2/4/6
+									float bonusDmg = levelBonus/6f;
+									Buff.prolong(Dungeon.hero, SnipersMark.class, SnipersMark.DURATION + levelBonus).set(context.defender.id(), bonusDmg);
+								} else {
+									Buff.prolong(Dungeon.hero, SnipersMark.class, SnipersMark.DURATION).set(context.defender.id(), 0);
+								}
+							}
+							Actor.remove(this);
+							return true;
+						}
+					});
+				}
 		}
 	}
 

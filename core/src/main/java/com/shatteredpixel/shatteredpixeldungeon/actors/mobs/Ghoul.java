@@ -203,12 +203,16 @@ public class Ghoul extends Mob implements CombatModifier.OnDamageEffect {
 	public int Damage(int dmg, Object src, EnumSet<DamageType> damageType ) {
 		if (getRandomizerEnabled(RandomTraits.SHARED_PAIN) && !(src instanceof Ghoul)) {
 			HashSet<Mob> allMobs = Dungeon.level.mobs;
-			for (Mob m : allMobs) {
+			ArrayList<Ghoul> allGhouls = new ArrayList<>();
+			for (Mob m : allMobs)
 				if (m instanceof Ghoul && m != this) {
-					if (distance(m) < 10) {
-						m.Damage(dmg / 10, this, DamageType.of(DamageType.NONE));
+					if (distance(m) < 10) { {
+						allGhouls.add((Ghoul) m);
 					}
 				}
+			}
+			for (int i = 0; i < allGhouls.size(); ++i) {
+				allGhouls.get(i).Damage(dmg / 10, this, DamageType.of(DamageType.NONE));
 			}
 		}
 		return super.Damage(dmg, src, damageType);

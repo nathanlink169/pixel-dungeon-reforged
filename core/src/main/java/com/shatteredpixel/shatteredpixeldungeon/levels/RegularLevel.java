@@ -57,6 +57,8 @@ import com.shatteredpixel.shatteredpixeldungeon.items.keys.Key;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.CrackedSpyglass;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.MimicTooth;
 import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.TrinketCatalyst;
+import com.shatteredpixel.shatteredpixeldungeon.items.trinkets.WanderersMap;
+import com.shatteredpixel.shatteredpixeldungeon.items.wands.Wand;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Document;
 import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.builders.Builder;
@@ -137,9 +139,12 @@ public abstract class RegularLevel extends Level {
 
 		//force max standard rooms and multiple by 1.5x for large levels
 		int standards = standardRooms(feeling == Feeling.LARGE);
+		float floatStandards = standards; // float for rounding
 		if (feeling == Feeling.LARGE){
-			standards = (int)Math.ceil(standards * 1.5f);
+			floatStandards = floatStandards * 1.5f;
 		}
+		floatStandards *= WanderersMap.mapSizeIncrease();
+		standards = (int)Math.ceil(floatStandards);
 		for (int i = 0; i < standards; i++) {
 			StandardRoom s;
 			do {
@@ -157,6 +162,7 @@ public abstract class RegularLevel extends Level {
 		if (feeling == Feeling.LARGE){
 			specials++;
 		}
+		specials = (int)Math.ceil(specials * WanderersMap.mapSizeIncrease());
 		SpecialRoom.initForFloor();
 		for (int i = 0; i < specials; i++) {
 			SpecialRoom s = SpecialRoom.createRoom();
@@ -167,6 +173,7 @@ public abstract class RegularLevel extends Level {
 		int secrets = SecretRoom.secretsForFloor(Dungeon.depth);
 		//one additional secret for secret levels
 		if (feeling == Feeling.SECRETS) secrets++;
+		secrets = (int)Math.ceil(secrets * WanderersMap.mapSizeIncrease());
 		for (int i = 0; i < secrets; i++) {
 			initRooms.add(SecretRoom.createRoom());
 		}
@@ -204,7 +211,7 @@ public abstract class RegularLevel extends Level {
 	protected abstract Painter painter();
 	
 	protected int nTraps() {
-		return Random.NormalIntRange( 2, 3 + (Dungeon.depth/5) );
+		return (int)Math.ceil(Random.NormalIntRange( 2, 3 + (Dungeon.depth/5) ) * WanderersMap.mapSizeIncrease());
 	}
 	
 	protected Class<?>[] trapClasses(){
@@ -229,7 +236,7 @@ public abstract class RegularLevel extends Level {
 		if (Dungeon.isChallenged(Challenges.HORDE)) {
 			mobs *= 2;
 		}
-		return mobs;
+		return (int)Math.ceil(mobs * WanderersMap.mapSizeIncrease());
 	}
 	
 	@Override
@@ -392,9 +399,9 @@ public abstract class RegularLevel extends Level {
 	@Override
 	protected void createItems() {
 		int offset = 0;
-		if (SPDSettings.difficulty() == 1) {
+		if (Dungeon.difficulty == 1) {
 			offset = 1;
-		} else if (SPDSettings.difficulty() == 4) {
+		} else if (Dungeon.difficulty == 4) {
 			offset = -1;
 		}
 		
@@ -404,6 +411,8 @@ public abstract class RegularLevel extends Level {
 		if (feeling == Feeling.LARGE){
 			nItems += 2 + offset;
 		}
+
+		nItems += WanderersMap.itemIncreaseCount();
 		
 		for (int i=0; i < nItems; i++) {
 

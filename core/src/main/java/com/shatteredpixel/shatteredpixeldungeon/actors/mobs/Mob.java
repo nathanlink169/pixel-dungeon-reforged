@@ -149,9 +149,8 @@ public abstract class Mob extends Char {
 		if (c.getPropertyStatic() && !properties.contains(Property.STATIC)) addProperty(Property.STATIC);
 		if (firstAdded) {
 			HP = GetMaxHP();
-
-			flying = c.getFlying();
 		}
+		flying = c.getFlying();
 	}
 
 	protected void addProperty(Property p) { properties.add(p); }
@@ -865,6 +864,16 @@ public abstract class Mob extends Char {
 				} else {
 					if (src instanceof Wand || src instanceof ClericSpell || src instanceof ArmorAbility) {
 						recentlyAttackedBy.add(Dungeon.hero);
+					}
+				}
+
+				if (src instanceof Mob) {
+					if (alignment == Alignment.ENEMY && ((Mob) src).alignment == Alignment.ALLY && Dungeon.level.adjacent(pos, ((Mob) src).pos)) {
+						enemy = (Char) src;
+						m_EnemyID.Set(((Mob) src).id());
+					} else if (alignment == Alignment.ALLY && ((Mob) src).alignment == Alignment.ENEMY && Dungeon.level.adjacent(pos, ((Mob) src).pos)) {
+						enemy = (Char) src;
+						m_EnemyID.Set(((Mob) src).id());
 					}
 				}
 			}

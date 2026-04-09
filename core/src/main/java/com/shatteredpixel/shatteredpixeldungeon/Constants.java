@@ -5934,7 +5934,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.SLASHING);
             }
 
             @Override

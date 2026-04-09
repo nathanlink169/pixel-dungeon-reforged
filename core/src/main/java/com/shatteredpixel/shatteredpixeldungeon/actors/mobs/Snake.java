@@ -192,6 +192,14 @@ public class Snake extends Mob implements CombatModifier.OnDamageEffect {
 	}
 
 	@Override
+	public float GetLootChance(int slot){
+		if (getRandomizerEnabled(RandomTraits.SEED_HOARDERS)) {
+			return 1;
+		}
+		return super.GetLootChance(slot);
+	}
+
+	@Override
 	public int priority() {
 		return Priority.NORMAL;
 	}

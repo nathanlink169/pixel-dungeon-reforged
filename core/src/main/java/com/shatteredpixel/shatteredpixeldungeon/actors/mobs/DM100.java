@@ -193,7 +193,7 @@ public class DM100 extends Mob implements Callback {
 					continue;
 				}
 
-				int damage = damageRoll(AttackContext.AttackType.RANGED, false);
+				int damage = damageRoll(AttackContext.AttackType.RANGED, false) / 4;
 				enemy.Damage( damage, new LightningBolt(), DamageType.of(DamageType.ELECTRICITY));
 			}
 		}

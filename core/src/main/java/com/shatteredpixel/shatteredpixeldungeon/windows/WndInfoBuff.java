@@ -24,6 +24,7 @@
 
 package com.shatteredpixel.shatteredpixeldungeon.windows;
 
+import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.ShatteredPixelDungeon;
@@ -72,7 +73,7 @@ public class WndInfoBuff extends Window {
 		txtInfo.setPos(titlebar.left(), titlebar.bottom() + 2*GAP);
 		add( txtInfo );
 
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			IconButton creativeButton = new IconButton(Icons.get(Icons.CREATIVE)) {
 				@Override
 				protected void onClick() {

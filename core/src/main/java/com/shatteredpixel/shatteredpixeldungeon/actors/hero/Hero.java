@@ -132,6 +132,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.potions.exotic.PotionOfDiv
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.DarkGold;
 import com.shatteredpixel.shatteredpixeldungeon.items.quest.Pickaxe;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.Ring;
+import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfElements;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfForce;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfFuror;
 import com.shatteredpixel.shatteredpixeldungeon.items.rings.RingOfHaste;
@@ -1605,6 +1606,8 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 			else if (pointsInTalent(Talent.IRON_STOMACH) == 2)  damage = 0;
 		}
 
+		damage = RingOfElements.HandleDamage(damage, damageType);
+
 		dmg = Math.round(damage);
 
 		dmg = RingOfTenacity.getDamageTaken(this, dmg);
@@ -1952,12 +1955,12 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 	
 	public void earnExp( int exp, Class source ) {
 
+		exp = (int) (exp * LuckyDice.expMultiplier());
+
 		//xp granted by ascension challenge is only for on-exp gain effects
 		if (source != AscensionChallenge.class) {
 			this.exp += exp;
 		}
-
-		exp = (int) (exp * LuckyDice.expMultiplier());
 
 		float percent = exp/(float)maxExp();
 

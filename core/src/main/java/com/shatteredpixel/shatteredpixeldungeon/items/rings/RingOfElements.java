@@ -36,10 +36,13 @@ import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Frost;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Ooze;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Paralysis;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.Poison;
+import com.shatteredpixel.shatteredpixeldungeon.combat.CombatModifier;
+import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
 import com.shatteredpixel.shatteredpixeldungeon.items.armor.glyphs.AntiMagic;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
 
+import java.util.EnumSet;
 import java.util.HashSet;
 
 public class RingOfElements extends Ring {
@@ -100,7 +103,20 @@ public class RingOfElements extends Ring {
 		
 		return 1f;
 	}
-	
+
+	public static float HandleDamage(float damage, EnumSet<DamageType> damageTypes) {
+		float damageSplit = damage / damageTypes.size();
+		float totalDamage = 0;
+		for (DamageType dt : damageTypes) {
+			if (DamageType.IsDamageEnergy(dt)) {
+				totalDamage += (float)Math.pow(0.825, getBuffedBonus(Dungeon.hero, Resistance.class)) * damageSplit;
+			} else {
+				totalDamage += damageSplit;
+			}
+		}
+		return totalDamage;
+	}
+
 	public class Resistance extends RingBuff {
 	
 	}

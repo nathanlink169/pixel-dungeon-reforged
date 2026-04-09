@@ -390,6 +390,7 @@ public class HeroSelectScene extends PixelScene {
 							GamesInProgress.selectedClass = HeroClass.Get(0);
 							SPDSettings.customSeed("");
 							SPDSettings.difficulty(2);
+							SPDSettings.creative(false);
 							HeroSelectScene.this.UpdateAfterWindowClose();
 						}
 					}

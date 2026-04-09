@@ -238,7 +238,7 @@ public class WndBag extends WndTabbed {
 		PixelScene.align(txtTitle);
 		add( txtTitle );
 
-		if (SPDSettings.creative()) {
+		if (Dungeon.creative) {
 			IconButton creativeButton = new IconButton(Icons.get(Icons.CREATIVE)) {
 				@Override
 				protected void onClick() {

@@ -123,7 +123,7 @@ public class Truesight extends ArmorAbility {
 		if (hero.hasTalent(Talent.BRIGHT_LIGHT)) {
 			int chance = hero.pointsInTalent(Talent.BRIGHT_LIGHT);
 			for (Mob m : Dungeon.level.mobs) {
-				if (m.state != m.SLEEPING && m.fieldOfView[Dungeon.hero.pos]) {
+				if (m.state != m.SLEEPING && m.fieldOfView != null && m.fieldOfView[Dungeon.hero.pos]) {
 					if (Random.Int(10) < chance) {
 						Buff.affect(m, Blindness.class, Blindness.DURATION);
 					}

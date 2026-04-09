@@ -192,7 +192,7 @@ public class WndHero extends WndTabbed {
 			infoButton.setRect(title.right(), 0, 16, 16);
 			add(infoButton);
 
-			if (SPDSettings.creative()) {
+			if (Dungeon.creative) {
 				IconButton creativeButton = new IconButton(Icons.get(Icons.CREATIVE)) {
 					@Override
 					protected void onClick() {

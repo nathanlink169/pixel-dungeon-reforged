@@ -45,7 +45,7 @@ public class Regeneration extends Buff {
 	private float partialRegen = 0f;
 
 	private float GetRegenerationDelay() {
-		switch (SPDSettings.difficulty()) {
+		switch (Dungeon.difficulty) {
 			case 1:
 				return 7.5f;
 			case 4:

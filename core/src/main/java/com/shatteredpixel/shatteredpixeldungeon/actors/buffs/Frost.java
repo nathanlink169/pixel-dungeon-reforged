@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.buffs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
+import com.shatteredpixel.shatteredpixeldungeon.actors.blobs.Freezing;
 import com.shatteredpixel.shatteredpixeldungeon.actors.hero.Hero;
 import com.shatteredpixel.shatteredpixeldungeon.actors.mobs.Thief;
 import com.shatteredpixel.shatteredpixeldungeon.combat.AttackContext;
@@ -39,6 +40,7 @@ import com.shatteredpixel.shatteredpixeldungeon.sprites.CharSprite;
 import com.shatteredpixel.shatteredpixeldungeon.ui.BuffIndicator;
 import com.shatteredpixel.shatteredpixeldungeon.utils.GLog;
 import com.watabou.noosa.Image;
+import com.watabou.utils.Bundle;
 import com.watabou.utils.Random;
 
 import java.util.ArrayList;
@@ -113,6 +115,8 @@ public class Frost extends FlavourBuff implements CombatModifier.OnHitEffect {
 			target.paralysed--;
 		if (Dungeon.level.water[target.pos])
 			Buff.prolong(target, Chill.class, Chill.DURATION/2f);
+
+		Buff.affect(target, FreezeResist.class, FreezeResist.IMMUNE_TIME);
 	}
 	
 	@Override
@@ -160,5 +164,16 @@ public class Frost extends FlavourBuff implements CombatModifier.OnHitEffect {
 	@Override
 	public boolean appliesTo(AttackContext context) {
 		return context.defender == target;
+	}
+
+	public static class FreezeResist extends FlavourBuff {
+
+		public static final int IMMUNE_TIME = 3;
+
+		{
+			type = buffType.POSITIVE;
+			immunities.add(Frost.class);
+			immunities.add(Freezing.class);
+		}
 	}
 }

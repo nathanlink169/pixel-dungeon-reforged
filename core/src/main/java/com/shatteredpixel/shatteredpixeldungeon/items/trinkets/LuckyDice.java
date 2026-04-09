@@ -77,7 +77,7 @@ public class LuckyDice extends Trinket {
         if (level == -1){
             return 0f;
         } else {
-            return 0.025f * (level + 1);
+            return 0.005f * (level + 1);
         }
     }
 
