@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.actors.hero;
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
 import com.shatteredpixel.shatteredpixeldungeon.Bones;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.GamesInProgress;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
@@ -93,6 +94,7 @@ import com.shatteredpixel.shatteredpixeldungeon.effects.Speck;
 import com.shatteredpixel.shatteredpixeldungeon.effects.SpellSprite;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Splash;
 import com.shatteredpixel.shatteredpixeldungeon.effects.Wound;
+import com.shatteredpixel.shatteredpixeldungeon.effects.particles.SmokeParticle;
 import com.shatteredpixel.shatteredpixeldungeon.items.Ankh;
 import com.shatteredpixel.shatteredpixeldungeon.items.Dewdrop;
 import com.shatteredpixel.shatteredpixeldungeon.items.EnergyCrystal;
@@ -1855,6 +1857,18 @@ public class Hero extends Char implements CombatModifier.OnDamageEffect {
 			justMoved = true;
 			
 			search(false);
+
+			if (Dungeon.isChallenged(Challenges.BARRIER_BREAKER) &&
+					(
+							Dungeon.level.map[step] == Terrain.DOOR ||
+									Dungeon.level.map[step] == Terrain.OPEN_DOOR
+							)
+			) {
+				Level.set(step, Terrain.EMBERS);
+				Sample.INSTANCE.play(Assets.Sounds.BLAST);
+				CellEmitter.center(step).burst(SmokeParticle.FACTORY, 10);
+				spend(speed());
+			}
 
 			return true;
 

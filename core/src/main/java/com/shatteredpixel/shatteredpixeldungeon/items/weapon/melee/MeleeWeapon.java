@@ -25,6 +25,7 @@
 package com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.actors.buffs.ArtifactRecharge;
@@ -261,7 +262,7 @@ public abstract class MeleeWeapon extends Weapon {
 				lvl*(tier+1);   //level scaling
 	}
 
-	public int STRReq(int lvl){
+	public int STRReq(int lvl) {
 		int req = STRReq(tier, lvl);
 		if (masteryPotionBonus){
 			req -= 4;
@@ -397,6 +398,10 @@ public abstract class MeleeWeapon extends Weapon {
 		//the mage's staff has no ability as it can only be gained by the mage
 		if (Dungeon.hero != null && Dungeon.hero.heroClass == HeroClass.DUELIST && !(this instanceof MagesStaff)){
 			info += "\n\n" + abilityInfo();
+		}
+
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			info += "\n\n" + Messages.get(Challenges.class, "cube.weapon_desc");
 		}
 		
 		return info;

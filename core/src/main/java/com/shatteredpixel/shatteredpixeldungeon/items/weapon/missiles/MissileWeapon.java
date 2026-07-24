@@ -27,6 +27,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.EFFECTIVE_SHOT;
 import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.POINT_BLANK;
 
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -225,6 +226,9 @@ abstract public class MissileWeapon extends Weapon implements CombatModifier.Acc
 	@Override
 	protected void onThrow( int cell ) {
 		Char enemy = Actor.findChar( cell );
+		if (Dungeon.isChallenged(Challenges.CUBE) && !(this instanceof ForceCube)) {
+			enemy = null;
+		}
 		if (enemy == null || enemy == curUser) {
 			parent = null;
 
@@ -495,7 +499,10 @@ abstract public class MissileWeapon extends Weapon implements CombatModifier.Acc
 		} else {
 			info += " " + Messages.get(this, "unlimited_uses");
 		}
-		
+
+		if (Dungeon.isChallenged(Challenges.CUBE) && !(this instanceof ForceCube)) {
+			info += "\n\n" + Messages.get(Challenges.class, "cube.weapon_desc");
+		}
 		
 		return info;
 	}

@@ -436,7 +436,7 @@ public class Gun extends Weapon {
         public boolean act() {
             Gun gun = Dungeon.hero.belongings.getItem(Gun.class);
             gun.SetIsLoaded(true);
-            GLog.p( Messages.get(this, "auto_reload") );
+            GLog.p( Messages.get(Gun.class, "auto_reload") );
             return super.act();
         }
 

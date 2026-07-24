@@ -98,6 +98,7 @@ import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.MagesStaff;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.Rapier;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WarHammer;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.melee.WornShortsword;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ForceCube;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingKnife;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingSpike;
 import com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles.ThrowingStone;
@@ -234,6 +235,16 @@ public enum HeroClass {
 			}
 		}
 
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			Item fc = new ForceCube().upgrade();
+			fc.collect();
+			for (int s = 0; s < QuickSlot.SIZE; s++) {
+				if (Dungeon.quickslot.getItem(s) == null) {
+					Dungeon.quickslot.setSlot(s, fc);
+					break;
+				}
+			}
+		}
 	}
 
 	public Badges.Badge masteryBadge() {
@@ -257,10 +268,13 @@ public enum HeroClass {
 	}
 
 	private static void initWarrior( Hero hero ) {
-		(hero.belongings.weapon = new WornShortsword()).identify();
-		ThrowingStone stones = new ThrowingStone();
-		stones.quantity(3).collect();
-		Dungeon.quickslot.setSlot(0, stones);
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new WornShortsword()).identify();
+
+			ThrowingStone stones = new ThrowingStone();
+			stones.quantity(3).collect();
+			Dungeon.quickslot.setSlot(0, stones);
+		}
 
 		if (hero.belongings.armor != null){
 			hero.belongings.armor.affixSeal(new BrokenSeal());
@@ -272,21 +286,25 @@ public enum HeroClass {
 	}
 
 	private static void initMage( Hero hero ) {
-		MagesStaff staff;
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			MagesStaff staff;
 
-		staff = new MagesStaff(new WandOfMagicMissile());
+			staff = new MagesStaff(new WandOfMagicMissile());
 
-		(hero.belongings.weapon = staff).identify();
-		hero.belongings.weapon.activate(hero);
+			(hero.belongings.weapon = staff).identify();
+			hero.belongings.weapon.activate(hero);
 
-		Dungeon.quickslot.setSlot(0, staff);
+			Dungeon.quickslot.setSlot(0, staff);
+		}
 
 		new ScrollOfUpgrade().identify();
 		new PotionOfLiquidFlame().identify();
 	}
 
 	private static void initRogue( Hero hero ) {
-		(hero.belongings.weapon = new Dagger()).identify();
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new Dagger()).identify();
+		}
 
 		CloakOfShadows cloak = new CloakOfShadows();
 		(hero.belongings.artifact = cloak).identify();
@@ -303,36 +321,39 @@ public enum HeroClass {
 	}
 
 	private static void initHuntress( Hero hero ) {
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new Gloves()).identify();
+			SpiritBow bow = new SpiritBow();
+			bow.identify().collect();
 
-		(hero.belongings.weapon = new Gloves()).identify();
-		SpiritBow bow = new SpiritBow();
-		bow.identify().collect();
-
-		Dungeon.quickslot.setSlot(0, bow);
+			Dungeon.quickslot.setSlot(0, bow);
+		}
 
 		new PotionOfMindVision().identify();
 		new ScrollOfLullaby().identify();
 	}
 
 	private static void initDuelist( Hero hero ) {
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new Rapier()).identify();
+			hero.belongings.weapon.activate(hero);
 
-		(hero.belongings.weapon = new Rapier()).identify();
-		hero.belongings.weapon.activate(hero);
+			ThrowingSpike spikes = new ThrowingSpike();
+			spikes.quantity(2).collect();
 
-		ThrowingSpike spikes = new ThrowingSpike();
-		spikes.quantity(2).collect();
-
-		Dungeon.quickslot.setSlot(0, hero.belongings.weapon);
-		Dungeon.quickslot.setSlot(1, spikes);
+			Dungeon.quickslot.setSlot(0, hero.belongings.weapon);
+			Dungeon.quickslot.setSlot(1, spikes);
+		}
 
 		new PotionOfStrength().identify();
 		new ScrollOfMirrorImage().identify();
 	}
 
 	private static void initCleric( Hero hero ) {
-
-		(hero.belongings.weapon = new Cudgel()).identify();
-		hero.belongings.weapon.activate(hero);
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new Cudgel()).identify();
+			hero.belongings.weapon.activate(hero);
+		}
 
 		HolyTome tome = new HolyTome();
 		(hero.belongings.artifact = tome).identify();
@@ -345,11 +366,13 @@ public enum HeroClass {
 	}
 
 	private static void initArtificer( Hero hero ) {
-		(hero.belongings.weapon = new Dagger()).identify();
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			(hero.belongings.weapon = new Dagger()).identify();
 
-		Gun gun = new Gun();
-		gun.identify().collect();
-		Dungeon.quickslot.setSlot(0, gun);
+			Gun gun = new Gun();
+			gun.identify().collect();
+			Dungeon.quickslot.setSlot(0, gun);
+		}
 
 		new PotionOfLiquidFlame().identify();
 		new PotionOfFrost().identify();

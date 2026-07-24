@@ -50,8 +50,10 @@ public class Challenges {
 	public static final int TRINKET_MADNESS		= 1 << 11;
 	public static final int RANDOMIZER			= 1 << 12;
 	public static final int ADAPTIVE			= 1 << 13;
+	public static final int CUBE				= 1 << 14;
+	public static final int BARRIER_BREAKER		= 1 << 15;
 
-	public static final int MAX_VALUE           = 1 << 14;
+	public static final int MAX_VALUE           = 1 << 16;
 
 	public static final String[] NAME_IDS = {
 			"champion_enemies",
@@ -67,7 +69,9 @@ public class Challenges {
 			"monster_unknown",
 			"trinket_madness",
 			"randomizer",
-			"adaptive"
+			"adaptive",
+			"cube",
+			"barrier_breaker",
 	};
 
 	public static final int[] MASKS = {
@@ -84,7 +88,9 @@ public class Challenges {
 			MONSTER_UNKNOWN,
 			TRINKET_MADNESS,
 			RANDOMIZER,
-			ADAPTIVE
+			ADAPTIVE,
+			CUBE,
+			BARRIER_BREAKER
 	};
 
 	public static float GetChallengeMultiplier() {

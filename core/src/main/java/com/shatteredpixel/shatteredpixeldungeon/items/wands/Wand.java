@@ -28,6 +28,7 @@ import static com.shatteredpixel.shatteredpixeldungeon.actors.hero.Talent.ARCSHI
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
@@ -156,6 +157,11 @@ public abstract class Wand extends Item {
 	}
 
 	public boolean tryToZap( Hero owner, int target ){
+
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			GLog.w(Messages.get(Challenges.class, "cube.wand_zap"));
+			return false;
+		}
 
 		if (owner.buff(WildMagic.WildMagicTracker.class) == null && owner.buff(MagicImmune.class) != null){
 			GLog.w( Messages.get(this, "no_magic") );
@@ -315,6 +321,10 @@ public abstract class Wand extends Item {
 
 		if (Dungeon.hero != null && Dungeon.hero.subClass == HeroSubClass.BATTLEMAGE){
 			desc += "\n\n" + Messages.get(this, "bmage_desc");
+		}
+
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			desc += "\n\n" + Messages.get(Challenges.class, "cube.weapon_desc");
 		}
 
 		return desc;

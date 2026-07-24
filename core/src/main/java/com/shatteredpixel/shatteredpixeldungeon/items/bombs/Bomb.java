@@ -26,6 +26,7 @@ package com.shatteredpixel.shatteredpixeldungeon.items.bombs;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.SPDSettings;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
@@ -104,7 +105,10 @@ public class Bomb extends Item {
 	@Override
 	public ArrayList<String> actions(Hero hero) {
 		ArrayList<String> actions = super.actions( hero );
-		actions.add ( AC_LIGHTTHROW );
+
+		if (!Dungeon.isChallenged(Challenges.CUBE)) {
+			actions.add(AC_LIGHTTHROW);
+		}
 		return actions;
 	}
 
@@ -257,10 +261,15 @@ public class Bomb extends Item {
 		int depth = Dungeon.hero == null ? 1 : Dungeon.scalingDepth();
 		String desc = Messages.get(this, "desc", 4+depth, 12+3*depth);
 		if (fuse == null) {
-			return desc + "\n\n" + Messages.get(this, "desc_fuse");
+			desc += "\n\n" + Messages.get(this, "desc_fuse");
 		} else {
-			return desc + "\n\n" + Messages.get(this, "desc_burning");
+			desc += "\n\n" + Messages.get(this, "desc_burning");
 		}
+
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			desc += "\n\n" + Messages.get(Challenges.class, "cube.weapon_desc");
+		}
+		return desc;
 	}
 
 	private static final String FUSE = "fuse";

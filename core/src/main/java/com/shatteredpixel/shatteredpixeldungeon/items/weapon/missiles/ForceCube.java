@@ -26,11 +26,14 @@ package com.shatteredpixel.shatteredpixeldungeon.items.weapon.missiles;
 
 import com.shatteredpixel.shatteredpixeldungeon.Assets;
 import com.shatteredpixel.shatteredpixeldungeon.Badges;
+import com.shatteredpixel.shatteredpixeldungeon.Challenges;
 import com.shatteredpixel.shatteredpixeldungeon.Dungeon;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Actor;
 import com.shatteredpixel.shatteredpixeldungeon.actors.Char;
 import com.shatteredpixel.shatteredpixeldungeon.items.wands.WandOfBlastWave;
 import com.shatteredpixel.shatteredpixeldungeon.combat.DamageType;
+import com.shatteredpixel.shatteredpixeldungeon.items.weapon.Weapon;
+import com.shatteredpixel.shatteredpixeldungeon.journal.Notes;
 import com.shatteredpixel.shatteredpixeldungeon.levels.traps.TenguDartTrap;
 import com.shatteredpixel.shatteredpixeldungeon.messages.Messages;
 import com.shatteredpixel.shatteredpixeldungeon.sprites.ItemSpriteSheet;
@@ -51,6 +54,22 @@ public class ForceCube extends MissileWeapon {
 		sticky = false;
 
 		damageType = DamageType.of(DamageType.BLUDGEONING);
+	}
+
+	@Override
+	public int STRReq(int lvl) {
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			return 10;
+		}
+		return super.STRReq(lvl);
+	}
+
+	@Override
+	protected void decrementDurability() {
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			return;
+		}
+		super.decrementDurability();
 	}
 
 	@Override
@@ -81,11 +100,57 @@ public class ForceCube extends MissileWeapon {
 			if (target == Dungeon.hero && !target.isAlive()){
 				Badges.validateDeathFromFriendlyMagic();
 				Dungeon.fail(this);
-				GLog.n(Messages.get(this, "ondeath"));
+				if (Dungeon.isChallenged(Challenges.CUBE)) {
+					GLog.p(Messages.get(this, "ondeath_challenge"));
+				} else {
+					GLog.n(Messages.get(this, "ondeath"));
+				}
 			}
 		}
 		
 		WandOfBlastWave.BlastWave.blast(cell);
 		Sample.INSTANCE.play( Assets.Sounds.BLAST );
+	}
+
+	@Override
+	public String desc() {
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			return Messages.get(this, "desc_challenge");
+		}
+		return super.desc();
+	}
+
+	@Override
+	public String info() {
+		if (Dungeon.isChallenged(Challenges.CUBE)) {
+			String info = "";
+			if (Dungeon.hero != null) {
+				Notes.CustomRecord note = Notes.findCustomRecord(customNoteID);
+				if (note != null) {
+					//we swap underscore(0x5F) with low macron(0x2CD) here to avoid highlighting in the item window
+					info += Messages.get(this, "custom_note", note.title().replace('_', '_')) + "\n\n" + desc();
+				} else {
+					note = Notes.findCustomRecord(getClass());
+					if (note != null) {
+						//we swap underscore(0x5F) with low macron(0x2CD) here to avoid highlighting in the item window
+						info += Messages.get(this, "custom_note_type", note.title().replace('_', '_')) + "\n\n" + desc();
+					}
+				}
+			}
+
+			info += desc();
+
+			info += "\n\n" + Messages.get( this, "stats_challenge",
+					Math.round(augment.damageFactor(min())),
+					Math.round(augment.damageFactor(max())));
+
+			if (enchantment != null && (cursedKnown || !enchantment.curse())){
+				info += "\n\n" + Messages.get(Weapon.class, "enchanted", enchantment.name());
+				info += " " + Messages.get(enchantment, "desc");
+			}
+
+			return info;
+		}
+		return super.info();
 	}
 }

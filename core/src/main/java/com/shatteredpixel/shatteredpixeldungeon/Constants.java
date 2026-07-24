@@ -3978,7 +3978,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.ACID);
             }
 
             @Override
@@ -4319,7 +4319,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getRangedDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.PIERCING);
             }
 
             @Override
@@ -4482,7 +4482,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getRangedDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.BLUDGEONING, DamageType.SLASHING);
             }
 
             @Override
@@ -5282,7 +5282,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.PIERCING);
             }
 
             @Override
@@ -11002,7 +11002,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getRangedDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.NEGATIVE_ENERGY);
             }
 
             @Override
@@ -11165,7 +11165,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getRangedDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.PIERCING);
             }
 
             @Override
@@ -14410,7 +14410,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.PIERCING);
             }
 
             @Override
@@ -14573,7 +14573,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.PIERCING);
             }
 
             @Override
@@ -19463,7 +19463,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.SLASHING);
             }
 
             @Override
@@ -20278,7 +20278,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getMeleeDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.SLASHING);
             }
 
             @Override
@@ -20456,7 +20456,7 @@ public class Constants {
 
             @Override
             public EnumSet<DamageType> getRangedDamageType() {
-                return DamageType.of(DamageType.NONE);
+                return DamageType.of(DamageType.FIRE);
             }
 
             @Override
